@@ -38,7 +38,12 @@ export function Input({
   return (
     <View style={[styles.container, containerStyle]}>
       {label && (
-        <Text style={[styles.label, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+        <Text
+          style={[
+            styles.label,
+            { color: colors.secondary, textAlign: isRTL ? "right" : "left" },
+          ]}
+        >
           {label}
         </Text>
       )}
@@ -46,14 +51,24 @@ export function Input({
         style={[
           styles.inputContainer,
           {
-            borderColor: error ? colors.destructive : focused ? colors.primary : colors.border,
+            borderColor: error
+              ? colors.destructive
+              : focused
+              ? colors.accent
+              : colors.border,
             backgroundColor: colors.card,
-            borderRadius: colors.radius,
+            borderRadius: colors.radiusSm,
+            borderWidth: focused ? 2 : 1.5,
           },
         ]}
       >
         {leftIcon && (
-          <Feather name={leftIcon} size={18} color={colors.mutedForeground} style={styles.leftIcon} />
+          <Feather
+            name={leftIcon}
+            size={17}
+            color={focused ? colors.accent : colors.mutedForeground}
+            style={styles.leftIcon}
+          />
         )}
         <TextInput
           style={[
@@ -71,7 +86,7 @@ export function Input({
         />
         {rightIcon && (
           <TouchableOpacity onPress={onRightIconPress} style={styles.rightIcon}>
-            <Feather name={rightIcon} size={18} color={colors.mutedForeground} />
+            <Feather name={rightIcon} size={17} color={colors.mutedForeground} />
           </TouchableOpacity>
         )}
       </View>
@@ -84,11 +99,10 @@ export function Input({
 
 const styles = StyleSheet.create({
   container: { gap: 6 },
-  label: { fontSize: 14, fontWeight: "500" as const },
+  label: { fontSize: 13, fontWeight: "500" as const, letterSpacing: 0.1 },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1.5,
     paddingHorizontal: 14,
     minHeight: 50,
   },

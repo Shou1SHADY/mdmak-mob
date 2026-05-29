@@ -9,8 +9,15 @@ export default function Index() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -19,7 +26,7 @@ export default function Index() {
 
   if (user.role === "contractor") return <Redirect href="/(contractor)/dashboard" />;
   if (user.role === "supplier") return <Redirect href="/(supplier)/dashboard" />;
-  if (user.role === "admin") return <Redirect href="/(admin)/dashboard" />;
 
+  // Admin role is not supported in the mobile app — send to login
   return <Redirect href="/auth/login" />;
 }

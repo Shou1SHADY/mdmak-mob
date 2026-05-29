@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView,
 } from "react-native";
@@ -19,7 +19,6 @@ interface Message {
   senderId: string;
   text: string;
   timestamp?: any;
-  read?: boolean;
 }
 
 export default function ChatScreen() {
@@ -38,10 +37,9 @@ export default function ChatScreen() {
       where("chatId", "==", chatId),
       orderBy("timestamp", "desc")
     );
-    const unsub = onSnapshot(q, (snap) => {
+    return onSnapshot(q, (snap) => {
       setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)));
     });
-    return unsub;
   }, [chatId]);
 
   const sendMessage = async () => {
@@ -52,18 +50,10 @@ export default function ChatScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await addDoc(collection(db, "messages"), {
-        chatId,
-        senderId: user?.uid,
-        text: msg,
-        timestamp: serverTimestamp(),
-        read: false,
+        chatId, senderId: user?.uid, text: msg,
+        timestamp: serverTimestamp(), read: false,
       });
-      await updateDoc(doc(db, "chats", chatId), {
-        lastMessage: msg,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (e) {
-      console.warn(e);
+      await updateDoc(doc(db, "chats", chatId), { lastMessage: msg, updatedAt: serverTimestamp() });
     } finally {
       setSending(false);
     }
@@ -81,50 +71,50 @@ export default function ChatScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={0}
     >
-      {/* Header */}
+      {/* Dark header */}
       <View
         style={[
           styles.header,
           {
-            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16),
-            backgroundColor: colors.card,
-            borderBottomColor: colors.border,
+            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
+            backgroundColor: colors.primary,
           },
         ]}
       >
-        <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Feather name="arrow-left" size={22} color="#F8FAFC" />
         </TouchableOpacity>
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Chat</Text>
-          <Text style={[styles.headerSub, { color: colors.mutedForeground }]}>#{chatId?.slice(0, 8)}</Text>
+        <View style={{ flex: 1, marginLeft: 10 }}>
+          <Text style={styles.headerTitle}>Chat</Text>
+          <Text style={styles.headerSub}>#{chatId?.slice(0, 8)}</Text>
         </View>
       </View>
 
-      {/* Messages */}
       <FlatList
         data={messages}
         keyExtractor={(item) => item.id}
         inverted
-        contentContainerStyle={[styles.msgList, { paddingBottom: 16 }]}
+        contentContainerStyle={styles.msgList}
         renderItem={({ item }) => {
           const isMe = item.senderId === user?.uid;
           return (
-            <View style={[styles.msgRow, isMe ? styles.msgRowMe : styles.msgRowOther]}>
+            <View style={[styles.msgRow, isMe ? styles.msgMe : styles.msgOther]}>
               <View
                 style={[
                   styles.bubble,
                   {
-                    backgroundColor: isMe ? colors.primary : colors.card,
+                    backgroundColor: isMe ? colors.cta : colors.card,
                     borderColor: isMe ? "transparent" : colors.border,
                     borderWidth: isMe ? 0 : 1,
+                    borderRadius: isMe
+                      ? { borderRadius: 16, borderBottomRightRadius: 4 } as any
+                      : 16,
                   },
                 ]}
               >
                 <Text style={[styles.msgText, { color: isMe ? "#fff" : colors.foreground }]}>{item.text}</Text>
-                <Text style={[styles.msgTime, { color: isMe ? "rgba(255,255,255,0.65)" : colors.mutedForeground }]}>
+                <Text style={[styles.msgTime, { color: isMe ? "rgba(255,255,255,0.6)" : colors.mutedForeground }]}>
                   {formatTime(item.timestamp)}
                 </Text>
               </View>
@@ -134,19 +124,26 @@ export default function ChatScreen() {
         scrollEnabled={!!messages.length}
       />
 
-      {/* Input */}
       <View
         style={[
           styles.inputBar,
           {
             backgroundColor: colors.card,
             borderTopColor: colors.border,
-            paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 8),
+            paddingBottom: insets.bottom + (Platform.OS === "web" ? 10 : 8),
           },
         ]}
       >
         <TextInput
-          style={[styles.input, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+          style={[
+            styles.input,
+            {
+              color: colors.foreground,
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+              borderRadius: colors.radiusSm,
+            },
+          ]}
           placeholder="Type a message..."
           placeholderTextColor={colors.mutedForeground}
           value={text}
@@ -155,11 +152,17 @@ export default function ChatScreen() {
           maxLength={500}
         />
         <TouchableOpacity
-          style={[styles.sendBtn, { backgroundColor: text.trim() ? colors.primary : colors.muted }]}
+          style={[
+            styles.sendBtn,
+            {
+              backgroundColor: text.trim() ? colors.cta : colors.muted,
+              borderRadius: colors.radiusSm,
+            },
+          ]}
           onPress={sendMessage}
           disabled={!text.trim() || sending}
         >
-          <Feather name="send" size={18} color={text.trim() ? "#fff" : colors.mutedForeground} />
+          <Feather name="send" size={17} color={text.trim() ? "#fff" : colors.mutedForeground} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -167,17 +170,18 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
-  headerTitle: { fontSize: 16, fontWeight: "700" as const },
-  headerSub: { fontSize: 12, marginTop: 1 },
-  msgList: { paddingHorizontal: 16, paddingTop: 16, gap: 8, flexGrow: 1, justifyContent: "flex-end" },
-  msgRow: { flexDirection: "row", marginBottom: 6 },
-  msgRowMe: { justifyContent: "flex-end" },
-  msgRowOther: { justifyContent: "flex-start" },
-  bubble: { maxWidth: "75%", borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, gap: 3 },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 14 },
+  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+  headerTitle: { fontSize: 15, fontWeight: "700" as const, color: "#F8FAFC" },
+  headerSub: { fontSize: 11, color: "rgba(248,250,252,0.55)", marginTop: 1 },
+  msgList: { paddingHorizontal: 16, paddingVertical: 16, gap: 6 },
+  msgRow: { flexDirection: "row", marginBottom: 4 },
+  msgMe: { justifyContent: "flex-end" },
+  msgOther: { justifyContent: "flex-start" },
+  bubble: { maxWidth: "74%", borderRadius: 16, paddingHorizontal: 14, paddingVertical: 9, gap: 2 },
   msgText: { fontSize: 15, lineHeight: 21 },
-  msgTime: { fontSize: 11, textAlign: "right" },
-  inputBar: { flexDirection: "row", alignItems: "flex-end", gap: 10, paddingHorizontal: 16, paddingTop: 10, borderTopWidth: 1 },
-  input: { flex: 1, borderRadius: 20, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, maxHeight: 120 },
-  sendBtn: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" },
+  msgTime: { fontSize: 10, textAlign: "right" },
+  inputBar: { flexDirection: "row", alignItems: "flex-end", gap: 10, paddingHorizontal: 14, paddingTop: 10, borderTopWidth: 1 },
+  input: { flex: 1, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, maxHeight: 100 },
+  sendBtn: { width: 42, height: 42, alignItems: "center", justifyContent: "center" },
 });

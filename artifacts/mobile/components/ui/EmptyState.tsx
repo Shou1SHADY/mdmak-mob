@@ -17,7 +17,7 @@ export function EmptyState({ icon, title, subtitle, actionLabel, onAction }: Emp
   return (
     <View style={styles.container}>
       <View style={[styles.iconContainer, { backgroundColor: colors.muted, borderRadius: 40 }]}>
-        <Feather name={icon} size={32} color={colors.mutedForeground} />
+        <Feather name={icon} size={30} color={colors.mutedForeground} />
       </View>
       <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
       {subtitle && (
@@ -31,8 +31,8 @@ export function EmptyState({ icon, title, subtitle, actionLabel, onAction }: Emp
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 12 },
-  iconContainer: { width: 80, height: 80, alignItems: "center", justifyContent: "center", marginBottom: 4 },
-  title: { fontSize: 18, fontWeight: "700" as const, textAlign: "center" },
+  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 10 },
+  iconContainer: { width: 76, height: 76, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  title: { fontSize: 17, fontWeight: "700" as const, textAlign: "center" },
   subtitle: { fontSize: 14, textAlign: "center", lineHeight: 21 },
 });

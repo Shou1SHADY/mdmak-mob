@@ -31,22 +31,32 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
   };
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("ar-SA", { style: "currency", currency: "SAR" }).format(amount);
+    new Intl.NumberFormat("ar-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(amount);
 
   return (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          borderRadius: colors.radius,
+        },
+      ]}
       onPress={onPress}
-      activeOpacity={onPress ? 0.8 : 1}
+      activeOpacity={onPress ? 0.82 : 1}
     >
       <View style={styles.topRow}>
-        <Text style={[styles.price, { color: colors.primary }]}>{formatCurrency(offer.price)}</Text>
-        <StatusBadge label={statusInfo.label} color={statusInfo.color} size="sm" />
+        <View>
+          <Text style={[styles.priceLabel, { color: colors.mutedForeground }]}>Quoted price</Text>
+          <Text style={[styles.price, { color: colors.foreground }]}>{formatCurrency(offer.price)}</Text>
+        </View>
+        <StatusBadge label={statusInfo.label} color={statusInfo.color} />
       </View>
       {offer.supplierName && (
         <View style={styles.metaItem}>
           <Feather name="briefcase" size={13} color={colors.mutedForeground} />
-          <Text style={[styles.metaText, { color: colors.mutedForeground }]}>{offer.supplierName}</Text>
+          <Text style={[styles.metaText, { color: colors.secondary }]}>{offer.supplierName}</Text>
         </View>
       )}
       {offer.rfqTitle && (
@@ -66,17 +76,22 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 14,
-    padding: 16,
     borderWidth: 1,
+    padding: 16,
     gap: 8,
     marginBottom: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  price: { fontSize: 20, fontWeight: "700" as const },
+  topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  priceLabel: { fontSize: 11, fontWeight: "500" as const, marginBottom: 2 },
+  price: { fontSize: 22, fontWeight: "700" as const },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 6 },
-  metaText: { fontSize: 13 },
+  metaText: { fontSize: 13, fontWeight: "500" as const },
   rfqTitle: { fontSize: 14, fontWeight: "600" as const },
-  notes: { fontSize: 14, lineHeight: 20 },
-  actions: { flexDirection: "row", gap: 8, marginTop: 4 },
+  notes: { fontSize: 13, lineHeight: 19 },
+  actions: { flexDirection: "row", gap: 8, marginTop: 4, flexWrap: "wrap" },
 });

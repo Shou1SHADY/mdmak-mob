@@ -20,6 +20,7 @@ import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RFQ_STATUSES } from "@/constants/data";
+import { ScreenHeader } from "@/components/ScreenHeader";
 
 export default function MyRFQsScreen() {
   const colors = useColors();
@@ -53,7 +54,10 @@ export default function MyRFQsScreen() {
   const applyFilters = (items: RFQItem[], s: string, status: string) => {
     let res = items;
     if (status !== "all") res = res.filter((r) => r.status === status);
-    if (s.trim()) res = res.filter((r) => r.title.toLowerCase().includes(s.toLowerCase()) || r.category.toLowerCase().includes(s.toLowerCase()));
+    if (s.trim()) res = res.filter((r) =>
+      r.title.toLowerCase().includes(s.toLowerCase()) ||
+      r.category.toLowerCase().includes(s.toLowerCase())
+    );
     setFiltered(res);
   };
 
@@ -62,27 +66,22 @@ export default function MyRFQsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View
-        style={[
-          styles.topBar,
-          {
-            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16),
-            backgroundColor: colors.background,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
-        <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: colors.foreground }]}>My RFQs</Text>
+      <ScreenHeader
+        title="My RFQs"
+        right={
           <TouchableOpacity
-            style={[styles.createBtn, { backgroundColor: colors.primary }]}
+            style={[styles.addBtn, { backgroundColor: colors.accent }]}
             onPress={() => router.push("/(contractor)/rfqs/create")}
           >
-            <Feather name="plus" size={16} color="#fff" />
+            <Feather name="plus" size={18} color={colors.primary} />
           </TouchableOpacity>
-        </View>
+        }
+      />
+
+      {/* Search + filter */}
+      <View style={[styles.filterBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <View style={[styles.searchBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Feather name="search" size={16} color={colors.mutedForeground} />
+          <Feather name="search" size={15} color={colors.mutedForeground} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground }]}
             placeholder="Search RFQs..."
@@ -90,32 +89,40 @@ export default function MyRFQsScreen() {
             value={search}
             onChangeText={setSearch}
           />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch("")}>
+              <Feather name="x" size={14} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
         </View>
-        <View style={styles.filterRow}>
-          {[{ id: "all", label: "All" }, ...RFQ_STATUSES].map((s) => (
+        <FlatList
+          horizontal
+          data={[{ id: "all", label: "All", color: "#94a3b8" }, ...RFQ_STATUSES]}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
             <TouchableOpacity
-              key={s.id}
               style={[
-                styles.filterChip,
+                styles.chip,
                 {
-                  backgroundColor: statusFilter === s.id ? colors.primary : colors.card,
-                  borderColor: statusFilter === s.id ? colors.primary : colors.border,
+                  backgroundColor: statusFilter === item.id ? colors.primary : colors.card,
+                  borderColor: statusFilter === item.id ? colors.primary : colors.border,
+                  borderRadius: colors.radiusSm,
                 },
               ]}
-              onPress={() => setStatusFilter(s.id)}
+              onPress={() => setStatusFilter(item.id)}
             >
-              <Text style={[styles.filterText, { color: statusFilter === s.id ? "#fff" : colors.mutedForeground }]}>
-                {s.label}
+              <Text style={[styles.chipText, { color: statusFilter === item.id ? "#F8FAFC" : colors.mutedForeground }]}>
+                {item.label}
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
+          )}
+          contentContainerStyle={{ gap: 8 }}
+        />
       </View>
 
       {loading ? (
-        <View style={{ padding: 16 }}>
-          {[1, 2, 3].map((k) => <CardSkeleton key={k} />)}
-        </View>
+        <View style={{ padding: 16 }}>{[1, 2, 3].map((k) => <CardSkeleton key={k} />)}</View>
       ) : (
         <FlatList
           data={filtered}
@@ -123,11 +130,14 @@ export default function MyRFQsScreen() {
           renderItem={({ item }) => (
             <RFQCard rfq={item} onPress={() => router.push(`/(contractor)/rfqs/${item.id}`)} showOffers />
           )}
-          contentContainerStyle={[
-            styles.list,
-            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 80) },
-          ]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchRFQs(); }} tintColor={colors.primary} />}
+          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 80) }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => { setRefreshing(true); fetchRFQs(); }}
+              tintColor={colors.accent}
+            />
+          }
           ListEmptyComponent={
             <EmptyState
               icon="file-text"
@@ -145,14 +155,11 @@ export default function MyRFQsScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: { paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, gap: 12 },
-  titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  title: { fontSize: 24, fontWeight: "700" as const },
-  createBtn: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  searchBox: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, height: 44 },
-  searchInput: { flex: 1, fontSize: 15 },
-  filterRow: { flexDirection: "row", gap: 8 },
-  filterChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 7 },
-  filterText: { fontSize: 13, fontWeight: "500" as const },
-  list: { padding: 16, gap: 0 },
+  addBtn: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  filterBar: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, gap: 10 },
+  searchBox: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 12, height: 42 },
+  searchInput: { flex: 1, fontSize: 14 },
+  chip: { borderWidth: 1.5, paddingHorizontal: 13, paddingVertical: 6 },
+  chipText: { fontSize: 12, fontWeight: "600" as const },
+  list: { padding: 16 },
 });

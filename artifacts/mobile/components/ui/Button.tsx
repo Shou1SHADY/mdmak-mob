@@ -2,7 +2,6 @@ import React from "react";
 import {
   TouchableOpacity,
   Text,
-  StyleSheet,
   ActivityIndicator,
   ViewStyle,
   TextStyle,
@@ -45,11 +44,11 @@ export function Button({
 
   const getContainerStyle = (): ViewStyle => {
     const base: ViewStyle = {
-      borderRadius: colors.radius,
+      borderRadius: colors.radiusSm,
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",
-      opacity: disabled || loading ? 0.6 : 1,
+      opacity: disabled || loading ? 0.55 : 1,
     };
     const sizes: Record<Size, ViewStyle> = {
       sm: { paddingHorizontal: 14, paddingVertical: 8 },
@@ -57,13 +56,22 @@ export function Button({
       lg: { paddingHorizontal: 28, paddingVertical: 16 },
     };
     const variants: Record<Variant, ViewStyle> = {
-      primary: { backgroundColor: colors.primary },
-      secondary: { backgroundColor: colors.secondary },
+      primary: { backgroundColor: colors.cta },
+      secondary: { backgroundColor: colors.muted },
       ghost: { backgroundColor: "transparent" },
       destructive: { backgroundColor: colors.destructive },
-      outline: { backgroundColor: "transparent", borderWidth: 1.5, borderColor: colors.border },
+      outline: {
+        backgroundColor: "transparent",
+        borderWidth: 1.5,
+        borderColor: colors.border,
+      },
     };
-    return { ...base, ...sizes[size], ...variants[variant], ...(fullWidth ? { width: "100%" } : {}) };
+    return {
+      ...base,
+      ...sizes[size],
+      ...variants[variant],
+      ...(fullWidth ? { width: "100%" } : {}),
+    };
   };
 
   const getTextStyle = (): TextStyle => {
@@ -73,9 +81,9 @@ export function Button({
       lg: { fontSize: 16 },
     };
     const variants: Record<Variant, TextStyle> = {
-      primary: { color: colors.primaryForeground },
-      secondary: { color: colors.secondaryForeground },
-      ghost: { color: colors.primary },
+      primary: { color: colors.ctaForeground },
+      secondary: { color: colors.secondary },
+      ghost: { color: colors.cta },
       destructive: { color: colors.destructiveForeground },
       outline: { color: colors.foreground },
     };
@@ -87,12 +95,16 @@ export function Button({
       style={[getContainerStyle(), style]}
       onPress={handlePress}
       disabled={disabled || loading}
-      activeOpacity={0.75}
+      activeOpacity={0.78}
     >
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === "primary" || variant === "destructive" ? "#fff" : colors.primary}
+          color={
+            variant === "primary" || variant === "destructive"
+              ? "#fff"
+              : colors.cta
+          }
         />
       ) : (
         <Text style={[getTextStyle(), textStyle]}>{title}</Text>

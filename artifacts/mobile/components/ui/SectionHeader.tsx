@@ -12,10 +12,13 @@ export function SectionHeader({ title, actionLabel, onAction }: SectionHeaderPro
   const colors = useColors();
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
+      <View style={[styles.titleRow]}>
+        <View style={[styles.accent, { backgroundColor: colors.accent }]} />
+        <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
+      </View>
       {actionLabel && onAction && (
         <TouchableOpacity onPress={onAction}>
-          <Text style={[styles.action, { color: colors.primary }]}>{actionLabel}</Text>
+          <Text style={[styles.action, { color: colors.cta }]}>{actionLabel}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -23,7 +26,14 @@ export function SectionHeader({ title, actionLabel, onAction }: SectionHeaderPro
 }
 
 const styles = StyleSheet.create({
-  container: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  title: { fontSize: 17, fontWeight: "700" as const },
-  action: { fontSize: 14, fontWeight: "500" as const },
+  container: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  accent: { width: 3, height: 18, borderRadius: 2 },
+  title: { fontSize: 16, fontWeight: "700" as const },
+  action: { fontSize: 13, fontWeight: "600" as const },
 });

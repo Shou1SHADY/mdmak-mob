@@ -65,26 +65,25 @@ export default function CreateRFQScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
+      {/* Dark header */}
       <View
         style={[
           styles.header,
           {
-            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16),
-            backgroundColor: colors.background,
-            borderBottomColor: colors.border,
+            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
+            backgroundColor: colors.primary,
           },
         ]}
       >
-        <TouchableOpacity onPress={() => (step > 1 ? setStep(step - 1) : router.back())}>
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
+        <TouchableOpacity onPress={() => (step > 1 ? setStep(step - 1) : router.back())} style={styles.backBtn}>
+          <Feather name="arrow-left" size={22} color="#F8FAFC" />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Create RFQ</Text>
-        <Text style={[styles.stepLabel, { color: colors.mutedForeground }]}>{step}/{totalSteps}</Text>
+        <Text style={[styles.headerTitle, { color: "#F8FAFC" }]}>Create RFQ</Text>
+        <Text style={[styles.stepLabel, { color: "rgba(248,250,252,0.6)" }]}>{step}/{totalSteps}</Text>
       </View>
 
-      <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-        <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${(step / totalSteps) * 100}%` }]} />
+      <View style={[styles.progressBar, { backgroundColor: "rgba(248,250,252,0.15)", marginTop: 0 }]}>
+        <View style={[styles.progressFill, { backgroundColor: colors.accent, width: `${(step / totalSteps) * 100}%` }]} />
       </View>
 
       <ScrollView
@@ -119,8 +118,8 @@ export default function CreateRFQScreen() {
                   style={[
                     styles.categoryChip,
                     {
-                      borderColor: category === cat.label ? colors.primary : colors.border,
-                      backgroundColor: category === cat.label ? colors.primary + "15" : colors.card,
+                      borderColor: category === cat.label ? colors.accent : colors.border,
+                      backgroundColor: category === cat.label ? colors.accent + "15" : colors.card,
                     },
                   ]}
                   onPress={() => setCategory(cat.label)}
@@ -128,7 +127,7 @@ export default function CreateRFQScreen() {
                   <Text
                     style={[
                       styles.categoryText,
-                      { color: category === cat.label ? colors.primary : colors.foreground },
+                      { color: category === cat.label ? colors.foreground : colors.secondary },
                     ]}
                     numberOfLines={2}
                   >
@@ -196,7 +195,8 @@ export default function CreateRFQScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14 },
+  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
   headerTitle: { fontSize: 18, fontWeight: "700" as const },
   stepLabel: { fontSize: 14 },
   progressBar: { height: 3 },

@@ -6,32 +6,28 @@ interface CardProps {
   children: ReactNode;
   style?: ViewStyle;
   onPress?: () => void;
-  elevated?: boolean;
+  glass?: boolean;
 }
 
-export function Card({ children, style, onPress, elevated = false }: CardProps) {
+export function Card({ children, style, onPress, glass = false }: CardProps) {
   const colors = useColors();
 
   const cardStyle: ViewStyle = {
-    backgroundColor: colors.card,
+    backgroundColor: glass ? "rgba(255,255,255,0.82)" : colors.card,
     borderRadius: colors.radius,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    ...(elevated
-      ? {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-          elevation: 3,
-        }
-      : {}),
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   };
 
   if (onPress) {
     return (
-      <TouchableOpacity style={[cardStyle, style]} onPress={onPress} activeOpacity={0.8}>
+      <TouchableOpacity style={[cardStyle, style]} onPress={onPress} activeOpacity={0.82}>
         {children}
       </TouchableOpacity>
     );

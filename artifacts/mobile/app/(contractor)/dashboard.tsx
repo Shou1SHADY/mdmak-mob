@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
@@ -20,6 +19,8 @@ import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { DashboardHeader } from "@/components/ScreenHeader";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ContractorDashboard() {
   const colors = useColors();
@@ -41,9 +42,6 @@ export default function ContractorDashboard() {
       );
       const snap = await getDocs(q);
       const items: RFQItem[] = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RFQItem));
-      setRfqs(items);
-
-      // count offers for each RFQ
       let totalOffers = 0;
       for (const rfq of items) {
         const offQ = query(collection(db, "offers"), where("rfqId", "==", rfq.id));
@@ -51,7 +49,7 @@ export default function ContractorDashboard() {
         rfq.offersCount = offSnap.size;
         totalOffers += offSnap.size;
       }
-
+      setRfqs(items);
       setStats({
         total: items.length,
         active: items.filter((r) => r.status === "new" || r.status === "under_review").length,
@@ -69,85 +67,99 @@ export default function ContractorDashboard() {
   useEffect(() => { fetchData(); }, [user?.organizationId]);
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={[
-        styles.container,
-        {
-          paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16),
-          paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 80),
-        },
-      ]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={[styles.greeting, { color: colors.mutedForeground }]}>Good day,</Text>
-          <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
-            {organization?.name ?? user?.displayName}
-          </Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => router.push("/(contractor)/notifications")}
-          >
-            <Feather name="bell" size={20} color={colors.foreground} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.createBtn, { backgroundColor: colors.primary }]}
-            onPress={() => router.push("/(contractor)/rfqs/create")}
-          >
-            <Feather name="plus" size={18} color="#fff" />
-            <Text style={styles.createText}>New RFQ</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <DashboardHeader
+        orgName={organization?.name}
+        userName={user?.displayName}
+        right={
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              onPress={() => router.push("/(contractor)/notifications")}
+            >
+              <Feather name="bell" size={19} color="#F8FAFC" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.newRfqBtn, { backgroundColor: colors.accent }]}
+              onPress={() => router.push("/(contractor)/rfqs/create")}
+            >
+              <Feather name="plus" size={16} color={colors.primary} />
+              <Text style={[styles.newRfqText, { color: colors.primary }]}>New RFQ</Text>
+            </TouchableOpacity>
+          </View>
+        }
+      />
 
-      {/* Stats */}
-      <View style={styles.statsGrid}>
-        <StatsCard title="Total RFQs" value={stats.total} icon="file-text" color={colors.primary} />
-        <StatsCard title="Active" value={stats.active} icon="activity" color={colors.accent} />
-        <StatsCard title="Offers" value={stats.offers} icon="tag" color="#8b5cf6" />
-        <StatsCard title="Closed" value={stats.closed} icon="check-circle" color={colors.success} />
-      </View>
-
-      {/* Recent RFQs */}
-      <SectionHeader title="Recent RFQs" actionLabel="View all" onAction={() => router.push("/(contractor)/rfqs/index")} />
-
-      {loading ? (
-        [1, 2, 3].map((k) => <CardSkeleton key={k} />)
-      ) : rfqs.length === 0 ? (
-        <EmptyState
-          icon="file-text"
-          title="No RFQs yet"
-          subtitle="Create your first RFQ to start getting offers from suppliers"
-          actionLabel="Create RFQ"
-          onAction={() => router.push("/(contractor)/rfqs/create")}
-        />
-      ) : (
-        rfqs.slice(0, 5).map((rfq) => (
-          <RFQCard
-            key={rfq.id}
-            rfq={rfq}
-            onPress={() => router.push(`/(contractor)/rfqs/${rfq.id}`)}
-            showOffers
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 80) },
+        ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); fetchData(); }}
+            tintColor={colors.accent}
           />
-        ))
-      )}
-    </ScrollView>
+        }
+      >
+        {/* Stats */}
+        <View style={styles.statsGrid}>
+          <StatsCard title="Total RFQs" value={stats.total} icon="file-text" color={colors.cta} />
+          <StatsCard title="Active" value={stats.active} icon="activity" color={colors.accent} />
+          <StatsCard title="Offers In" value={stats.offers} icon="tag" color="#7C3AED" />
+          <StatsCard title="Closed" value={stats.closed} icon="check-circle" color={colors.success} />
+        </View>
+
+        <SectionHeader
+          title="Recent RFQs"
+          actionLabel="View all"
+          onAction={() => router.push("/(contractor)/rfqs/index")}
+        />
+
+        {loading
+          ? [1, 2, 3].map((k) => <CardSkeleton key={k} />)
+          : rfqs.length === 0
+          ? (
+            <EmptyState
+              icon="file-text"
+              title="No RFQs yet"
+              subtitle="Create your first RFQ to start receiving offers from suppliers"
+              actionLabel="Create RFQ"
+              onAction={() => router.push("/(contractor)/rfqs/create")}
+            />
+          )
+          : rfqs.slice(0, 5).map((rfq) => (
+            <RFQCard
+              key={rfq.id}
+              rfq={rfq}
+              onPress={() => router.push(`/(contractor)/rfqs/${rfq.id}`)}
+              showOffers
+            />
+          ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 20 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  greeting: { fontSize: 13 },
-  name: { fontSize: 20, fontWeight: "700" as const },
-  headerActions: { flexDirection: "row", gap: 10, alignItems: "center" },
-  iconBtn: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center", borderWidth: 1 },
-  createBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
-  createText: { color: "#fff", fontWeight: "600" as const, fontSize: 14 },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  container: { padding: 16, gap: 18 },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(248,250,252,0.12)",
+  },
+  newRfqBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  newRfqText: { fontWeight: "700" as const, fontSize: 13 },
 });

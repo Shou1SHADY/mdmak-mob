@@ -1,17 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Platform,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import {
-  doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp
-} from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -20,6 +12,7 @@ import { RFQItem } from "@/components/RFQCard";
 import { OfferItem, OfferCard } from "@/components/OfferCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import { RFQ_STATUSES } from "@/constants/data";
 
 export default function RFQDetailScreen() {
@@ -34,8 +27,7 @@ export default function RFQDetailScreen() {
     try {
       const rfqDoc = await getDoc(doc(db, "rfqs", id));
       if (rfqDoc.exists()) setRfq({ id: rfqDoc.id, ...rfqDoc.data() } as RFQItem);
-      const offQ = query(collection(db, "offers"), where("rfqId", "==", id));
-      const offSnap = await getDocs(offQ);
+      const offSnap = await getDocs(query(collection(db, "offers"), where("rfqId", "==", id)));
       const offerItems: OfferItem[] = await Promise.all(
         offSnap.docs.map(async (d) => {
           const offer = { id: d.id, ...d.data() } as OfferItem;
@@ -58,13 +50,7 @@ export default function RFQDetailScreen() {
     const labels = { accepted: "Accept", rejected: "Reject", price_reduction: "Request price reduction for" };
     Alert.alert("Confirm", `${labels[action]} this offer?`, [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "Confirm",
-        onPress: async () => {
-          await updateDoc(doc(db, "offers", offer.id), { status: action });
-          fetchData();
-        },
-      },
+      { text: "Confirm", onPress: async () => { await updateDoc(doc(db, "offers", offer.id), { status: action }); fetchData(); } },
     ]);
   };
 
@@ -72,36 +58,20 @@ export default function RFQDetailScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ color: colors.mutedForeground }}>Loading...</Text>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScreenHeader title="RFQ Detail" showBack />
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View
-        style={[
-          styles.header,
-          {
-            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16),
-            backgroundColor: colors.background,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
-        <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]} numberOfLines={1}>RFQ Detail</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
+      <ScreenHeader title="RFQ Detail" showBack />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
         {rfq && (
-          <View style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
             <View style={styles.row}>
-              <Text style={[styles.category, { color: colors.primary }]}>{rfq.category}</Text>
+              <Text style={[styles.category, { color: colors.secondary }]}>{rfq.category}</Text>
               {statusInfo && <StatusBadge label={statusInfo.label} color={statusInfo.color} />}
             </View>
             <Text style={[styles.rfqTitle, { color: colors.foreground }]}>{rfq.title}</Text>
@@ -110,12 +80,12 @@ export default function RFQDetailScreen() {
             )}
             <View style={styles.metaGrid}>
               <View style={styles.metaItem}>
-                <Feather name="map-pin" size={14} color={colors.mutedForeground} />
+                <Feather name="map-pin" size={13} color={colors.mutedForeground} />
                 <Text style={[styles.metaText, { color: colors.mutedForeground }]}>{rfq.city}</Text>
               </View>
               <View style={styles.metaItem}>
-                <Feather name="tag" size={14} color={colors.primary} />
-                <Text style={[styles.metaText, { color: colors.primary }]}>{offers.length} offers</Text>
+                <Feather name="tag" size={13} color={colors.accent} />
+                <Text style={[styles.metaText, { color: colors.accent }]}>{offers.length} offers</Text>
               </View>
             </View>
           </View>
@@ -126,8 +96,8 @@ export default function RFQDetailScreen() {
         </Text>
 
         {offers.length === 0 ? (
-          <View style={[styles.emptyOffers, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="inbox" size={32} color={colors.mutedForeground} />
+          <View style={[styles.emptyOffers, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+            <Feather name="inbox" size={28} color={colors.mutedForeground} />
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No offers yet</Text>
           </View>
         ) : (
@@ -139,8 +109,9 @@ export default function RFQDetailScreen() {
                 offer.status === "pending" ? (
                   <View style={styles.offerActions}>
                     {idx === 0 && (
-                      <View style={[styles.bestBadge, { backgroundColor: colors.success + "20" }]}>
-                        <Text style={[styles.bestText, { color: colors.success }]}>Lowest Price</Text>
+                      <View style={[styles.bestBadge, { backgroundColor: colors.success + "18", borderRadius: colors.radiusSm }]}>
+                        <Feather name="trending-down" size={12} color={colors.success} />
+                        <Text style={[styles.bestText, { color: colors.success }]}>Lowest</Text>
                       </View>
                     )}
                     <Button title="Accept" onPress={() => handleOfferAction(offer, "accepted")} size="sm" style={{ flex: 1 }} />
@@ -158,21 +129,19 @@ export default function RFQDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
-  headerTitle: { fontSize: 18, fontWeight: "600" as const, flex: 1, textAlign: "center", marginHorizontal: 12 },
-  content: { padding: 16, gap: 16 },
-  rfqCard: { borderRadius: 16, padding: 18, borderWidth: 1, gap: 8 },
+  content: { padding: 16, gap: 14 },
+  rfqCard: { padding: 18, borderWidth: 1, gap: 8 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  category: { fontSize: 12, fontWeight: "600" as const, textTransform: "uppercase", letterSpacing: 0.5 },
-  rfqTitle: { fontSize: 18, fontWeight: "700" as const, lineHeight: 24 },
+  category: { fontSize: 11, fontWeight: "700" as const, textTransform: "uppercase", letterSpacing: 0.6 },
+  rfqTitle: { fontSize: 18, fontWeight: "700" as const, lineHeight: 25 },
   desc: { fontSize: 14, lineHeight: 21 },
   metaGrid: { flexDirection: "row", gap: 16, marginTop: 4 },
-  metaItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+  metaItem: { flexDirection: "row", alignItems: "center", gap: 5 },
   metaText: { fontSize: 13 },
-  sectionTitle: { fontSize: 18, fontWeight: "700" as const },
-  emptyOffers: { borderRadius: 14, borderWidth: 1, padding: 32, alignItems: "center", gap: 8 },
-  emptyText: { fontSize: 15 },
-  offerActions: { flexDirection: "row", gap: 8, marginTop: 4, flexWrap: "wrap", alignItems: "center" },
-  bestBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
-  bestText: { fontSize: 12, fontWeight: "600" as const },
+  sectionTitle: { fontSize: 17, fontWeight: "700" as const },
+  emptyOffers: { borderWidth: 1, padding: 32, alignItems: "center", gap: 8 },
+  emptyText: { fontSize: 14 },
+  offerActions: { flexDirection: "row", gap: 7, marginTop: 4, flexWrap: "wrap", alignItems: "center" },
+  bestBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4 },
+  bestText: { fontSize: 11, fontWeight: "600" as const },
 });

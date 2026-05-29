@@ -41,12 +41,12 @@ export default function SupplierRFQDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
+      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.primary }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Feather name="arrow-left" size={22} color="#F8FAFC" />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]} numberOfLines={1}>RFQ Detail</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle} numberOfLines={1}>RFQ Detail</Text>
+        <View style={{ width: 34 }} />
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}>
@@ -94,8 +94,9 @@ export default function SupplierRFQDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
-  headerTitle: { fontSize: 18, fontWeight: "600" as const, flex: 1, textAlign: "center", marginHorizontal: 12 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14 },
+  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+  headerTitle: { fontSize: 17, fontWeight: "700" as const, color: "#F8FAFC", flex: 1, textAlign: "center", marginHorizontal: 8 },
   content: { padding: 16, gap: 16 },
   card: { borderRadius: 16, padding: 18, borderWidth: 1, gap: 10 },
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
