@@ -1,0 +1,73 @@
+Build a Flutter mobile app for "Mdmak Tech" (مدماك تيك) — a Saudi B2B construction procurement marketplace connecting contractors and suppliers.
+## App Overview
+The app serves 3 roles: Contractors (create RFQs), Suppliers (browse RFQs & submit offers), and Admin (platform oversight). The web app exists already on Firebase, and this Flutter app must connect to the same Firebase backend.
+## Tech Stack Requirements
+- Flutter with Dart, using Material 3
+- State management: Riverpod
+- Backend: Firebase (Firestore, Auth, Storage) — must connect to existing Firebase project
+- Real-time messaging via Firestore streams
+- Bilingual support: Arabic (primary, RTL) and English (LTR, fallback) using easy_localization or flutter_localizations
+- Navigation: go_router with role-based routing
+## Role-Based Portals
+### Contractor Portal
+- Dashboard with active RFQs, statistics cards, recent activity
+- Create RFQ: multi-step form with category selection from 16 construction categories (Iron & Metals, Cement & Concrete, Bricks & Blocks, Flooring & Finishes, Doors & Windows, Electrical & Lighting, Sanitary Ware & Plumbing, Insulation & Roofing, Paints & Colors, Gypsum & False Ceilings, Ready Mix Concrete, Equipment & Machinery, Adhesives & Chemicals, Blacksmithing, HVAC, Wood) and 200+ subcategories, 21 Saudi cities dropdown, deadline picker, PDF attachment upload
+- My RFQs list with filters (status: Draft/New/Under Review/Closed, category, city), batch publish drafts
+- RFQ detail view with submitted offers list, price comparison, accept/reject/request price reduction actions
+- Supplier discovery: searchable list of registered suppliers with profiles, ratings, specializations
+- Real-time chat per RFQ thread with unread badge, typing indicator
+- Notifications screen with real-time badge counter
+- Team management: view/add organization members
+- Profile: company info, CR number, city, edit capability
+### Supplier Portal
+- Dashboard with stats, active RFQs, recent offers
+- Browse open RFQs with filters (category, city, deadline range, search)
+- RFQ detail view with "Submit Offer" button, ask inquiry
+- Submit Offer: price input, notes, PDF attachment upload
+- My Offers list with status tracking (Pending/Accepted/Rejected/Price Reduction Requested)
+- Orders: view accepted/fulfilled orders
+- Real-time chat per RFQ thread
+- Notifications screen
+- Team management
+- Profile: specializations selection (multi-select from categories), service areas (multi-select cities), verification status badge
+### Admin Portal
+- Dashboard with platform statistics (bar chart & pie chart — users, RFQs, offers)
+- User management: view contractors and suppliers, approve/reject supplier verification requests
+- RFQ oversight: view all platform RFQs
+- Settings screen
+## AI Features
+Integrate with existing Genkit + Gemini backend endpoints:
+- AI supplier recommendations for an RFQ
+- AI RFQ recommendations for a supplier
+- AI specialization suggestions for supplier onboarding
+- AI draft RFQ description generator
+## Design & UX
+- Material 3 with a construction/industrial theme (primary: blue-gray/teal, brand color: #0D9488)
+- Full RTL support for Arabic with proper text direction switching
+- Bottom navigation bar for main sections per role
+- Pull-to-refresh, skeleton loaders, infinite scroll for lists
+- Empty states for all lists
+- Snackbar toasts for actions, confirmation dialogs for destructive actions
+- Responsive layout (works on phones and tablets)
+- Dark mode support (follow system or manual toggle)
+## Firebase Collections Structure (existing — read from here)
+- users/{uid}: role, organizationId, displayName, email, phone, city
+- organizations/{orgId}: type (contractor/supplier), name, crNumber, city, specializations[], serviceAreas[], verified
+- rfqs/{rfqId}: contractorOrgId, title, description, category, subcategory, city, status, deadline, createdAt, attachments[]
+- offers/{offerId}: rfqId, supplierOrgId, price, notes, status, attachments[], createdAt
+- chats/{chatId}: rfqId, contractorOrgId, supplierOrgId, lastMessage, unreadContractor, unreadSupplier
+- messages/{msgId}: chatId, senderId, text, timestamp, read
+- notifications/{notifId}: userId, title, body, type, read, createdAt, relatedId
+- reviews/{reviewId}: reviewerOrgId, targetOrgId, rating, comment, createdAt
+## Auth Flow
+- Login with email/password (Firebase Auth)
+- Register with role selection (Contractor/Supplier), organization creation or join by code
+- Email verification
+- Role-based redirect on login
+- Logout with confirmation
+## Key Polish Items
+- App icon and branded splash screen
+- Offline queue: queue offers/submissions when offline, sync when connected
+- Deep link support for notification navigation
+- In-app rating dialog after completing an order
+- Arabic number formatting throughout when locale is Arabic
