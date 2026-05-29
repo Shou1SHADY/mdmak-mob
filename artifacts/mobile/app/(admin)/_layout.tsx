@@ -1,5 +1,14 @@
-import { Redirect } from "expo-router";
+import { useEffect } from "react";
+import { Stack, router } from "expo-router";
 
+/**
+ * Admin portal is not available in the mobile app.
+ * Redirect any attempt to access admin routes back to login.
+ */
 export default function AdminLayout() {
-  return <Redirect href="/auth/login" />;
+  useEffect(() => {
+    router.replace("/auth/login");
+  }, []);
+
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

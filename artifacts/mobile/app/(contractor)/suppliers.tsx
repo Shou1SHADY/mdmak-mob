@@ -93,7 +93,7 @@ export default function SuppliersScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 80 }]}
           renderItem={({ item }) => (
-            <Card style={styles.card} elevated>
+            <Card style={styles.card}>
               <View style={styles.cardTop}>
                 <View style={[styles.avatar, { backgroundColor: colors.primary + "20" }]}>
                   <Text style={[styles.avatarText, { color: colors.primary }]}>
