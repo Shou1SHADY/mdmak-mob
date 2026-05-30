@@ -11,6 +11,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 
 interface Message {
@@ -26,6 +27,8 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
   const { user } = useAuth();
+  const t = useT();
+  const { isRTL } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -63,7 +66,7 @@ export default function ChatScreen() {
     if (!ts) return "";
     try {
       const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleTimeString("en-SA", { hour: "2-digit", minute: "2-digit" });
+      return d.toLocaleTimeString(isRTL ? "ar-SA" : "en-SA", { hour: "2-digit", minute: "2-digit" });
     } catch { return ""; }
   };
 
@@ -86,7 +89,7 @@ export default function ChatScreen() {
           <Feather name="arrow-left" size={22} color="#F8FAFC" />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={styles.headerTitle}>Chat</Text>
+          <Text style={styles.headerTitle}>{t.chat.title}</Text>
           <Text style={styles.headerSub}>#{chatId?.slice(0, 8)}</Text>
         </View>
       </View>
@@ -108,7 +111,9 @@ export default function ChatScreen() {
                     borderColor: isMe ? "transparent" : colors.border,
                     borderWidth: isMe ? 0 : 1,
                     borderRadius: isMe
-                      ? { borderRadius: 16, borderBottomRightRadius: 4 } as any
+                      ? (isRTL
+                        ? { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 4, borderBottomRightRadius: 16 } as any
+                        : { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 16, borderBottomRightRadius: 4 } as any)
                       : 16,
                   },
                 ]}
@@ -144,7 +149,7 @@ export default function ChatScreen() {
               borderRadius: colors.radiusSm,
             },
           ]}
-          placeholder="Type a message..."
+          placeholder={t.chat.typeMessage}
           placeholderTextColor={colors.mutedForeground}
           value={text}
           onChangeText={setText}

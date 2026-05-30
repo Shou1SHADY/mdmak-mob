@@ -14,6 +14,7 @@ import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { RFQCard, RFQItem } from "@/components/RFQCard";
@@ -26,6 +27,8 @@ export default function MyRFQsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const t = useT();
+  const { isRTL } = useLanguage();
   const [rfqs, setRfqs] = useState<RFQItem[]>([]);
   const [filtered, setFiltered] = useState<RFQItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,17 +37,25 @@ export default function MyRFQsScreen() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const fetchRFQs = async () => {
-    if (!user?.organizationId) return;
+    const orgId = user?.organizationId;
+    if (!orgId) {
+      setLoading(false);
+      return;
+    }
+    console.log("[RFQs] Fetching for orgId:", orgId);
     try {
       const q = query(
         collection(db, "rfqs"),
-        where("contractorOrgId", "==", user.organizationId),
+        where("organizationId", "==", orgId),
         orderBy("createdAt", "desc")
       );
       const snap = await getDocs(q);
+      console.log("[RFQs] Got", snap.size, "results");
       const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RFQItem));
       setRfqs(items);
       applyFilters(items, search, statusFilter);
+    } catch (e: any) {
+      console.warn("[RFQs] Query failed:", e.code, e.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -67,7 +78,7 @@ export default function MyRFQsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader
-        title="My RFQs"
+        title={t.tabs.rfqs}
         right={
           <TouchableOpacity
             style={[styles.addBtn, { backgroundColor: colors.accent }]}
@@ -83,8 +94,8 @@ export default function MyRFQsScreen() {
         <View style={[styles.searchBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Feather name="search" size={15} color={colors.mutedForeground} />
           <TextInput
-            style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Search RFQs..."
+            style={[styles.searchInput, { color: colors.foreground }, { textAlign: isRTL ? "right" : "left" }]}
+            placeholder={t.rfq.searchPlaceholder}
             placeholderTextColor={colors.mutedForeground}
             value={search}
             onChangeText={setSearch}
@@ -97,7 +108,7 @@ export default function MyRFQsScreen() {
         </View>
         <FlatList
           horizontal
-          data={[{ id: "all", label: "All", color: "#94a3b8" }, ...RFQ_STATUSES]}
+          data={[{ id: "all", label: t.common.all, color: "#94a3b8" }, ...RFQ_STATUSES]}
           keyExtractor={(item) => item.id}
           showsHorizontalScrollIndicator={false}
           renderItem={({ item }) => (
@@ -141,9 +152,9 @@ export default function MyRFQsScreen() {
           ListEmptyComponent={
             <EmptyState
               icon="file-text"
-              title="No RFQs found"
-              subtitle={search || statusFilter !== "all" ? "Try adjusting your filters" : "Create your first RFQ"}
-              actionLabel={!search && statusFilter === "all" ? "Create RFQ" : undefined}
+              title={t.rfq.noRfqsFound}
+              subtitle={search || statusFilter !== "all" ? t.rfq.tryAdjustingFilters : t.rfq.createFirstRfq}
+              actionLabel={!search && statusFilter === "all" ? t.dashboard.createRfq : undefined}
               onAction={!search && statusFilter === "all" ? () => router.push("/(contractor)/rfqs/create") : undefined}
             />
           }

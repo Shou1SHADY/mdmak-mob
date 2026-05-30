@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -25,6 +26,7 @@ export default function SupplierChatsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const t = useT();
   const [chats, setChats] = useState<ChatThread[]>([]);
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export default function SupplierChatsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Messages</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.tabs.messages}</Text>
       </View>
       <FlatList
         data={chats}
@@ -61,7 +63,7 @@ export default function SupplierChatsScreen() {
                   RFQ #{item.rfqId.slice(0, 8)}
                 </Text>
                 <Text style={[styles.lastMsg, { color: colors.mutedForeground }]} numberOfLines={1}>
-                  {item.lastMessage ?? "No messages yet"}
+                  {item.lastMessage ?? t.chat.noMessages}
                 </Text>
               </View>
               {unread > 0 && (
@@ -72,7 +74,7 @@ export default function SupplierChatsScreen() {
             </TouchableOpacity>
           );
         }}
-        ListEmptyComponent={<EmptyState icon="message-circle" title="No conversations" subtitle="Messages with contractors will appear here" />}
+        ListEmptyComponent={<EmptyState icon="message-circle" title={t.chat.noConversations} subtitle={t.chat.noConversationsDesc} />}
         scrollEnabled={!!chats.length}
       />
     </View>

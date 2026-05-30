@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -22,6 +23,7 @@ export default function SupplierTeamScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const t = useT();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +47,7 @@ export default function SupplierTeamScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Feather name="arrow-left" size={24} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.foreground }]}>Team</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.team.title}</Text>
         <View style={{ width: 24 }} />
       </View>
       <FlatList
@@ -70,7 +72,7 @@ export default function SupplierTeamScreen() {
             </View>
           </View>
         )}
-        ListEmptyComponent={<EmptyState icon="users" title="No team members" subtitle="Invite teammates to collaborate" />}
+        ListEmptyComponent={<EmptyState icon="users" title={t.team.noMembers} subtitle={t.team.noMembersDesc} />}
         scrollEnabled={!!members.length}
       />
     </View>

@@ -7,6 +7,7 @@ import { collection, query, where, onSnapshot, orderBy } from "firebase/firestor
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -28,6 +29,8 @@ export default function ContractorChatsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const t = useT();
+  const { isRTL } = useLanguage();
   const [chats, setChats] = useState<ChatThread[]>([]);
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export default function ContractorChatsScreen() {
           { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border },
         ]}
       >
-        <Text style={[styles.title, { color: colors.foreground }]}>Messages</Text>
+        <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{t.tabs.messages}</Text>
       </View>
       <FlatList
         data={chats}
@@ -72,7 +75,7 @@ export default function ContractorChatsScreen() {
                   {item.rfqTitle ?? `RFQ #${item.rfqId.slice(0, 8)}`}
                 </Text>
                 <Text style={[styles.lastMsg, { color: colors.mutedForeground }]} numberOfLines={1}>
-                  {item.lastMessage ?? "No messages yet"}
+                  {item.lastMessage ?? t.chat.noMessages}
                 </Text>
               </View>
               {unread > 0 && (
@@ -83,7 +86,7 @@ export default function ContractorChatsScreen() {
             </TouchableOpacity>
           );
         }}
-        ListEmptyComponent={<EmptyState icon="message-circle" title="No conversations" subtitle="Chats with suppliers will appear here" />}
+        ListEmptyComponent={<EmptyState icon="message-circle" title={t.chat.noConversations} subtitle={t.chat.noConversationsDesc} />}
         scrollEnabled={!!chats.length}
       />
     </View>

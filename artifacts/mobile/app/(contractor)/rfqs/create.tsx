@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -23,6 +24,8 @@ export default function CreateRFQScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const t = useT();
+  const { isRTL } = useLanguage();
 
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState("");
@@ -35,27 +38,30 @@ export default function CreateRFQScreen() {
 
   const handleSubmit = async (draft: boolean) => {
     if (!title.trim() || !category || !city) {
-      Alert.alert("Missing Fields", "Please fill in title, category, and city.");
+      Alert.alert(t.rfq.missingTitle, t.rfq.missingFields);
       return;
     }
     setLoading(true);
     try {
       await addDoc(collection(db, "rfqs"), {
-        contractorOrgId: user?.organizationId,
+        contractorId: user?.uid,
+        organizationId: user?.organizationId,
+        createdByUserId: user?.uid,
+        createdByUserName: user?.displayName,
         title: title.trim(),
         description: description.trim(),
         category,
         city,
         deadline: deadline || null,
-        status: draft ? "draft" : "new",
+        status: draft ? "Draft" : "New",
         createdAt: serverTimestamp(),
-        attachments: [],
+        updatedAt: serverTimestamp(),
       });
-      Alert.alert("Success", draft ? "RFQ saved as draft." : "RFQ published successfully!", [
-        { text: "OK", onPress: () => router.back() },
+      Alert.alert(t.common.success, draft ? t.rfq.savedDraft : t.rfq.published, [
+        { text: t.common.ok, onPress: () => router.back() },
       ]);
     } catch {
-      Alert.alert("Error", "Failed to create RFQ. Please try again.");
+      Alert.alert(t.common.error, t.rfq.createFailed);
     } finally {
       setLoading(false);
     }
@@ -78,7 +84,7 @@ export default function CreateRFQScreen() {
         <TouchableOpacity onPress={() => (step > 1 ? setStep(step - 1) : router.back())} style={styles.backBtn}>
           <Feather name="arrow-left" size={22} color="#F8FAFC" />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: "#F8FAFC" }]}>Create RFQ</Text>
+        <Text style={[styles.headerTitle, { color: "#F8FAFC" }]}>{t.dashboard.createRfq}</Text>
         <Text style={[styles.stepLabel, { color: "rgba(248,250,252,0.6)" }]}>{step}/{totalSteps}</Text>
       </View>
 
@@ -92,25 +98,28 @@ export default function CreateRFQScreen() {
       >
         {step === 1 && (
           <View style={styles.form}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>RFQ Details</Text>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.rfq.rfqDetails}</Text>
             <Input
-              label="Title *"
+              label={t.rfq.title}
+              required
               value={title}
               onChangeText={setTitle}
-              placeholder="e.g. 50 Tons of Steel Bars for Villa Project"
+              placeholder={t.rfq.titlePlaceholder}
               leftIcon="file-text"
+              isRTL={isRTL}
             />
             <Input
-              label="Description"
+              label={t.rfq.description}
               value={description}
               onChangeText={setDescription}
               multiline
               numberOfLines={4}
-              placeholder="Describe your requirements in detail..."
+              placeholder={t.rfq.descriptionPlaceholder}
               style={{ height: 100, textAlignVertical: "top", paddingTop: 12 }}
+              isRTL={isRTL}
             />
 
-            <Text style={[styles.label, { color: colors.foreground }]}>Category *</Text>
+            <Text style={[styles.label, { color: colors.foreground }]}>{t.rfq.category} *</Text>
             <View style={styles.grid}>
               {CATEGORIES.map((cat) => (
                 <TouchableOpacity
@@ -137,15 +146,15 @@ export default function CreateRFQScreen() {
               ))}
             </View>
 
-            <Button title="Next" onPress={() => { if (!title.trim() || !category) { Alert.alert("Missing", "Fill in title and category."); return; } setStep(2); }} fullWidth />
+            <Button title={t.common.next} onPress={() => { if (!title.trim() || !category) { Alert.alert(t.rfq.missingTitle, t.rfq.fillTitleCategory); return; } setStep(2); }} fullWidth />
           </View>
         )}
 
         {step === 2 && (
           <View style={styles.form}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Location & Timeline</Text>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.rfq.locationTimeline}</Text>
 
-            <Text style={[styles.label, { color: colors.foreground }]}>City *</Text>
+            <Text style={[styles.label, { color: colors.foreground }]}>{t.rfq.city} *</Text>
             <View style={styles.cityGrid}>
               {SAUDI_CITIES.map((c) => (
                 <TouchableOpacity
@@ -165,23 +174,24 @@ export default function CreateRFQScreen() {
             </View>
 
             <Input
-              label="Deadline (optional)"
+              label={t.rfq.deadlineOptional}
               value={deadline}
               onChangeText={setDeadline}
-              placeholder="e.g. 2026-07-15"
+              placeholder={t.rfq.deadlinePlaceholder}
               leftIcon="calendar"
+              isRTL={isRTL}
             />
 
             <View style={styles.btnRow}>
               <Button
-                title="Save Draft"
+                title={t.rfq.saveDraft}
                 variant="outline"
                 loading={loading && isDraft}
                 style={{ flex: 1 }}
                 onPress={() => { setIsDraft(true); handleSubmit(true); }}
               />
               <Button
-                title="Publish"
+                title={t.rfq.publish}
                 onPress={() => { setIsDraft(false); handleSubmit(false); }}
                 loading={loading && !isDraft}
                 style={{ flex: 1 }}

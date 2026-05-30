@@ -1,15 +1,13 @@
-import colors from "@/constants/colors";
+import designTokens from "@/constants/colors";
 
-/**
- * Returns the Mdmak Tech design tokens.
- * Fixed light-only palette — no dark mode toggle.
- * radius = card radius (12px); radiusMd = 10px; radiusSm = 8px.
- */
 export function useColors() {
   return {
-    ...colors.light,
-    radius: colors.radius.card,
-    radiusMd: colors.radius.medium,
-    radiusSm: colors.radius.small,
+    ...designTokens.light,
+    radius: designTokens.radius.card,
+    radiusMd: designTokens.radius.medium,
+    radiusSm: designTokens.radius.small,
+    spacing: designTokens.spacing,
+    shadow: designTokens.shadow,
+    typography: designTokens.typography,
   };
 }

@@ -3,10 +3,11 @@ import {
   View, Text, FlatList, StyleSheet, TouchableOpacity, Platform,
 } from "react-native";
 import { router } from "expo-router";
-import { collection, query, where, getDocs, updateDoc, doc, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, updateDoc, doc, orderBy } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -25,19 +26,25 @@ export default function NotificationsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const t = useT();
+  const { isRTL } = useLanguage();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchNotifs = async () => {
-    if (!user?.uid) return;
+    if (!user?.uid) {
+      setLoading(false);
+      return;
+    }
     try {
       const q = query(
-        collection(db, "notifications"),
-        where("userId", "==", user.uid),
+        collection(db, "users", user.uid, "notifications"),
         orderBy("createdAt", "desc")
       );
       const snap = await getDocs(q);
       setNotifications(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notification)));
+    } catch (e) {
+      console.warn("[Notifications] Error:", e);
     } finally {
       setLoading(false);
     }
@@ -46,8 +53,8 @@ export default function NotificationsScreen() {
   useEffect(() => { fetchNotifs(); }, [user?.uid]);
 
   const markRead = async (notif: Notification) => {
-    if (!notif.read) {
-      await updateDoc(doc(db, "notifications", notif.id), { read: true });
+    if (!notif.read && user?.uid) {
+      await updateDoc(doc(db, "users", user.uid, "notifications", notif.id), { read: true });
       setNotifications((prev) => prev.map((n) => n.id === notif.id ? { ...n, read: true } : n));
     }
   };
@@ -66,7 +73,7 @@ export default function NotificationsScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Feather name="arrow-left" size={24} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.foreground }]}>Notifications</Text>
+        <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{t.tabs.notifications}</Text>
         <View style={{ width: 24 }} />
       </View>
       <FlatList
@@ -81,15 +88,15 @@ export default function NotificationsScreen() {
           >
             <View style={[styles.dot, { backgroundColor: item.read ? "transparent" : colors.primary }]} />
             <View style={{ flex: 1, gap: 3 }}>
-              <Text style={[styles.notifTitle, { color: colors.foreground }]}>{item.title}</Text>
-              <Text style={[styles.notifBody, { color: colors.mutedForeground }]} numberOfLines={2}>{item.body}</Text>
+              <Text style={[styles.notifTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{item.title}</Text>
+              <Text style={[styles.notifBody, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={2}>{item.body}</Text>
               {item.createdAt && (
                 <Text style={[styles.time, { color: colors.mutedForeground }]}>{formatTime(item.createdAt)}</Text>
               )}
             </View>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<EmptyState icon="bell" title="No notifications" subtitle="You're all caught up" />}
+        ListEmptyComponent={<EmptyState icon="bell" title={t.notifications.noNotifications} subtitle={t.notifications.allCaughtUp} />}
         scrollEnabled={!!notifications.length}
       />
     </View>

@@ -12,6 +12,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useT } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -31,6 +32,7 @@ interface Supplier {
 export default function SuppliersScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const t = useT();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [filtered, setFiltered] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,9 +40,16 @@ export default function SuppliersScreen() {
 
   const fetchSuppliers = async () => {
     try {
-      const q = query(collection(db, "organizations"), where("type", "==", "supplier"));
+      const q = query(collection(db, "users"), where("role", "==", "Supplier"));
       const snap = await getDocs(q);
-      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Supplier));
+      const items = snap.docs.map((d) => ({
+        id: d.id,
+        name: d.data().orgName ?? d.data().displayName ?? "Unknown",
+        city: d.data().city,
+        specializations: d.data().specializations,
+        serviceAreas: d.data().serviceAreas,
+        verified: d.data().verified,
+      } as Supplier));
       setSuppliers(items);
       setFiltered(items);
     } finally {
@@ -70,12 +79,12 @@ export default function SuppliersScreen() {
           },
         ]}
       >
-        <Text style={[styles.title, { color: colors.foreground }]}>Suppliers</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.suppliers.title}</Text>
         <View style={[styles.searchBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Feather name="search" size={16} color={colors.mutedForeground} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Search by name, city, specialty..."
+            placeholder={t.suppliers.searchPlaceholder}
             placeholderTextColor={colors.mutedForeground}
             value={search}
             onChangeText={setSearch}
@@ -106,7 +115,7 @@ export default function SuppliersScreen() {
                       {item.name}
                     </Text>
                     {item.verified && (
-                      <StatusBadge label="Verified" color={colors.success} size="sm" />
+                      <StatusBadge label={t.suppliers.verified} color={colors.success} size="sm" />
                     )}
                   </View>
                   {item.city && (
@@ -133,7 +142,7 @@ export default function SuppliersScreen() {
               )}
             </Card>
           )}
-          ListEmptyComponent={<EmptyState icon="users" title="No suppliers found" subtitle="Try adjusting your search" />}
+          ListEmptyComponent={<EmptyState icon="users" title={t.suppliers.noSuppliers} subtitle={t.suppliers.noSuppliersDesc} />}
           scrollEnabled={!!filtered.length}
         />
       )}

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { StatsCard } from "@/components/StatsCard";
 import { OfferCard, OfferItem } from "@/components/OfferCard";
@@ -20,6 +21,7 @@ import { DashboardHeader } from "@/components/ScreenHeader";
 export default function SupplierDashboard() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const t = useT();
   const { user, organization } = useAuth();
   const [offers, setOffers] = useState<OfferItem[]>([]);
   const [recentRfqs, setRecentRfqs] = useState<RFQItem[]>([]);
@@ -28,24 +30,28 @@ export default function SupplierDashboard() {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
-    if (!user?.organizationId) return;
+    const orgId = user?.organizationId;
+    if (!orgId) {
+      setLoading(false);
+      return;
+    }
     try {
       const offQ = query(
         collection(db, "offers"),
-        where("supplierOrgId", "==", user.organizationId),
+        where("organizationId", "==", orgId),
         orderBy("createdAt", "desc"),
         limit(10)
       );
       const offSnap = await getDocs(offQ);
       const offerItems = offSnap.docs.map((d) => ({ id: d.id, ...d.data() } as OfferItem));
       setOffers(offerItems);
-      const rfqQ = query(collection(db, "rfqs"), where("status", "==", "new"), orderBy("createdAt", "desc"), limit(5));
+      const rfqQ = query(collection(db, "rfqs"), where("status", "==", "New"), orderBy("createdAt", "desc"), limit(5));
       const rfqSnap = await getDocs(rfqQ);
       setRecentRfqs(rfqSnap.docs.map((d) => ({ id: d.id, ...d.data() } as RFQItem)));
       setStats({
         totalOffers: offerItems.length,
-        pending: offerItems.filter((o) => o.status === "pending").length,
-        accepted: offerItems.filter((o) => o.status === "accepted").length,
+        pending: offerItems.filter((o) => o.status === "قيد المراجعة").length,
+        accepted: offerItems.filter((o) => o.status === "مقبول").length,
         openRfqs: rfqSnap.size,
       });
     } finally {
@@ -84,26 +90,26 @@ export default function SupplierDashboard() {
         }
       >
         <View style={styles.statsGrid}>
-          <StatsCard title="My Offers" value={stats.totalOffers} icon="tag" color={colors.cta} />
-          <StatsCard title="Pending" value={stats.pending} icon="clock" color={colors.warning} />
-          <StatsCard title="Accepted" value={stats.accepted} icon="check-circle" color={colors.success} />
-          <StatsCard title="Open RFQs" value={stats.openRfqs} icon="file-text" color={colors.accent} />
+          <StatsCard title={t.dashboard.myOffers} value={stats.totalOffers} icon="tag" color={colors.cta} />
+          <StatsCard title={t.dashboard.pending} value={stats.pending} icon="clock" color={colors.warning} />
+          <StatsCard title={t.dashboard.accepted} value={stats.accepted} icon="check-circle" color={colors.success} />
+          <StatsCard title={t.dashboard.openRfqs} value={stats.openRfqs} icon="file-text" color={colors.accent} />
         </View>
 
-        <SectionHeader title="Open RFQs" actionLabel="Browse all" onAction={() => router.push("/(supplier)/rfqs")} />
+        <SectionHeader title={t.dashboard.openRfqs} actionLabel={t.dashboard.browseAll} onAction={() => router.push("/(supplier)/rfqs")} />
         {loading
           ? [1, 2].map((k) => <CardSkeleton key={k} />)
           : recentRfqs.length === 0
-          ? <EmptyState icon="file-text" title="No open RFQs" subtitle="Check back later" />
+          ? <EmptyState icon="file-text" title={t.dashboard.noOpenRfqs} subtitle={t.dashboard.noOpenRfqsDesc} />
           : recentRfqs.map((rfq) => (
             <RFQCard key={rfq.id} rfq={rfq} onPress={() => router.push(`/(supplier)/rfq/${rfq.id}`)} />
           ))}
 
-        <SectionHeader title="Recent Offers" actionLabel="View all" onAction={() => router.push("/(supplier)/offers")} />
+        <SectionHeader title={t.dashboard.recentOffers} actionLabel={t.dashboard.browseAll} onAction={() => router.push("/(supplier)/offers")} />
         {loading
           ? [1, 2].map((k) => <CardSkeleton key={k} />)
           : offers.slice(0, 3).length === 0
-          ? <EmptyState icon="tag" title="No offers yet" subtitle="Submit offers on open RFQs to get started" />
+          ? <EmptyState icon="tag" title={t.dashboard.noOffers} subtitle={t.dashboard.noOffersDesc} />
           : offers.slice(0, 3).map((offer) => <OfferCard key={offer.id} offer={offer} />)}
       </ScrollView>
     </View>

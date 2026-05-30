@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebas
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { OfferCard, OfferItem } from "@/components/OfferCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
@@ -18,6 +19,7 @@ export default function OrdersScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const t = useT();
   const [orders, setOrders] = useState<OfferItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,8 +29,8 @@ export default function OrdersScreen() {
       try {
         const q = query(
           collection(db, "offers"),
-          where("supplierOrgId", "==", user.organizationId),
-          where("status", "==", "accepted"),
+          where("organizationId", "==", user.organizationId),
+          where("status", "==", "مقبول"),
           orderBy("createdAt", "desc")
         );
         const snap = await getDocs(q);
@@ -56,7 +58,7 @@ export default function OrdersScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Feather name="arrow-left" size={24} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.foreground }]}>Orders</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>{t.orders.title}</Text>
         <View style={{ width: 24 }} />
       </View>
       {loading ? (
@@ -67,7 +69,7 @@ export default function OrdersScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <OfferCard offer={item} />}
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 40 }]}
-          ListEmptyComponent={<EmptyState icon="package" title="No orders yet" subtitle="Accepted offers will appear here as orders" />}
+          ListEmptyComponent={<EmptyState icon="package" title={t.orders.noOrders} subtitle={t.orders.noOrdersDesc} />}
           scrollEnabled={!!orders.length}
         />
       )}

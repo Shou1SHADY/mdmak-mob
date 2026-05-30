@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { UserRole } from "@/context/AuthContext";
@@ -21,10 +22,13 @@ import { SAUDI_CITIES } from "@/constants/data";
 export default function RegisterScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { register } = useAuth();
+  const { user, register, logout } = useAuth();
+  const t = useT();
+  const { isRTL } = useLanguage();
+  const pendingRef = useRef(false);
 
   const [step, setStep] = useState(1);
-  const [role, setRole] = useState<UserRole>("contractor");
+  const [role, setRole] = useState<UserRole>("Contractor");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
@@ -38,15 +42,15 @@ export default function RegisterScreen() {
 
   const handleNext = () => {
     if (!email.trim() || !password || !confirmPass || !displayName.trim()) {
-      Alert.alert("Missing Fields", "Please fill in all fields.");
+      Alert.alert(t.common.error, t.auth.validation.fieldsRequired);
       return;
     }
     if (password !== confirmPass) {
-      Alert.alert("Password Mismatch", "Passwords do not match.");
+      Alert.alert(t.common.error, t.auth.validation.passwordMismatch);
       return;
     }
     if (password.length < 6) {
-      Alert.alert("Weak Password", "Password must be at least 6 characters.");
+      Alert.alert(t.common.error, t.auth.validation.passwordWeak);
       return;
     }
     setStep(2);
@@ -54,26 +58,48 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!orgName.trim()) {
-      Alert.alert("Missing Fields", "Please enter your organization name.");
+      Alert.alert(t.common.error, t.auth.validation.orgNameRequired);
       return;
     }
     setLoading(true);
     try {
-      await register(email.trim(), password, displayName.trim(), role, orgName.trim(), city);
+      const appUser = await register(email.trim(), password, displayName.trim(), role, orgName.trim(), city);
+      console.log("[Register] Success, user role:", appUser.role);
+      if (appUser.role === "Admin") {
+        await logout();
+        Alert.alert(t.common.error, t.auth.errors.adminNotSupported);
+        return;
+      }
+      pendingRef.current = true;
     } catch (err: any) {
+      console.log("[Register] Error:", err.code, err.message);
       const msg =
         err.code === "auth/email-already-in-use"
-          ? "This email is already registered."
-          : "Registration failed. Please try again.";
-      Alert.alert("Registration Failed", msg);
+          ? t.auth.errors.emailInUse
+          : err.code === "auth/weak-password"
+          ? t.auth.validation.passwordWeak
+          : err.code === "auth/network-request-failed"
+          ? t.auth.errors.networkError
+          : err.message || t.auth.errors.genericRegister;
+      Alert.alert(t.common.error, msg);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (user && pendingRef.current) {
+      pendingRef.current = false;
+      const dashboard =
+        user.role === "Supplier" ? "/(supplier)/dashboard" : "/(contractor)/dashboard";
+      console.log("[Register] Navigating to:", dashboard);
+      router.replace(dashboard);
+    }
+  }, [user]);
+
   const roles: { id: UserRole; label: string; labelAr: string; desc: string }[] = [
-    { id: "contractor", label: "Contractor", labelAr: "مقاول", desc: "Post RFQs & source suppliers" },
-    { id: "supplier", label: "Supplier", labelAr: "مورد", desc: "Browse RFQs & submit offers" },
+    { id: "Contractor", label: t.auth.register.contractor, labelAr: "مقاول", desc: t.auth.register.contractorDesc },
+    { id: "Supplier", label: t.auth.register.supplier, labelAr: "مورد", desc: t.auth.register.supplierDesc },
   ];
 
   return (
@@ -84,7 +110,7 @@ export default function RegisterScreen() {
           <Feather name="arrow-left" size={22} color="#F8FAFC" />
         </TouchableOpacity>
         <View style={styles.heroCenter}>
-          <Text style={styles.heroTitle}>Create Account</Text>
+          <Text style={styles.heroTitle}>{t.auth.register.title}</Text>
           <View style={styles.stepTrack}>
             {[1, 2].map((s) => (
               <View
@@ -108,18 +134,18 @@ export default function RegisterScreen() {
         <View style={[styles.card, { borderRadius: colors.radius, backgroundColor: colors.card, borderColor: colors.border }]}>
           {step === 1 && (
             <View style={styles.form}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your details</Text>
-              <Input label="Full Name" value={displayName} onChangeText={setDisplayName} leftIcon="user" placeholder="Ahmed Al-Rashidi" />
-              <Input label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" leftIcon="mail" placeholder="your@email.com" />
-              <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry={!showPass} leftIcon="lock" rightIcon={showPass ? "eye-off" : "eye"} onRightIconPress={() => setShowPass(!showPass)} placeholder="At least 6 characters" />
-              <Input label="Confirm Password" value={confirmPass} onChangeText={setConfirmPass} secureTextEntry={!showPass} leftIcon="lock" placeholder="Repeat password" />
-              <Button title="Continue" onPress={handleNext} fullWidth size="lg" />
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.auth.register.step1}</Text>
+              <Input label={t.auth.register.fullName} value={displayName} onChangeText={setDisplayName} leftIcon="user" placeholder={t.auth.register.namePlaceholder} isRTL={isRTL} />
+              <Input label={t.auth.register.email} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" leftIcon="mail" placeholder={t.auth.login.emailPlaceholder} isRTL={isRTL} />
+              <Input label={t.auth.register.password} value={password} onChangeText={setPassword} secureTextEntry={!showPass} leftIcon="lock" rightIcon={showPass ? "eye-off" : "eye"} onRightIconPress={() => setShowPass(!showPass)} placeholder={t.auth.validation.passwordWeak} isRTL={isRTL} />
+              <Input label={t.auth.register.confirmPassword} value={confirmPass} onChangeText={setConfirmPass} secureTextEntry={!showPass} leftIcon="lock" isRTL={isRTL} />
+              <Button title={t.auth.register.continue} onPress={handleNext} fullWidth size="lg" />
             </View>
           )}
 
           {step === 2 && (
             <View style={styles.form}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your role</Text>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.auth.register.yourRole}</Text>
 
               <View style={styles.roleRow}>
                 {roles.map((r) => (
@@ -142,10 +168,10 @@ export default function RegisterScreen() {
                 ))}
               </View>
 
-              <Input label="Organization Name" value={orgName} onChangeText={setOrgName} leftIcon="briefcase" placeholder="Al-Rashidi Construction Co." />
+              <Input label={t.auth.register.orgName} value={orgName} onChangeText={setOrgName} leftIcon="briefcase" placeholder={t.auth.register.orgNamePlaceholder} isRTL={isRTL} />
 
               <View>
-                <Text style={[styles.label, { color: colors.secondary }]}>City</Text>
+                <Text style={[styles.label, { color: colors.secondary }]}>{t.auth.register.city}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                   <View style={{ flexDirection: "row", gap: 8 }}>
                     {SAUDI_CITIES.slice(0, 10).map((c) => (
@@ -168,15 +194,15 @@ export default function RegisterScreen() {
                 </ScrollView>
               </View>
 
-              <Button title="Create Account" onPress={handleRegister} loading={loading} fullWidth size="lg" />
+              <Button title={t.auth.register.createAccount} onPress={handleRegister} loading={loading} fullWidth size="lg" />
             </View>
           )}
         </View>
 
         <TouchableOpacity style={styles.link} onPress={() => router.push("/auth/login")}>
           <Text style={[styles.linkText, { color: colors.mutedForeground }]}>
-            Already have an account?{" "}
-            <Text style={{ color: colors.cta, fontWeight: "700" }}>Sign in</Text>
+            {t.auth.register.haveAccount}{" "}
+            <Text style={{ color: colors.cta, fontWeight: "700" }}>{t.auth.register.signIn}</Text>
           </Text>
         </TouchableOpacity>
       </ScrollView>

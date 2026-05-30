@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   TouchableOpacity,
   Text,
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  Animated,
+  View,
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
@@ -19,9 +21,9 @@ interface ButtonProps {
   size?: Size;
   loading?: boolean;
   disabled?: boolean;
+  fullWidth?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
-  fullWidth?: boolean;
 }
 
 export function Button({
@@ -31,11 +33,29 @@ export function Button({
   size = "md",
   loading = false,
   disabled = false,
+  fullWidth = false,
   style,
   textStyle,
-  fullWidth = false,
 }: ButtonProps) {
   const colors = useColors();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.timing(scaleAnim, {
+      toValue: 0.97,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 4,
+      tension: 60,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -44,19 +64,25 @@ export function Button({
 
   const getContainerStyle = (): ViewStyle => {
     const base: ViewStyle = {
-      borderRadius: colors.radiusSm,
+      borderRadius: colors.radiusMd,
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",
-      opacity: disabled || loading ? 0.55 : 1,
+      minHeight: 48,
+      opacity: disabled ? 0.5 : 1,
+      ...colors.shadow.sm,
     };
     const sizes: Record<Size, ViewStyle> = {
-      sm: { paddingHorizontal: 14, paddingVertical: 8 },
-      md: { paddingHorizontal: 20, paddingVertical: 13 },
-      lg: { paddingHorizontal: 28, paddingVertical: 16 },
+      sm: { paddingHorizontal: colors.spacing.base, paddingVertical: colors.spacing.sm },
+      md: { paddingHorizontal: colors.spacing.lg, paddingVertical: colors.spacing.md },
+      lg: { paddingHorizontal: colors.spacing.xl, paddingVertical: colors.spacing.base },
     };
     const variants: Record<Variant, ViewStyle> = {
-      primary: { backgroundColor: colors.cta },
+      primary: {
+        backgroundColor: colors.cta,
+        borderWidth: 1,
+        borderColor: colors.primary,
+      },
       secondary: { backgroundColor: colors.muted },
       ghost: { backgroundColor: "transparent" },
       destructive: { backgroundColor: colors.destructive },
@@ -75,11 +101,6 @@ export function Button({
   };
 
   const getTextStyle = (): TextStyle => {
-    const sizes: Record<Size, TextStyle> = {
-      sm: { fontSize: 13 },
-      md: { fontSize: 15 },
-      lg: { fontSize: 16 },
-    };
     const variants: Record<Variant, TextStyle> = {
       primary: { color: colors.ctaForeground },
       secondary: { color: colors.secondary },
@@ -87,28 +108,56 @@ export function Button({
       destructive: { color: colors.destructiveForeground },
       outline: { color: colors.foreground },
     };
-    return { fontWeight: "600" as const, ...sizes[size], ...variants[variant] };
+    return { ...colors.typography.button, ...variants[variant] };
   };
 
+  const spinnerColor =
+    variant === "primary" || variant === "destructive"
+      ? variant === "primary"
+        ? colors.ctaForeground
+        : colors.destructiveForeground
+      : colors.cta;
+
+  const isInteractive = !disabled && !loading;
+
   return (
-    <TouchableOpacity
-      style={[getContainerStyle(), style]}
-      onPress={handlePress}
-      disabled={disabled || loading}
-      activeOpacity={0.78}
+    <Animated.View
+      style={[
+        { transform: [{ scale: scaleAnim }] },
+        fullWidth && { width: "100%" },
+      ]}
     >
-      {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={
-            variant === "primary" || variant === "destructive"
-              ? "#fff"
-              : colors.cta
-          }
-        />
-      ) : (
-        <Text style={[getTextStyle(), textStyle]}>{title}</Text>
-      )}
-    </TouchableOpacity>
+      <TouchableOpacity
+        style={[getContainerStyle(), style]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        disabled={!isInteractive}
+        activeOpacity={isInteractive ? 0.78 : 1}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: disabled || loading }}
+        accessible={true}
+        hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+      >
+        <Text style={[getTextStyle(), textStyle, { opacity: loading ? 0 : 1 }]}>
+          {title}
+        </Text>
+        {loading && (
+          <View
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <ActivityIndicator size="small" color={spinnerColor} />
+          </View>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 }

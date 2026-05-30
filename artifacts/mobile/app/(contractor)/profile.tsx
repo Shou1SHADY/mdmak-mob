@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { doc, updateDoc } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/Input";
@@ -17,6 +18,8 @@ export default function ContractorProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user, organization, logout, refreshUser } = useAuth();
+  const t = useT();
+  const { setLanguage, isRTL } = useLanguage();
   const [editing, setEditing] = useState(false);
   const [orgName, setOrgName] = useState(organization?.name ?? "");
   const [city, setCity] = useState(organization?.city ?? "");
@@ -27,28 +30,40 @@ export default function ContractorProfileScreen() {
     if (!user?.organizationId) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, "organizations", user.organizationId), {
-        name: orgName, city, crNumber,
+      await updateDoc(doc(db, "users", user.uid), {
+        orgName, city, crNumber,
       });
       await refreshUser();
       setEditing(false);
     } catch {
-      Alert.alert("Error", "Failed to save. Please try again.");
+      Alert.alert(t.common.error, t.profile.saveFailed);
     } finally {
       setSaving(false);
     }
   };
 
+  const handleSignOut = async () => {
+    console.log("[Profile] Signing out...");
+    await logout();
+    console.log("[Profile] Logged out, navigating to login");
+    router.replace("/auth/login");
+  };
+
   const handleLogout = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Sign Out", style: "destructive", onPress: logout },
-    ]);
+    if (Platform.OS === "web") {
+      handleSignOut();
+    } else {
+      Alert.alert(t.common.signOut, t.common.signOutConfirm, [
+        { text: t.common.cancel, style: "cancel" },
+        { text: t.common.signOut, style: "destructive", onPress: handleSignOut },
+      ]);
+    }
   };
 
   const menuItems = [
-    { icon: "users" as const, label: "Team Members", onPress: () => router.push("/(contractor)/team") },
-    { icon: "bell" as const, label: "Notifications", onPress: () => router.push("/(contractor)/notifications") },
+    { icon: "users" as const, label: t.profile.teamMembers, onPress: () => router.push("/(contractor)/team") },
+    { icon: "bell" as const, label: t.profile.notifications, onPress: () => router.push("/(contractor)/notifications") },
+    { icon: "globe" as const, label: isRTL ? "English" : "العربية", onPress: () => setLanguage(isRTL ? "en" : "ar") },
   ];
 
   return (
@@ -70,7 +85,7 @@ export default function ContractorProfileScreen() {
           <Text style={[styles.name, { color: "#F8FAFC" }]}>{organization?.name ?? user?.displayName}</Text>
           <Text style={[styles.email, { color: "rgba(248,250,252,0.6)" }]}>{user?.email}</Text>
           <View style={[styles.roleBadge, { backgroundColor: colors.accent + "20", borderColor: colors.accent + "50", borderWidth: 1 }]}>
-            <Text style={[styles.roleText, { color: colors.accent }]}>Contractor</Text>
+            <Text style={[styles.roleText, { color: colors.accent }]}>{t.auth.register.contractor}</Text>
           </View>
         </View>
       </View>
@@ -82,25 +97,25 @@ export default function ContractorProfileScreen() {
         {/* Company Info */}
         <Card>
           <View style={styles.cardHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Company Info</Text>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.profile.organization}</Text>
             <TouchableOpacity onPress={() => setEditing(!editing)}>
               <Feather name={editing ? "x" : "edit-2"} size={18} color={colors.cta} />
             </TouchableOpacity>
           </View>
           {editing ? (
             <View style={styles.form}>
-              <Input label="Organization Name" value={orgName} onChangeText={setOrgName} leftIcon="briefcase" />
-              <Input label="CR Number" value={crNumber} onChangeText={setCrNumber} leftIcon="hash" placeholder="1234567890" />
-              <Input label="City" value={city} onChangeText={setCity} leftIcon="map-pin" />
-              <Button title="Save Changes" onPress={handleSave} loading={saving} fullWidth />
+              <Input label={t.profile.companyName} value={orgName} onChangeText={setOrgName} leftIcon="briefcase" />
+              <Input label={t.profile.crNumber} value={crNumber} onChangeText={setCrNumber} leftIcon="hash" placeholder="1234567890" />
+              <Input label={t.profile.city} value={city} onChangeText={setCity} leftIcon="map-pin" />
+              <Button title={t.common.save} onPress={handleSave} loading={saving} fullWidth />
             </View>
           ) : (
             <View style={styles.infoGrid}>
               {[
-                { icon: "briefcase" as const, label: "Organization", value: organization?.name },
-                { icon: "hash" as const, label: "CR Number", value: organization?.crNumber ?? "Not set" },
-                { icon: "map-pin" as const, label: "City", value: organization?.city ?? user?.city },
-                { icon: "mail" as const, label: "Email", value: user?.email },
+                { icon: "briefcase" as const, label: t.profile.organization, value: organization?.name },
+                { icon: "hash" as const, label: t.profile.crNumber, value: organization?.crNumber ?? "Not set" },
+                { icon: "map-pin" as const, label: t.profile.city, value: organization?.city ?? user?.city },
+                { icon: "mail" as const, label: t.auth.login.email, value: user?.email },
               ].map((item) => (
                 <View key={item.label} style={styles.infoRow}>
                   <Feather name={item.icon} size={15} color={colors.mutedForeground} />
@@ -132,7 +147,7 @@ export default function ContractorProfileScreen() {
           ))}
         </Card>
 
-        <Button title="Sign Out" onPress={handleLogout} variant="destructive" fullWidth />
+        <Button title={t.common.signOut} onPress={handleLogout} variant="destructive" fullWidth />
       </ScrollView>
     </View>
   );

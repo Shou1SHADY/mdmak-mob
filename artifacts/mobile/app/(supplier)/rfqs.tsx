@@ -7,6 +7,7 @@ import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
@@ -15,6 +16,8 @@ import { CATEGORIES } from "@/constants/data";
 
 export default function BrowseRFQsScreen() {
   const colors = useColors();
+  const t = useT();
+  const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const [rfqs, setRfqs] = useState<RFQItem[]>([]);
   const [filtered, setFiltered] = useState<RFQItem[]>([]);
@@ -25,7 +28,7 @@ export default function BrowseRFQsScreen() {
 
   const fetchRFQs = async () => {
     try {
-      const q = query(collection(db, "rfqs"), where("status", "in", ["new", "under_review"]), orderBy("createdAt", "desc"));
+      const q = query(collection(db, "rfqs"), where("status", "in", ["New", "Active", "Under Review"]), orderBy("createdAt", "desc"));
       const snap = await getDocs(q);
       const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RFQItem));
       setRfqs(items);
@@ -56,14 +59,15 @@ export default function BrowseRFQsScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Dark top bar */}
       <View style={[styles.topBarDark, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.primary }]}>
-        <Text style={styles.titleDark}>Browse RFQs</Text>
+        <Text style={styles.titleDark}>{t.tabs.browseRfqs}</Text>
       </View>
       {/* Search + filters on white bg */}
       <View style={[styles.topBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <View style={[styles.searchBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Feather name="search" size={16} color={colors.mutedForeground} />
+          {/* TODO: i18n */}
           <TextInput
-            style={[styles.searchInput, { color: colors.foreground }]}
+            style={[styles.searchInput, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
             placeholder="Search RFQs..."
             placeholderTextColor={colors.mutedForeground}
             value={search}

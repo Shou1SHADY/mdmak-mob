@@ -7,6 +7,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -17,6 +18,8 @@ import { CATEGORIES, SAUDI_CITIES } from "@/constants/data";
 export default function SupplierProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const t = useT();
+  const { setLanguage, isRTL } = useLanguage();
   const { user, organization, logout, refreshUser } = useAuth();
   const [editingSpecs, setEditingSpecs] = useState(false);
   const [selectedSpecs, setSelectedSpecs] = useState<string[]>(organization?.specializations ?? []);
@@ -34,24 +37,33 @@ export default function SupplierProfileScreen() {
     if (!user?.organizationId) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, "organizations", user.organizationId), {
+      await updateDoc(doc(db, "users", user.uid), {
         specializations: selectedSpecs,
         serviceAreas: selectedAreas,
       });
       await refreshUser();
       setEditingSpecs(false);
     } catch {
-      Alert.alert("Error", "Failed to save. Please try again.");
+      Alert.alert(t.common.error, t.supplierProfile.saveFailed);
     } finally {
       setSaving(false);
     }
   };
 
+  const handleSignOut = async () => {
+    await logout();
+    router.replace("/auth/login");
+  };
+
   const handleLogout = () => {
-    Alert.alert("Sign Out", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Sign Out", style: "destructive", onPress: logout },
-    ]);
+    if (Platform.OS === "web") {
+      handleSignOut();
+    } else {
+      Alert.alert(t.common.signOut, t.common.signOutConfirm, [
+        { text: t.common.cancel, style: "cancel" },
+        { text: t.common.signOut, style: "destructive", onPress: handleSignOut },
+      ]);
+    }
   };
 
   return (
@@ -67,10 +79,10 @@ export default function SupplierProfileScreen() {
         <Text style={[styles.email, { color: colors.mutedForeground }]}>{user?.email}</Text>
         <View style={styles.badges}>
           <View style={[styles.roleBadge, { backgroundColor: colors.accent + "20" }]}>
-            <Text style={[styles.roleText, { color: colors.accent }]}>Supplier</Text>
+            <Text style={[styles.roleText, { color: colors.accent }]}>{t.auth.register.supplier}</Text>
           </View>
           {organization?.verified && (
-            <StatusBadge label="Verified" color={colors.success} size="sm" />
+            <StatusBadge label={t.supplierProfile.verified} color={colors.success} size="sm" />
           )}
         </View>
       </View>
@@ -78,7 +90,7 @@ export default function SupplierProfileScreen() {
       {/* Specializations */}
       <Card>
         <View style={styles.cardHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Specializations</Text>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.supplierProfile.specializations}</Text>
           <TouchableOpacity onPress={() => setEditingSpecs(!editingSpecs)}>
             <Feather name={editingSpecs ? "x" : "edit-2"} size={18} color={colors.primary} />
           </TouchableOpacity>
@@ -97,7 +109,7 @@ export default function SupplierProfileScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>Service areas:</Text>
+            <Text style={[styles.label, { color: colors.mutedForeground }]}>{t.supplierProfile.serviceAreas}:</Text>
             <View style={styles.chipsGrid}>
               {SAUDI_CITIES.map((city) => (
                 <TouchableOpacity
@@ -109,7 +121,7 @@ export default function SupplierProfileScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <Button title="Save" onPress={handleSave} loading={saving} fullWidth />
+            <Button title={t.common.save} onPress={handleSave} loading={saving} fullWidth />
           </View>
         ) : (
           <View style={{ gap: 10 }}>
@@ -130,9 +142,10 @@ export default function SupplierProfileScreen() {
 
       <Card>
         {[
-          { icon: "users" as const, label: "Team Members", onPress: () => router.push("/(supplier)/team") },
-          { icon: "bell" as const, label: "Notifications", onPress: () => router.push("/(supplier)/notifications") },
-          { icon: "package" as const, label: "Orders", onPress: () => router.push("/(supplier)/orders") },
+          { icon: "users" as const, label: t.profile.teamMembers, onPress: () => router.push("/(supplier)/team") },
+          { icon: "bell" as const, label: t.profile.notifications, onPress: () => router.push("/(supplier)/notifications") },
+          { icon: "package" as const, label: t.profile.orders, onPress: () => router.push("/(supplier)/orders") },
+          { icon: "globe" as const, label: isRTL ? "English" : "العربية", onPress: () => setLanguage(isRTL ? "en" : "ar") },
         ].map((item, i, arr) => (
           <TouchableOpacity
             key={item.label}
@@ -146,7 +159,7 @@ export default function SupplierProfileScreen() {
         ))}
       </Card>
 
-      <Button title="Sign Out" onPress={handleLogout} variant="destructive" fullWidth />
+      <Button title={t.common.signOut} onPress={handleLogout} variant="destructive" fullWidth />
     </ScrollView>
   );
 }

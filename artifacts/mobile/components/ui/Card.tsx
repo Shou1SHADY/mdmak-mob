@@ -1,37 +1,53 @@
 import React, { ReactNode } from "react";
-import { View, StyleSheet, ViewStyle, TouchableOpacity } from "react-native";
+import { View, ViewStyle, TouchableOpacity } from "react-native";
 import { useColors } from "@/hooks/useColors";
+
+type CardElevation = "flat" | "raised" | "high";
 
 interface CardProps {
   children: ReactNode;
   style?: ViewStyle;
   onPress?: () => void;
   glass?: boolean;
+  elevation?: CardElevation;
 }
 
-export function Card({ children, style, onPress, glass = false }: CardProps) {
+const elevationToShadow = {
+  flat: "none",
+  raised: "md",
+  high: "lg",
+} as const;
+
+export function Card({
+  children,
+  style,
+  onPress,
+  glass = false,
+  elevation = "raised",
+}: CardProps) {
   const colors = useColors();
+  const shadow = colors.shadow[elevationToShadow[elevation]];
 
   const cardStyle: ViewStyle = {
     backgroundColor: glass ? "rgba(255,255,255,0.82)" : colors.card,
     borderRadius: colors.radius,
-    padding: 16,
+    padding: colors.spacing.base,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    ...shadow,
   };
 
   if (onPress) {
     return (
-      <TouchableOpacity style={[cardStyle, style]} onPress={onPress} activeOpacity={0.82}>
+      <TouchableOpacity style={[cardStyle, style]} onPress={onPress} activeOpacity={0.85}>
         {children}
       </TouchableOpacity>
     );
   }
 
-  return <View style={[cardStyle, style]}>{children}</View>;
+  return (
+    <View style={[cardStyle, style]} accessibilityRole="none">
+      {children}
+    </View>
+  );
 }

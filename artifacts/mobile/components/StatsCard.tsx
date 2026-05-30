@@ -19,20 +19,33 @@ export function StatsCard({ title, value, icon, color, subtitle }: StatsCardProp
     <View
       style={[
         styles.card,
+        colors.shadow.sm,
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
           borderRadius: colors.radius,
+          padding: colors.spacing.base,
+          gap: colors.spacing.xs,
         },
       ]}
     >
-      <View style={[styles.iconBox, { backgroundColor: accentColor + "12", borderRadius: colors.radiusMd }]}>
+      <View
+        style={[
+          styles.iconBox,
+          colors.shadow.sm,
+          {
+            backgroundColor: accentColor + "12",
+            borderRadius: colors.radiusMd,
+            marginBottom: colors.spacing.xs,
+          },
+        ]}
+      >
         <Feather name={icon} size={20} color={accentColor} />
       </View>
-      <Text style={[styles.value, { color: colors.foreground }]}>{value}</Text>
-      <Text style={[styles.title, { color: colors.mutedForeground }]}>{title}</Text>
+      <Text style={[styles.value, colors.typography.h1, { color: colors.foreground }]}>{value}</Text>
+      <Text style={[styles.title, colors.typography.caption, { color: colors.mutedForeground }]}>{title}</Text>
       {subtitle && (
-        <Text style={[styles.subtitle, { color: accentColor }]}>{subtitle}</Text>
+        <Text style={[styles.subtitle, colors.typography.caption, { color: accentColor, fontWeight: "600" }]}>{subtitle}</Text>
       )}
     </View>
   );
@@ -40,25 +53,15 @@ export function StatsCard({ title, value, icon, color, subtitle }: StatsCardProp
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
-    padding: 16,
     borderWidth: 1,
-    gap: 5,
-    minWidth: 140,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
   iconBox: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 2,
   },
-  value: { fontSize: 26, fontWeight: "700" as const },
-  title: { fontSize: 12, fontWeight: "500" as const },
-  subtitle: { fontSize: 12, fontWeight: "600" as const },
+  value: { fontWeight: "700" as const },
+  title: {},
+  subtitle: {},
 });

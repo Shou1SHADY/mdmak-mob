@@ -26,15 +26,19 @@ export const SAUDI_CITIES = [
 ];
 
 export const RFQ_STATUSES = [
-  { id: "draft", label: "Draft", labelAr: "مسودة", color: "#94a3b8" },
-  { id: "new", label: "New", labelAr: "جديد", color: "#3b82f6" },
-  { id: "under_review", label: "Under Review", labelAr: "قيد المراجعة", color: "#f59e0b" },
-  { id: "closed", label: "Closed", labelAr: "مغلق", color: "#22c55e" },
+  { id: "Draft", label: "Draft", labelAr: "مسودة", color: "#94a3b8" },
+  { id: "New", label: "New", labelAr: "جديد", color: "#3b82f6" },
+  { id: "Active", label: "Active", labelAr: "نشط", color: "#06b6d4" },
+  { id: "Under Review", label: "Under Review", labelAr: "قيد المراجعة", color: "#f59e0b" },
+  { id: "Closed", label: "Closed", labelAr: "مغلق", color: "#22c55e" },
 ];
 
 export const OFFER_STATUSES = [
-  { id: "pending", label: "Pending", labelAr: "قيد الانتظار", color: "#f59e0b" },
-  { id: "accepted", label: "Accepted", labelAr: "مقبول", color: "#22c55e" },
-  { id: "rejected", label: "Rejected", labelAr: "مرفوض", color: "#ef4444" },
-  { id: "price_reduction", label: "Price Reduction Requested", labelAr: "طلب تخفيض السعر", color: "#8b5cf6" },
+  { id: "قيد المراجعة", label: "Under Review", labelAr: "قيد المراجعة", color: "#f59e0b" },
+  { id: "مقبول", label: "Accepted", labelAr: "مقبول", color: "#22c55e" },
+  { id: "مرفوض", label: "Rejected", labelAr: "مرفوض", color: "#ef4444" },
+  { id: "مطلوب تخفيض", label: "Price Reduction", labelAr: "مطلوب تخفيض", color: "#8b5cf6" },
+  { id: "تم التسليم", label: "Delivered", labelAr: "تم التسليم", color: "#06b6d4" },
+  { id: "جاري التوصيل", label: "In Transit", labelAr: "جاري التوصيل", color: "#3b82f6" },
+  { id: "قيد التجهيز", label: "In Preparation", labelAr: "قيد التجهيز", color: "#a855f7" },
 ];

@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { RFQItem } from "@/components/RFQCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -15,6 +16,8 @@ import { RFQ_STATUSES } from "@/constants/data";
 
 export default function SupplierRFQDetailScreen() {
   const colors = useColors();
+  const t = useT();
+  const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [rfq, setRfq] = useState<RFQItem | null>(null);
@@ -34,7 +37,7 @@ export default function SupplierRFQDetailScreen() {
   if (loading || !rfq) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ color: colors.mutedForeground }}>Loading...</Text>
+        <Text style={{ color: colors.mutedForeground }}>{t.common.loading}</Text>
       </View>
     );
   }
@@ -43,9 +46,9 @@ export default function SupplierRFQDetailScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.primary }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={22} color="#F8FAFC" />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color="#F8FAFC" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>RFQ Detail</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>{t.rfq.detail}</Text>
         <View style={{ width: 34 }} />
       </View>
 
@@ -56,9 +59,9 @@ export default function SupplierRFQDetailScreen() {
             {statusInfo && <StatusBadge label={statusInfo.label} color={statusInfo.color} />}
           </View>
           <Text style={[styles.rfqTitle, { color: colors.foreground }]}>{rfq.title}</Text>
-          {rfq.description && (
-            <Text style={[styles.desc, { color: colors.mutedForeground }]}>{rfq.description}</Text>
-          )}
+           {rfq.description && (
+            <Text style={[styles.desc, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>{rfq.description}</Text>
+           )}
           <View style={styles.metaGrid}>
             <View style={styles.metaRow}>
               <Feather name="map-pin" size={14} color={colors.mutedForeground} />
@@ -68,7 +71,7 @@ export default function SupplierRFQDetailScreen() {
               <View style={styles.metaRow}>
                 <Feather name="calendar" size={14} color={colors.mutedForeground} />
                 <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
-                  Deadline: {typeof rfq.deadline === "string" ? rfq.deadline : rfq.deadline?.toDate?.()?.toLocaleDateString("en-SA") ?? "—"}
+                  {/* TODO: i18n */}Deadline: {typeof rfq.deadline === "string" ? rfq.deadline : rfq.deadline?.toDate?.()?.toLocaleDateString("en-SA") ?? "—"}
                 </Text>
               </View>
             )}
@@ -77,10 +80,11 @@ export default function SupplierRFQDetailScreen() {
 
         <View style={styles.btnGroup}>
           <Button
-            title="Submit Offer"
+            title={t.rfq.submitOffer}
             onPress={() => router.push(`/(supplier)/submit-offer/${rfq.id}`)}
             fullWidth
           />
+          {/* TODO: i18n */}
           <Button
             title="Message Contractor"
             onPress={() => {}}

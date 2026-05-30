@@ -2,19 +2,26 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { OFFER_STATUSES } from "@/constants/data";
 
 export interface OfferItem {
   id: string;
   rfqId: string;
-  supplierOrgId: string;
-  price: number;
-  notes?: string;
+  organizationId: string;
+  supplierId?: string;
+  price: string;
   status: string;
   createdAt?: any;
+  updatedAt?: any;
   supplierName?: string;
+  companyName?: string;
   rfqTitle?: string;
+  contractorId?: string;
+  contractorOrgId?: string;
+  submittedByUserId?: string;
+  submittedByUserName?: string;
 }
 
 interface OfferCardProps {
@@ -25,13 +32,15 @@ interface OfferCardProps {
 
 export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
   const colors = useColors();
+  const t = useT();
+  const { isRTL } = useLanguage();
   const statusInfo = OFFER_STATUSES.find((s) => s.id === offer.status) ?? {
     label: offer.status,
     color: "#94a3b8",
   };
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("ar-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(amount);
+  const formatCurrency = (amount: string) =>
+    new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(parseFloat(amount));
 
   return (
     <TouchableOpacity
@@ -48,7 +57,7 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
     >
       <View style={styles.topRow}>
         <View>
-          <Text style={[styles.priceLabel, { color: colors.mutedForeground }]}>Quoted price</Text>
+          <Text style={[styles.priceLabel, { color: colors.mutedForeground }]}>{t.rfq.quotedPrice}</Text>
           <Text style={[styles.price, { color: colors.foreground }]}>{formatCurrency(offer.price)}</Text>
         </View>
         <StatusBadge label={statusInfo.label} color={statusInfo.color} />
@@ -62,11 +71,6 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
       {offer.rfqTitle && (
         <Text style={[styles.rfqTitle, { color: colors.foreground }]} numberOfLines={1}>
           {offer.rfqTitle}
-        </Text>
-      )}
-      {offer.notes && (
-        <Text style={[styles.notes, { color: colors.mutedForeground }]} numberOfLines={2}>
-          {offer.notes}
         </Text>
       )}
       {actions && <View style={styles.actions}>{actions}</View>}

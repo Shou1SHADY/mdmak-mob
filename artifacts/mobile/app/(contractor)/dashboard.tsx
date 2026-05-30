@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useT } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { StatsCard } from "@/components/StatsCard";
@@ -25,6 +26,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function ContractorDashboard() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const t = useT();
   const { user, organization } = useAuth();
   const [rfqs, setRfqs] = useState<RFQItem[]>([]);
   const [stats, setStats] = useState({ total: 0, active: 0, offers: 0, closed: 0 });
@@ -32,15 +34,21 @@ export default function ContractorDashboard() {
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchData = async () => {
-    if (!user?.organizationId) return;
+    const orgId = user?.organizationId;
+    if (!orgId) {
+      setLoading(false);
+      return;
+    }
+    console.log("[Dashboard] Fetching for orgId:", orgId);
     try {
       const q = query(
         collection(db, "rfqs"),
-        where("contractorOrgId", "==", user.organizationId),
+        where("organizationId", "==", orgId),
         orderBy("createdAt", "desc"),
         limit(20)
       );
       const snap = await getDocs(q);
+      console.log("[Dashboard] Got", snap.size, "RFQs");
       const items: RFQItem[] = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RFQItem));
       let totalOffers = 0;
       for (const rfq of items) {
@@ -52,9 +60,9 @@ export default function ContractorDashboard() {
       setRfqs(items);
       setStats({
         total: items.length,
-        active: items.filter((r) => r.status === "new" || r.status === "under_review").length,
+        active: items.filter((r) => r.status === "New" || r.status === "Active" || r.status === "Under Review").length,
         offers: totalOffers,
-        closed: items.filter((r) => r.status === "closed").length,
+        closed: items.filter((r) => r.status === "Closed").length,
       });
     } catch (e) {
       console.warn(e);
@@ -71,6 +79,7 @@ export default function ContractorDashboard() {
       <DashboardHeader
         orgName={organization?.name}
         userName={user?.displayName}
+        orgType={user?.role === "Supplier" ? "Supplier" : "Contractor"}
         right={
           <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
             <TouchableOpacity
@@ -84,7 +93,7 @@ export default function ContractorDashboard() {
               onPress={() => router.push("/(contractor)/rfqs/create")}
             >
               <Feather name="plus" size={16} color={colors.primary} />
-              <Text style={[styles.newRfqText, { color: colors.primary }]}>New RFQ</Text>
+              <Text style={[styles.newRfqText, { color: colors.primary }]}>{t.dashboard.newRfq}</Text>
             </TouchableOpacity>
           </View>
         }
@@ -103,17 +112,43 @@ export default function ContractorDashboard() {
           />
         }
       >
+        {!organization?.name && user?.organizationId && (
+          <TouchableOpacity
+            style={[styles.banner, { backgroundColor: colors.accent + "12", borderColor: colors.accent + "30", borderRadius: colors.radiusSm }]}
+            onPress={() => router.push("/(contractor)/profile")}
+            activeOpacity={0.8}
+          >
+            <Feather name="alert-circle" size={16} color={colors.accent} />
+            <Text style={[styles.bannerText, { color: colors.accent }]}>
+              Complete your company profile to get started
+            </Text>
+            <Feather name="chevron-right" size={14} color={colors.accent} />
+          </TouchableOpacity>
+        )}
+
         {/* Stats */}
         <View style={styles.statsGrid}>
-          <StatsCard title="Total RFQs" value={stats.total} icon="file-text" color={colors.cta} />
-          <StatsCard title="Active" value={stats.active} icon="activity" color={colors.accent} />
-          <StatsCard title="Offers In" value={stats.offers} icon="tag" color="#7C3AED" />
-          <StatsCard title="Closed" value={stats.closed} icon="check-circle" color={colors.success} />
+          <View style={styles.statsRow}>
+            <View style={{ flex: 1 }}>
+              <StatsCard title={t.dashboard.totalRfqs} value={stats.total} icon="file-text" color={colors.cta} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <StatsCard title={t.dashboard.active} value={stats.active} icon="activity" color={colors.accent} />
+            </View>
+          </View>
+          <View style={styles.statsRow}>
+            <View style={{ flex: 1 }}>
+              <StatsCard title={t.dashboard.offersIn} value={stats.offers} icon="tag" color="#7C3AED" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <StatsCard title={t.dashboard.closed} value={stats.closed} icon="check-circle" color={colors.success} />
+            </View>
+          </View>
         </View>
 
         <SectionHeader
-          title="Recent RFQs"
-          actionLabel="View all"
+          title={t.dashboard.recentRfqs}
+          actionLabel={t.dashboard.viewAll}
           onAction={() => router.push("/(contractor)/rfqs/index")}
         />
 
@@ -123,9 +158,9 @@ export default function ContractorDashboard() {
           ? (
             <EmptyState
               icon="file-text"
-              title="No RFQs yet"
-              subtitle="Create your first RFQ to start receiving offers from suppliers"
-              actionLabel="Create RFQ"
+              title={t.dashboard.noRfqs}
+              subtitle={t.dashboard.noRfqsDesc}
+              actionLabel={t.dashboard.createRfq}
               onAction={() => router.push("/(contractor)/rfqs/create")}
             />
           )
@@ -143,8 +178,18 @@ export default function ContractorDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 18 },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  container: { padding: 16, gap: 20 },
+  banner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+    borderWidth: 1,
+    marginBottom: 4,
+  },
+  bannerText: { flex: 1, fontSize: 13, fontWeight: "600" as const },
+  statsGrid: { gap: 8 },
+  statsRow: { flexDirection: "row", gap: 8 },
   headerIconBtn: {
     width: 36,
     height: 36,
@@ -156,10 +201,10 @@ const styles = StyleSheet.create({
   newRfqBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 13,
+    gap: 4,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
   },
-  newRfqText: { fontWeight: "700" as const, fontSize: 13 },
+  newRfqText: { fontWeight: "600" as const, fontSize: 16, lineHeight: 24 },
 });

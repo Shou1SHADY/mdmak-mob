@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useT, useLanguage } from "@/context/LanguageContext";
 
 interface ScreenHeaderProps {
   title: string;
@@ -50,16 +51,20 @@ export function ScreenHeader({ title, subtitle, showBack = false, right, style }
 export function DashboardHeader({
   orgName,
   userName,
+  orgType,
   right,
   style,
 }: {
   orgName?: string;
   userName?: string;
+  orgType?: string;
   right?: React.ReactNode;
   style?: ViewStyle;
 }) {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const t = useT();
+  const { isRTL } = useLanguage();
 
   return (
     <View
@@ -68,16 +73,33 @@ export function DashboardHeader({
         {
           backgroundColor: colors.primary,
           paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
+          borderBottomWidth: 2,
+          borderBottomColor: colors.accent,
         },
         style,
       ]}
     >
-      <View style={styles.dashInner}>
+      <View style={[styles.dashInner, { marginTop: colors.spacing.sm }]}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.greeting}>مرحباً • Welcome</Text>
-          <Text style={styles.orgName} numberOfLines={1}>
-            {orgName ?? userName ?? ""}
+          <Text
+            style={[
+              styles.greeting,
+              colors.typography.caption,
+              { textAlign: isRTL ? "right" : "left", marginBottom: colors.spacing.xs },
+            ]}
+          >
+            {t.dashboard.welcome}
           </Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={[styles.orgName, colors.typography.h3, { flexShrink: 1 }]} numberOfLines={1}>
+              {orgName ?? userName ?? ""}
+            </Text>
+            {orgType ? (
+              <View style={[styles.orgBadge, { backgroundColor: colors.accent }]}>
+                <Text style={styles.orgBadgeText}>{orgType}</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
         {right}
       </View>
@@ -115,13 +137,23 @@ const styles = StyleSheet.create({
   },
   rightSlot: { width: 34, alignItems: "flex-end" },
 
-  dashContainer: { paddingHorizontal: 16, paddingBottom: 16 },
+  dashContainer: { paddingHorizontal: 16, paddingBottom: 20 },
   dashInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 8,
   },
-  greeting: { fontSize: 12, color: "rgba(248,250,252,0.6)", marginBottom: 2 },
-  orgName: { fontSize: 20, fontWeight: "700" as const, color: "#F8FAFC" },
+  greeting: { color: "rgba(248,250,252,0.6)" },
+  orgName: { color: "#F8FAFC" },
+  orgBadge: {
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  orgBadgeText: {
+    fontSize: 11,
+    fontWeight: "600" as const,
+    color: "#F8FAFC",
+  },
 });

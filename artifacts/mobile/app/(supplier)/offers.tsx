@@ -7,6 +7,7 @@ import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebas
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { OfferCard, OfferItem } from "@/components/OfferCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
@@ -16,6 +17,8 @@ import { OFFER_STATUSES } from "@/constants/data";
 export default function MyOffersScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const t = useT();
+  const { isRTL } = useLanguage();
   const { user } = useAuth();
   const [offers, setOffers] = useState<OfferItem[]>([]);
   const [filtered, setFiltered] = useState<OfferItem[]>([]);
@@ -24,11 +27,15 @@ export default function MyOffersScreen() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const fetchOffers = async () => {
-    if (!user?.organizationId) return;
+    const orgId = user?.organizationId;
+    if (!orgId) {
+      setLoading(false);
+      return;
+    }
     try {
       const q = query(
         collection(db, "offers"),
-        where("supplierOrgId", "==", user.organizationId),
+        where("organizationId", "==", orgId),
         orderBy("createdAt", "desc")
       );
       const snap = await getDocs(q);
@@ -60,9 +67,9 @@ export default function MyOffersScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>My Offers</Text>
+        <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{t.dashboard.myOffers}</Text>
         <View style={styles.filterRow}>
-          {[{ id: "all", label: "All" }, ...OFFER_STATUSES].map((s) => (
+          {[{ id: "all", label: "All" /* TODO: i18n */ }, ...OFFER_STATUSES].map((s) => (
             <TouchableOpacity
               key={s.id}
               style={[styles.filterChip, { backgroundColor: statusFilter === s.id ? colors.primary : colors.card, borderColor: statusFilter === s.id ? colors.primary : colors.border }]}
@@ -83,7 +90,7 @@ export default function MyOffersScreen() {
           renderItem={({ item }) => <OfferCard offer={item} />}
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 80) }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchOffers(); }} tintColor={colors.primary} />}
-          ListEmptyComponent={<EmptyState icon="tag" title="No offers" subtitle={statusFilter !== "all" ? "No offers with this status" : "Browse RFQs and submit your first offer"} />}
+          ListEmptyComponent={<EmptyState icon="tag" title={t.dashboard.noOffers} subtitle={statusFilter !== "all" ? "No offers with this status" /* TODO: i18n */ : t.dashboard.noOffersDesc} />}
           scrollEnabled={!!filtered.length}
         />
       )}

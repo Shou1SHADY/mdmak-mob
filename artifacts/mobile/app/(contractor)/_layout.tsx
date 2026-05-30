@@ -3,9 +3,11 @@ import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { Platform, StyleSheet, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { useT } from "@/context/LanguageContext";
 
 export default function ContractorLayout() {
   const colors = useColors();
+  const t = useT();
   const isWeb = Platform.OS === "web";
 
   return (
@@ -39,35 +41,35 @@ export default function ContractorLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: "Dashboard",
+          title: t.tabs.dashboard,
           tabBarIcon: ({ color }) => <Feather name="grid" size={21} color={color} />,
         }}
       />
       <Tabs.Screen
         name="rfqs/index"
         options={{
-          title: "My RFQs",
+          title: t.tabs.rfqs,
           tabBarIcon: ({ color }) => <Feather name="file-text" size={21} color={color} />,
         }}
       />
       <Tabs.Screen
         name="suppliers"
         options={{
-          title: "Suppliers",
+          title: t.tabs.suppliers,
           tabBarIcon: ({ color }) => <Feather name="users" size={21} color={color} />,
         }}
       />
       <Tabs.Screen
         name="chats"
         options={{
-          title: "Messages",
+          title: t.tabs.messages,
           tabBarIcon: ({ color }) => <Feather name="message-circle" size={21} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t.tabs.profile,
           tabBarIcon: ({ color }) => <Feather name="user" size={21} color={color} />,
         }}
       />
