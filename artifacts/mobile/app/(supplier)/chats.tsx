@@ -86,9 +86,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "700" as const },
   list: { paddingTop: 8 },
   chatItem: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderBottomWidth: 1 },
-  avatar: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 48, height: 48, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   chatTitle: { fontSize: 15, fontWeight: "600" as const },
   lastMsg: { fontSize: 13 },
-  badge: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  badge: { width: 22, height: 22, borderRadius: 999, alignItems: "center", justifyContent: "center" },
   badgeText: { color: "#fff", fontSize: 11, fontWeight: "700" as const },
 });

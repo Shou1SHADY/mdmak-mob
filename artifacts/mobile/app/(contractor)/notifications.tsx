@@ -63,7 +63,7 @@ export default function NotificationsScreen() {
     if (!ts) return "";
     try {
       const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleDateString("en-SA", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      return d.toLocaleDateString(isRTL ? "ar-SA" : "en-SA", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
     } catch { return ""; }
   };
 
@@ -71,7 +71,7 @@ export default function NotificationsScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={24} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{t.tabs.notifications}</Text>
         <View style={{ width: 24 }} />

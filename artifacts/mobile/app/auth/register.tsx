@@ -107,7 +107,7 @@ export default function RegisterScreen() {
       {/* Dark header */}
       <View style={[styles.hero, { backgroundColor: colors.primary, paddingTop: topPad + 16 }]}>
         <TouchableOpacity onPress={() => (step > 1 ? setStep(1) : router.back())} style={styles.backBtn}>
-          <Feather name="arrow-left" size={22} color="#F8FAFC" />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color="#FFFFFF" />
         </TouchableOpacity>
         <View style={styles.heroCenter}>
           <Text style={styles.heroTitle}>{t.auth.register.title}</Text>
@@ -117,7 +117,7 @@ export default function RegisterScreen() {
                 key={s}
                 style={[
                   styles.stepDot,
-                  { backgroundColor: step >= s ? colors.accent : "rgba(248,250,252,0.3)" },
+                  { backgroundColor: step >= s ? colors.primary : "rgba(255,255,255,0.3)" },
                 ]}
               />
             ))}
@@ -131,7 +131,7 @@ export default function RegisterScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.card, { borderRadius: colors.radius, backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.card, { borderRadius: colors.radius3xl, backgroundColor: colors.card, borderColor: colors.border, ...colors.shadow.lg }]}>        
           {step === 1 && (
             <View style={styles.form}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.auth.register.step1}</Text>
@@ -220,18 +220,13 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
   heroCenter: { flex: 1, alignItems: "center", gap: 10 },
-  heroTitle: { fontSize: 20, fontWeight: "700" as const, color: "#F8FAFC" },
+  heroTitle: { fontSize: 20, fontWeight: "700" as const, color: "#FFFFFF" },
   stepTrack: { flexDirection: "row", gap: 8 },
   stepDot: { width: 36, height: 4, borderRadius: 2 },
   scroll: { paddingHorizontal: 20, paddingTop: 4 },
   card: {
     padding: 24,
     borderWidth: 1,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
   },
   form: { gap: 14 },
   sectionTitle: { fontSize: 18, fontWeight: "700" as const, marginBottom: 4 },

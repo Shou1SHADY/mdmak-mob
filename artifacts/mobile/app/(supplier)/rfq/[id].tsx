@@ -32,7 +32,7 @@ export default function SupplierRFQDetailScreen() {
     fetch();
   }, [id]);
 
-  const statusInfo = rfq ? (RFQ_STATUSES.find((s) => s.id === rfq.status) ?? { label: rfq.status, color: "#94a3b8" }) : null;
+  const statusInfo = rfq ? (RFQ_STATUSES.find((s) => s.id === rfq.status) ?? { label: rfq.status, color: colors.outline }) : null;
 
   if (loading || !rfq) {
     return (
@@ -46,7 +46,7 @@ export default function SupplierRFQDetailScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.primary }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color="#F8FAFC" />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color="#FFFFFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{t.rfq.detail}</Text>
         <View style={{ width: 34 }} />
@@ -71,7 +71,7 @@ export default function SupplierRFQDetailScreen() {
               <View style={styles.metaRow}>
                 <Feather name="calendar" size={14} color={colors.mutedForeground} />
                 <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
-                  {/* TODO: i18n */}Deadline: {typeof rfq.deadline === "string" ? rfq.deadline : rfq.deadline?.toDate?.()?.toLocaleDateString("en-SA") ?? "—"}
+                  {t.rfq.deadline}: {typeof rfq.deadline === "string" ? rfq.deadline : rfq.deadline?.toDate?.()?.toLocaleDateString(isRTL ? "ar-SA" : "en-SA") ?? "—"}
                 </Text>
               </View>
             )}
@@ -84,9 +84,8 @@ export default function SupplierRFQDetailScreen() {
             onPress={() => router.push(`/(supplier)/submit-offer/${rfq.id}`)}
             fullWidth
           />
-          {/* TODO: i18n */}
           <Button
-            title="Message Contractor"
+            title={t.rfq.messageContractor}
             onPress={() => {}}
             variant="outline"
             fullWidth
@@ -100,7 +99,7 @@ export default function SupplierRFQDetailScreen() {
 const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14 },
   backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
-  headerTitle: { fontSize: 17, fontWeight: "700" as const, color: "#F8FAFC", flex: 1, textAlign: "center", marginHorizontal: 8 },
+  headerTitle: { fontSize: 17, fontWeight: "700" as const, color: "#FFFFFF", flex: 1, textAlign: "center", marginHorizontal: 8 },
   content: { padding: 16, gap: 16 },
   card: { borderRadius: 16, padding: 18, borderWidth: 1, gap: 10 },
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },

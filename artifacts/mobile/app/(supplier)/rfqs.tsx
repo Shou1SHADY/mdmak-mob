@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, RefreshControl, Platform,
+  View, Text, FlatList, TextInput, TouchableOpacity, RefreshControl, Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
@@ -57,38 +57,31 @@ export default function BrowseRFQsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Dark top bar */}
       <View style={[styles.topBarDark, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.primary }]}>
-        <Text style={styles.titleDark}>{t.tabs.browseRfqs}</Text>
+        <Text style={[styles.titleDark]}>{t.tabs.browseRfqs}</Text>
       </View>
-      {/* Search + filters on white bg */}
       <View style={[styles.topBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <View style={[styles.searchBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Feather name="search" size={16} color={colors.mutedForeground} />
-          {/* TODO: i18n */}
+        <View style={[styles.searchBox, { backgroundColor: colors.surfaceGray, borderColor: colors.border }]}>
+          <Feather name="search" size={16} color={colors.outline} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
-            placeholder="Search RFQs..."
-            placeholderTextColor={colors.mutedForeground}
+            placeholder={t.rfq.searchPlaceholder}
+            placeholderTextColor={colors.outline}
             value={search}
             onChangeText={setSearch}
           />
         </View>
-        <FlatList
-          horizontal
-          data={categories.slice(0, 8)}
-          keyExtractor={(item) => item}
-          showsHorizontalScrollIndicator={false}
-          renderItem={({ item }) => (
+        <View style={styles.filterRow}>
+          {categories.slice(0, 8).map((item) => (
             <TouchableOpacity
-              style={[styles.filterChip, { backgroundColor: categoryFilter === item ? colors.primary : colors.card, borderColor: categoryFilter === item ? colors.primary : colors.border, borderRadius: colors.radiusSm }]}
+              key={item}
+              style={[styles.filterChip, { backgroundColor: categoryFilter === item ? colors.primary : colors.card, borderColor: categoryFilter === item ? colors.primary : colors.border, borderRadius: colors.radiusFull }]}
               onPress={() => setCategoryFilter(item)}
             >
-              <Text style={[styles.filterText, { color: categoryFilter === item ? "#F8FAFC" : colors.mutedForeground }]}>{item}</Text>
+              <Text style={[styles.filterText, { color: categoryFilter === item ? "#FFFFFF" : colors.onSurfaceVariant }]}>{item}</Text>
             </TouchableOpacity>
-          )}
-          contentContainerStyle={{ gap: 8 }}
-        />
+          ))}
+        </View>
       </View>
 
       {loading ? (
@@ -102,7 +95,7 @@ export default function BrowseRFQsScreen() {
           )}
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 80) }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchRFQs(); }} tintColor={colors.primary} />}
-          ListEmptyComponent={<EmptyState icon="search" title="No RFQs found" subtitle="Try adjusting your filters" />}
+          ListEmptyComponent={<EmptyState icon="search" title={t.rfq.noRfqsFound} subtitle={t.rfq.tryAdjustingFilters} />}
           scrollEnabled={!!filtered.length}
         />
       )}
@@ -110,13 +103,14 @@ export default function BrowseRFQsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = {
   topBarDark: { paddingHorizontal: 16, paddingBottom: 16 },
-  titleDark: { fontSize: 22, fontWeight: "700" as const, color: "#F8FAFC", marginTop: 8 },
-  topBar: { paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, gap: 12, paddingTop: 12 },
-  searchBox: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 14, height: 44 },
+  titleDark: { fontSize: 22, fontWeight: "700" as const, color: "#FFFFFF", marginTop: 8 },
+  topBar: { paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, gap: 12, paddingTop: 12 } as any,
+  searchBox: { flexDirection: "row" as const, alignItems: "center" as const, gap: 10, borderRadius: 24, borderWidth: 1.5, paddingHorizontal: 16, height: 44 },
   searchInput: { flex: 1, fontSize: 15 },
-  filterChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 7 },
+  filterChip: { borderWidth: 1, paddingHorizontal: 14, paddingVertical: 7 },
+  filterRow: { flexDirection: "row" as const, flexWrap: "wrap" as const, gap: 8 },
   filterText: { fontSize: 13, fontWeight: "500" as const },
   list: { padding: 16 },
-});
+};

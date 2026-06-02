@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   toast: {
     minHeight: 48,
-    borderRadius: colors.radius.small,
+    borderRadius: colors.radius.sm,
     paddingHorizontal: 12,
     paddingVertical: 14,
     marginHorizontal: 16,

@@ -1,9 +1,55 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
+
+const TAB_ICON_SIZE = 22;
+
+function TabIcon({ name, color, focused, colors }: { name: keyof typeof Feather.glyphMap; color: string; focused: boolean; colors: ReturnType<typeof useColors> }) {
+  return (
+    <View style={{
+      width: 40,
+      height: 32,
+      borderRadius: 10,
+      backgroundColor: focused ? colors.glowBlue : "transparent",
+      alignItems: "center",
+      justifyContent: "center",
+    }}>
+      <Feather name={name} size={TAB_ICON_SIZE} color={color} />
+    </View>
+  );
+}
+
+const sharedTabOptions = (colors: ReturnType<typeof useColors>, isWeb: boolean) => ({
+  tabBarActiveTintColor: colors.cta,
+  tabBarInactiveTintColor: colors.outline,
+  headerShown: false,
+  tabBarStyle: {
+    backgroundColor: colors.surface,
+    borderTopWidth: 0,
+    elevation: 0,
+    height: isWeb ? 82 : 66,
+    paddingBottom: isWeb ? 14 : 8,
+    paddingTop: 6,
+    paddingHorizontal: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+  } as any,
+  tabBarLabelStyle: {
+    fontSize: 11,
+    fontWeight: "600" as const,
+    letterSpacing: 0.2,
+    marginTop: 4,
+  } as any,
+  tabBarItemStyle: {
+    gap: 0,
+    paddingHorizontal: 6,
+  } as any,
+});
 
 export default function SupplierLayout() {
   const colors = useColors();
@@ -11,50 +57,51 @@ export default function SupplierLayout() {
   const isWeb = Platform.OS === "web";
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: "#64748B",
-        headerShown: false,
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: colors.primary,
-          borderTopWidth: 0,
-          elevation: 0,
-          height: isWeb ? 80 : 62,
-          paddingBottom: isWeb ? 10 : 6,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.18,
-          shadowRadius: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600" as const,
-          marginTop: 1,
-        },
-        tabBarIconStyle: { marginTop: 4 },
-      }}
-    >
+    <Tabs screenOptions={sharedTabOptions(colors, isWeb)}>
       <Tabs.Screen
         name="dashboard"
-        options={{ title: t.tabs.dashboard, tabBarIcon: ({ color }) => <Feather name="grid" size={21} color={color} /> }}
+        options={{
+          title: t.tabs.dashboard,
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="grid" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="rfqs"
-        options={{ title: t.tabs.browseRfqs, tabBarIcon: ({ color }) => <Feather name="search" size={21} color={color} /> }}
+        options={{
+          title: t.tabs.browseRfqs,
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="search" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="offers"
-        options={{ title: t.tabs.offers, tabBarIcon: ({ color }) => <Feather name="tag" size={21} color={color} /> }}
+        options={{
+          title: t.tabs.offers,
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="tag" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="chats"
-        options={{ title: t.tabs.messages, tabBarIcon: ({ color }) => <Feather name="message-circle" size={21} color={color} /> }}
+        options={{
+          title: t.tabs.messages,
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="message-circle" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="profile"
-        options={{ title: t.tabs.profile, tabBarIcon: ({ color }) => <Feather name="user" size={21} color={color} /> }}
+        options={{
+          title: t.tabs.profile,
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="user" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          ),
+        }}
       />
       <Tabs.Screen name="rfq/[id]" options={{ href: null }} />
       <Tabs.Screen name="submit-offer/[rfqId]" options={{ href: null }} />

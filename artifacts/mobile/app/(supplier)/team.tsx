@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
-import { useT } from "@/context/LanguageContext";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -24,6 +24,7 @@ export default function SupplierTeamScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const t = useT();
+  const { isRTL } = useLanguage();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +46,7 @@ export default function SupplierTeamScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={24} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.foreground }]}>{t.team.title}</Text>
         <View style={{ width: 24 }} />

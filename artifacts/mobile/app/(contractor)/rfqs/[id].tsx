@@ -40,7 +40,7 @@ export default function RFQDetailScreen() {
         userSnap.docs.forEach((d) => {
           const oid = d.data().organizationId;
           if (oid && orgIds.includes(oid)) {
-            orgNames[oid] = d.data().companyName ?? d.data().name ?? "Unknown";
+            orgNames[oid] = d.data().companyName ?? d.data().name ?? t.common.unknown;
           }
         });
       }
@@ -69,7 +69,7 @@ export default function RFQDetailScreen() {
     ]);
   };
 
-  const statusInfo = rfq ? (RFQ_STATUSES.find((s) => s.id === rfq.status) ?? { label: rfq.status, color: "#94a3b8" }) : null;
+  const statusInfo = rfq ? (RFQ_STATUSES.find((s) => s.id === rfq.status) ?? { label: rfq.status, color: colors.outline }) : null;
 
   if (loading) {
     return (
@@ -84,7 +84,7 @@ export default function RFQDetailScreen() {
       <ScreenHeader title={t.rfq.detail} showBack />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
         {rfq && (
-          <View style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+          <View style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl }]}>          
             <View style={styles.row}>
               <Text style={[styles.category, { color: colors.secondary }]}>{rfq.category}</Text>
               {statusInfo && <StatusBadge label={statusInfo.label} color={statusInfo.color} />}
@@ -111,7 +111,7 @@ export default function RFQDetailScreen() {
         </Text>
 
         {offers.length === 0 ? (
-          <View style={[styles.emptyOffers, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+          <View style={[styles.emptyOffers, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl }]}>          
             <Feather name="inbox" size={28} color={colors.mutedForeground} />
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.rfq.noOffers}</Text>
           </View>

@@ -37,7 +37,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
   const { isRTL } = useLanguage();
   const statusInfo = RFQ_STATUSES.find((s) => s.id === rfq.status) ?? {
     label: rfq.status,
-    color: "#94a3b8",
+    color: "#747688",
   };
 
   const formatDate = (ts: any) => {
@@ -58,7 +58,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
-          borderRadius: colors.radius,
+          borderRadius: colors.radiusXl,
           marginBottom: colors.spacing.md,
           ...colors.shadow.sm,
           opacity: pressed ? 0.85 : 1,
@@ -67,17 +67,17 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
       ]}
     >
       {!isRTL && (
-        <View style={[styles.stripe, { backgroundColor: colors.accent }]} />
+        <View style={[styles.stripe, { backgroundColor: colors.primary }]} />
       )}
 
-      <View style={[styles.inner, { padding: colors.spacing.md, gap: colors.spacing.xs }]}>
+      <View style={[styles.inner, { padding: colors.spacing.base, gap: colors.spacing.xs }]}>
         <View style={styles.topRow}>
           <Text
             style={[
               styles.category,
               {
-                color: colors.secondary,
-                ...colors.typography.caption,
+                color: colors.outline,
+                ...colors.typography.label,
                 marginRight: colors.spacing.sm,
               },
             ]}
@@ -91,7 +91,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
         <Text
           style={[
             styles.title,
-            { color: colors.foreground, ...colors.typography.h4, fontWeight: "700" },
+            { color: colors.foreground, fontSize: 18, fontWeight: "700" as const, lineHeight: 26 },
           ]}
           numberOfLines={2}
         >
@@ -100,7 +100,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
 
         {rfq.description && (
           <Text
-            style={[styles.desc, { color: colors.mutedForeground, ...colors.typography.bodySm }]}
+            style={[styles.desc, { color: colors.outline, ...colors.typography.bodySm }]}
             numberOfLines={2}
           >
             {rfq.description}
@@ -109,18 +109,18 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
 
         <View style={[styles.metaRow, { gap: colors.spacing.md }]}>
           <View style={styles.metaItem}>
-            <Feather name="map-pin" size={12} color={colors.mutedForeground} />
+            <Feather name="map-pin" size={13} color={colors.outline} />
             <Text
-              style={[styles.metaText, { color: colors.mutedForeground, ...colors.typography.caption }]}
+              style={[styles.metaText, { color: colors.outline, ...colors.typography.caption }]}
             >
               {rfq.city}
             </Text>
           </View>
           {rfq.deadline && (
             <View style={styles.metaItem}>
-              <Feather name="calendar" size={12} color={colors.mutedForeground} />
+              <Feather name="calendar" size={13} color={colors.outline} />
               <Text
-                style={[styles.metaText, { color: colors.mutedForeground, ...colors.typography.caption }]}
+                style={[styles.metaText, { color: colors.outline, ...colors.typography.caption }]}
               >
                 {formatDate(rfq.deadline)}
               </Text>
@@ -128,8 +128,8 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
           )}
           {showOffers && (
             <View style={styles.metaItem}>
-              <Feather name="tag" size={12} color={colors.accent} />
-              <Text style={[styles.metaText, { color: colors.accent, ...colors.typography.caption }]}>
+              <Feather name="tag" size={13} color={colors.secondary} />
+              <Text style={[styles.metaText, { color: colors.secondary, ...colors.typography.caption, fontWeight: "600" }]}>
                 {rfq.offersCount ?? 0} {t.rfq.offersSuffix}
               </Text>
             </View>
@@ -137,7 +137,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
         </View>
       </View>
       {isRTL && (
-        <View style={[styles.stripe, styles.stripeRTL, { backgroundColor: colors.accent }]} />
+        <View style={[styles.stripe, styles.stripeRTL, { backgroundColor: colors.primary }]} />
       )}
     </Pressable>
   );
@@ -169,8 +169,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   category: {
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
     flex: 1,
   },
   title: {},

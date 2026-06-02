@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useColors } from "@/hooks/useColors";
 
 interface StatusBadgeProps {
   label: string;
@@ -13,10 +14,10 @@ export function StatusBadge({ label, color, size = "md" }: StatusBadgeProps) {
       style={[
         styles.badge,
         {
-          backgroundColor: color + "18",
-          borderColor: color + "40",
-          paddingHorizontal: size === "sm" ? 8 : 11,
-          paddingVertical: size === "sm" ? 3 : 5,
+          backgroundColor: color + "16",
+          borderColor: color + "30",
+          paddingHorizontal: size === "sm" ? 10 : 12,
+          paddingVertical: size === "sm" ? 4 : 6,
         },
       ]}
     >
@@ -29,9 +30,9 @@ export function StatusBadge({ label, color, size = "md" }: StatusBadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: 20,
+    borderRadius: 999,
     alignSelf: "flex-start",
     borderWidth: 1,
   },
-  text: { fontWeight: "600" as const, letterSpacing: 0.1 },
+  text: { fontWeight: "600" as const },
 });

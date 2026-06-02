@@ -13,12 +13,12 @@ export function SectionHeader({ title, actionLabel, onAction }: SectionHeaderPro
   return (
     <View style={styles.container}>
       <View style={[styles.titleRow]}>
-        <View style={[styles.accent, { backgroundColor: colors.accent }]} />
+        <View style={[styles.accent, { backgroundColor: colors.primary }]} />
         <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
       </View>
       {actionLabel && onAction && (
         <TouchableOpacity onPress={onAction}>
-          <Text style={[styles.action, { color: colors.cta }]}>{actionLabel}</Text>
+          <Text style={[styles.action, { color: colors.primary }]}>{actionLabel}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -32,8 +32,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  accent: { width: 3, height: 18, borderRadius: 2 },
-  title: { fontSize: 16, fontWeight: "700" as const },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  accent: { width: 3, height: 20, borderRadius: 2 },
+  title: { fontSize: 18, fontWeight: "700" as const },
   action: { fontSize: 13, fontWeight: "600" as const },
 });

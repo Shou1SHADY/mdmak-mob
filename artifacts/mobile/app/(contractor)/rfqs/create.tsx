@@ -71,25 +71,26 @@ export default function CreateRFQScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Dark header */}
       <View
         style={[
           styles.header,
           {
             paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
-            backgroundColor: colors.primary,
+            backgroundColor: colors.surface,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
           },
         ]}
       >
         <TouchableOpacity onPress={() => (step > 1 ? setStep(step - 1) : router.back())} style={styles.backBtn}>
-          <Feather name="arrow-left" size={22} color="#F8FAFC" />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: "#F8FAFC" }]}>{t.dashboard.createRfq}</Text>
-        <Text style={[styles.stepLabel, { color: "rgba(248,250,252,0.6)" }]}>{step}/{totalSteps}</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>{t.dashboard.createRfq}</Text>
+        <Text style={[styles.stepLabel, { color: colors.outline }]}>{step}/{totalSteps}</Text>
       </View>
 
-      <View style={[styles.progressBar, { backgroundColor: "rgba(248,250,252,0.15)", marginTop: 0 }]}>
-        <View style={[styles.progressFill, { backgroundColor: colors.accent, width: `${(step / totalSteps) * 100}%` }]} />
+      <View style={[styles.progressBar, { backgroundColor: colors.border, marginTop: 0 }]}>
+        <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${(step / totalSteps) * 100}%` }]} />
       </View>
 
       <ScrollView
@@ -127,8 +128,8 @@ export default function CreateRFQScreen() {
                   style={[
                     styles.categoryChip,
                     {
-                      borderColor: category === cat.label ? colors.accent : colors.border,
-                      backgroundColor: category === cat.label ? colors.accent + "15" : colors.card,
+                      borderColor: category === cat.label ? colors.primary : colors.border,
+                      backgroundColor: category === cat.label ? colors.accentBlueSoft : colors.card,
                     },
                   ]}
                   onPress={() => setCategory(cat.label)}
@@ -136,7 +137,7 @@ export default function CreateRFQScreen() {
                   <Text
                     style={[
                       styles.categoryText,
-                      { color: category === cat.label ? colors.foreground : colors.secondary },
+                      { color: category === cat.label ? colors.primary : colors.onSurfaceVariant },
                     ]}
                     numberOfLines={2}
                   >
@@ -206,7 +207,7 @@ export default function CreateRFQScreen() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14 },
-  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center", borderRadius: 10 },
   headerTitle: { fontSize: 18, fontWeight: "700" as const },
   stepLabel: { fontSize: 14 },
   progressBar: { height: 3 },
@@ -214,12 +215,12 @@ const styles = StyleSheet.create({
   content: { padding: 20 },
   form: { gap: 16 },
   sectionTitle: { fontSize: 20, fontWeight: "700" as const, marginBottom: 4 },
-  label: { fontSize: 14, fontWeight: "500" as const },
+  label: { fontSize: 14, fontWeight: "500" as const, textTransform: "uppercase" as const, letterSpacing: 0.5 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  categoryChip: { borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8, width: "47%" },
+  categoryChip: { borderRadius: 12, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8, width: "47%" },
   categoryText: { fontSize: 13, fontWeight: "500" as const, textAlign: "center" },
   cityGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  cityChip: { borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7 },
+  cityChip: { borderRadius: 24, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7 },
   cityText: { fontSize: 13, fontWeight: "500" as const },
   btnRow: { flexDirection: "row", gap: 12, marginTop: 8 },
 });

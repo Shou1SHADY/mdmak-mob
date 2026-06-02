@@ -27,7 +27,7 @@ export function Skeleton({ width = "100%", height = 16, borderRadius = 8, style 
   return (
     <Animated.View
       style={[
-        { width: width as any, height, borderRadius, backgroundColor: colors.muted, opacity },
+        { width: width as any, height, borderRadius, backgroundColor: colors.surfaceGray, opacity },
         style,
       ]}
     />
@@ -40,7 +40,7 @@ export function CardSkeleton() {
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.row}>
         <Skeleton width={120} height={14} />
-        <Skeleton width={60} height={22} borderRadius={11} />
+        <Skeleton width={60} height={24} borderRadius={12} />
       </View>
       <Skeleton height={18} style={{ marginTop: 10 }} />
       <Skeleton width="60%" height={13} style={{ marginTop: 6 }} />
@@ -54,7 +54,7 @@ export function CardSkeleton() {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     marginBottom: 12,

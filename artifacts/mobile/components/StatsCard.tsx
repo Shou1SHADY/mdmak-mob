@@ -23,7 +23,7 @@ export function StatsCard({ title, value, icon, color, subtitle }: StatsCardProp
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
-          borderRadius: colors.radius,
+          borderRadius: colors.radiusXl,
           padding: colors.spacing.base,
           gap: colors.spacing.xs,
         },
@@ -32,9 +32,8 @@ export function StatsCard({ title, value, icon, color, subtitle }: StatsCardProp
       <View
         style={[
           styles.iconBox,
-          colors.shadow.sm,
           {
-            backgroundColor: accentColor + "12",
+            backgroundColor: accentColor + "14",
             borderRadius: colors.radiusMd,
             marginBottom: colors.spacing.xs,
           },
@@ -42,8 +41,8 @@ export function StatsCard({ title, value, icon, color, subtitle }: StatsCardProp
       >
         <Feather name={icon} size={20} color={accentColor} />
       </View>
-      <Text style={[styles.value, colors.typography.h1, { color: colors.foreground }]}>{value}</Text>
-      <Text style={[styles.title, colors.typography.caption, { color: colors.mutedForeground }]}>{title}</Text>
+      <Text style={[styles.value, { color: colors.foreground }]}>{value}</Text>
+      <Text style={[styles.title, colors.typography.caption, { color: colors.outline, textTransform: "uppercase" as const }]}>{title}</Text>
       {subtitle && (
         <Text style={[styles.subtitle, colors.typography.caption, { color: accentColor, fontWeight: "600" }]}>{subtitle}</Text>
       )}
@@ -56,12 +55,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   iconBox: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
-  value: { fontWeight: "700" as const },
+  value: { fontSize: 26, fontWeight: "700" as const, lineHeight: 32 },
   title: {},
   subtitle: {},
 });

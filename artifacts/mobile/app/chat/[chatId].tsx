@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, FlatList, StyleSheet, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView,
+  View, Text, FlatList, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import {
@@ -75,22 +75,17 @@ export default function ChatScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* Dark header */}
       <View
         style={[
-          styles.header,
-          {
-            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
-            backgroundColor: colors.primary,
-          },
+          { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 14, paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
         ]}
       >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={22} color="#F8FAFC" />
+        <TouchableOpacity onPress={() => router.back()} style={{ width: 34, height: 34, alignItems: "center", justifyContent: "center" }}>
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={styles.headerTitle}>{t.chat.title}</Text>
-          <Text style={styles.headerSub}>#{chatId?.slice(0, 8)}</Text>
+          <Text style={{ fontSize: 15, fontWeight: "700" as const, color: colors.foreground }}>{t.chat.title}</Text>
+          <Text style={{ fontSize: 11, color: colors.outline, marginTop: 1 }}>#{chatId?.slice(0, 8)}</Text>
         </View>
       </View>
 
@@ -98,28 +93,25 @@ export default function ChatScreen() {
         data={messages}
         keyExtractor={(item) => item.id}
         inverted
-        contentContainerStyle={styles.msgList}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16, gap: 6 }}
         renderItem={({ item }) => {
           const isMe = item.senderId === user?.uid;
           return (
-            <View style={[styles.msgRow, isMe ? styles.msgMe : styles.msgOther]}>
+            <View style={[isMe ? { justifyContent: "flex-end" } : { justifyContent: "flex-start" }, { flexDirection: "row", marginBottom: 4 }]}>
               <View
-                style={[
-                  styles.bubble,
-                  {
-                    backgroundColor: isMe ? colors.cta : colors.card,
-                    borderColor: isMe ? "transparent" : colors.border,
-                    borderWidth: isMe ? 0 : 1,
-                    borderRadius: isMe
-                      ? (isRTL
-                        ? { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 4, borderBottomRightRadius: 16 } as any
-                        : { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottomLeftRadius: 16, borderBottomRightRadius: 4 } as any)
-                      : 16,
-                  },
-                ]}
+                style={{
+                  backgroundColor: isMe ? colors.primary : colors.card,
+                  borderColor: isMe ? "transparent" : colors.border,
+                  borderWidth: isMe ? 0 : 1,
+                  borderRadius: 16,
+                  maxWidth: "74%",
+                  paddingHorizontal: 14,
+                  paddingVertical: 9,
+                  gap: 2,
+                }}
               >
-                <Text style={[styles.msgText, { color: isMe ? "#fff" : colors.foreground }]}>{item.text}</Text>
-                <Text style={[styles.msgTime, { color: isMe ? "rgba(255,255,255,0.6)" : colors.mutedForeground }]}>
+                <Text style={{ fontSize: 15, lineHeight: 21, color: isMe ? "#fff" : colors.foreground }}>{item.text}</Text>
+                <Text style={{ fontSize: 10, textAlign: isRTL ? "left" : "right", color: isMe ? "rgba(255,255,255,0.6)" : colors.outline }}>
                   {formatTime(item.timestamp)}
                 </Text>
               </View>
@@ -130,63 +122,53 @@ export default function ChatScreen() {
       />
 
       <View
-        style={[
-          styles.inputBar,
-          {
-            backgroundColor: colors.card,
-            borderTopColor: colors.border,
-            paddingBottom: insets.bottom + (Platform.OS === "web" ? 10 : 8),
-          },
-        ]}
+        style={{
+          flexDirection: "row",
+          alignItems: "flex-end",
+          gap: 10,
+          paddingHorizontal: 14,
+          paddingTop: 10,
+          paddingBottom: insets.bottom + (Platform.OS === "web" ? 10 : 8),
+          backgroundColor: colors.card,
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+        }}
       >
         <TextInput
-          style={[
-            styles.input,
-            {
-              color: colors.foreground,
-              backgroundColor: colors.background,
-              borderColor: colors.border,
-              borderRadius: colors.radiusSm,
-            },
-          ]}
+          style={{
+            flex: 1,
+            color: colors.foreground,
+            backgroundColor: colors.surfaceGray,
+            borderColor: colors.border,
+            borderRadius: 24,
+            borderWidth: 1.5,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            fontSize: 15,
+            maxHeight: 100,
+          }}
           placeholder={t.chat.typeMessage}
-          placeholderTextColor={colors.mutedForeground}
+          placeholderTextColor={colors.outline}
           value={text}
           onChangeText={setText}
           multiline
           maxLength={500}
         />
         <TouchableOpacity
-          style={[
-            styles.sendBtn,
-            {
-              backgroundColor: text.trim() ? colors.cta : colors.muted,
-              borderRadius: colors.radiusSm,
-            },
-          ]}
+          style={{
+            width: 42,
+            height: 42,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 12,
+            backgroundColor: text.trim() ? colors.primary : colors.surfaceGray,
+          }}
           onPress={sendMessage}
           disabled={!text.trim() || sending}
         >
-          <Feather name="send" size={17} color={text.trim() ? "#fff" : colors.mutedForeground} />
+          <Feather name="send" size={17} color={text.trim() ? "#fff" : colors.outline} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 14 },
-  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
-  headerTitle: { fontSize: 15, fontWeight: "700" as const, color: "#F8FAFC" },
-  headerSub: { fontSize: 11, color: "rgba(248,250,252,0.55)", marginTop: 1 },
-  msgList: { paddingHorizontal: 16, paddingVertical: 16, gap: 6 },
-  msgRow: { flexDirection: "row", marginBottom: 4 },
-  msgMe: { justifyContent: "flex-end" },
-  msgOther: { justifyContent: "flex-start" },
-  bubble: { maxWidth: "74%", borderRadius: 16, paddingHorizontal: 14, paddingVertical: 9, gap: 2 },
-  msgText: { fontSize: 15, lineHeight: 21 },
-  msgTime: { fontSize: 10, textAlign: "right" },
-  inputBar: { flexDirection: "row", alignItems: "flex-end", gap: 10, paddingHorizontal: 14, paddingTop: 10, borderTopWidth: 1 },
-  input: { flex: 1, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, maxHeight: 100 },
-  sendBtn: { width: 42, height: 42, alignItems: "center", justifyContent: "center" },
-});

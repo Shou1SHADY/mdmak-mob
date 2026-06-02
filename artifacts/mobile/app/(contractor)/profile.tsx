@@ -43,9 +43,7 @@ export default function ContractorProfileScreen() {
   };
 
   const handleSignOut = async () => {
-    console.log("[Profile] Signing out...");
     await logout();
-    console.log("[Profile] Logged out, navigating to login");
     router.replace("/auth/login");
   };
 
@@ -68,7 +66,6 @@ export default function ContractorProfileScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Dark hero header */}
       <View
         style={[
           styles.heroHeader,
@@ -79,13 +76,13 @@ export default function ContractorProfileScreen() {
         ]}
       >
         <View style={styles.avatarSection}>
-          <View style={[styles.avatar, { backgroundColor: "rgba(32,203,213,0.18)", borderColor: colors.accent, borderWidth: 2 }]}>
+          <View style={[styles.avatar, { backgroundColor: "rgba(238,242,255,0.18)", borderColor: colors.accentPurpleSoft, borderWidth: 2 }]}>
             <Text style={styles.avatarText}>{organization?.name?.charAt(0)?.toUpperCase() ?? "C"}</Text>
           </View>
-          <Text style={[styles.name, { color: "#F8FAFC" }]}>{organization?.name ?? user?.displayName}</Text>
-          <Text style={[styles.email, { color: "rgba(248,250,252,0.6)" }]}>{user?.email}</Text>
-          <View style={[styles.roleBadge, { backgroundColor: colors.accent + "20", borderColor: colors.accent + "50", borderWidth: 1 }]}>
-            <Text style={[styles.roleText, { color: colors.accent }]}>{t.auth.register.contractor}</Text>
+          <Text style={[styles.name, { color: "#FFFFFF" }]}>{organization?.name ?? user?.displayName}</Text>
+          <Text style={[styles.email, { color: "rgba(255,255,255,0.6)" }]}>{user?.email}</Text>
+          <View style={[styles.roleBadge, { backgroundColor: colors.accentBlueSoft + "30", borderColor: colors.accentPurpleSoft + "50", borderWidth: 1 }]}>
+            <Text style={[styles.roleText, { color: colors.accentPurpleSoft }]}>{t.auth.register.contractor}</Text>
           </View>
         </View>
       </View>
@@ -94,12 +91,11 @@ export default function ContractorProfileScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 80 }]}
       >
-        {/* Company Info */}
         <Card>
           <View style={styles.cardHeader}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.profile.organization}</Text>
             <TouchableOpacity onPress={() => setEditing(!editing)}>
-              <Feather name={editing ? "x" : "edit-2"} size={18} color={colors.cta} />
+              <Feather name={editing ? "x" : "edit-2"} size={18} color={colors.primary} />
             </TouchableOpacity>
           </View>
           {editing ? (
@@ -113,15 +109,15 @@ export default function ContractorProfileScreen() {
             <View style={styles.infoGrid}>
               {[
                 { icon: "briefcase" as const, label: t.profile.organization, value: organization?.name },
-                { icon: "hash" as const, label: t.profile.crNumber, value: organization?.crNumber ?? "Not set" },
+                { icon: "hash" as const, label: t.profile.crNumber, value: organization?.crNumber ?? t.profile.notSet },
                 { icon: "map-pin" as const, label: t.profile.city, value: organization?.city ?? user?.city },
                 { icon: "mail" as const, label: t.auth.login.email, value: user?.email },
               ].map((item) => (
                 <View key={item.label} style={styles.infoRow}>
-                  <Feather name={item.icon} size={15} color={colors.mutedForeground} />
+                  <Feather name={item.icon} size={15} color={colors.outline} />
                   <View>
-                    <Text style={[styles.infoLabel, { color: colors.mutedForeground }]}>{item.label}</Text>
-                    <Text style={[styles.infoValue, { color: colors.foreground }]}>{item.value ?? "—"}</Text>
+                    <Text style={[styles.infoLabel, { color: colors.outline }]}>{item.label}</Text>
+                    <Text style={[styles.infoValue, { color: colors.foreground }]}>{item.value ?? "\u2014"}</Text>
                   </View>
                 </View>
               ))}
@@ -129,7 +125,6 @@ export default function ContractorProfileScreen() {
           )}
         </Card>
 
-        {/* Menu */}
         <Card>
           {menuItems.map((item, i) => (
             <TouchableOpacity
@@ -142,7 +137,7 @@ export default function ContractorProfileScreen() {
             >
               <Feather name={item.icon} size={18} color={colors.foreground} />
               <Text style={[styles.menuLabel, { color: colors.foreground }]}>{item.label}</Text>
-              <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+              <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={16} color={colors.outline} />
             </TouchableOpacity>
           ))}
         </Card>
@@ -154,10 +149,10 @@ export default function ContractorProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  heroHeader: { paddingHorizontal: 16, paddingBottom: 20 },
+  heroHeader: { paddingHorizontal: 16, paddingBottom: 24 },
   avatarSection: { alignItems: "center", gap: 8, paddingVertical: 12 },
   avatar: { width: 80, height: 80, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 32, fontWeight: "700" as const, color: "#20CBD5" },
+  avatarText: { fontSize: 32, fontWeight: "700" as const, color: "#EEF2FF" },
   name: { fontSize: 20, fontWeight: "700" as const },
   email: { fontSize: 13 },
   roleBadge: { borderRadius: 12, paddingHorizontal: 14, paddingVertical: 5 },
@@ -168,7 +163,7 @@ const styles = StyleSheet.create({
   form: { gap: 12 },
   infoGrid: { gap: 14 },
   infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  infoLabel: { fontSize: 12 },
+  infoLabel: { fontSize: 11, fontWeight: "600" as const, textTransform: "uppercase" as const, letterSpacing: 0.5 },
   infoValue: { fontSize: 15, fontWeight: "500" as const },
   menuRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 14 },
   menuLabel: { flex: 1, fontSize: 15 },

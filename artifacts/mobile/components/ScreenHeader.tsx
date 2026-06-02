@@ -2,9 +2,11 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Platform, ViewStyle } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
+import { Image } from "expo-image";
 
 interface ScreenHeaderProps {
   title: string;
@@ -23,8 +25,10 @@ export function ScreenHeader({ title, subtitle, showBack = false, right, style }
       style={[
         styles.container,
         {
-          backgroundColor: colors.primary,
+          backgroundColor: colors.surface,
           paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
         },
         style,
       ]}
@@ -32,14 +36,14 @@ export function ScreenHeader({ title, subtitle, showBack = false, right, style }
       <View style={styles.row}>
         {showBack ? (
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather name="arrow-left" size={22} color="#F8FAFC" />
+            <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 34 }} />
         )}
         <View style={styles.center}>
-          <Text style={styles.title} numberOfLines={1}>{title}</Text>
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={1}>{title}</Text>
+          {subtitle && <Text style={[styles.subtitle, { color: colors.outline }]}>{subtitle}</Text>}
         </View>
         <View style={styles.rightSlot}>{right ?? <View style={{ width: 34 }} />}</View>
       </View>
@@ -47,7 +51,6 @@ export function ScreenHeader({ title, subtitle, showBack = false, right, style }
   );
 }
 
-/** Transparent version for scroll-over-header patterns */
 export function DashboardHeader({
   orgName,
   userName,
@@ -69,41 +72,112 @@ export function DashboardHeader({
   return (
     <View
       style={[
-        styles.dashContainer,
         {
-          backgroundColor: colors.primary,
           paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
-          borderBottomWidth: 2,
-          borderBottomColor: colors.accent,
+          backgroundColor: colors.surfaceSecondary,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
         },
         style,
       ]}
     >
-      <View style={[styles.dashInner, { marginTop: colors.spacing.sm }]}>
-        <View style={{ flex: 1 }}>
-          <Text
-            style={[
-              styles.greeting,
-              colors.typography.caption,
-              { textAlign: isRTL ? "right" : "left", marginBottom: colors.spacing.xs },
-            ]}
-          >
-            {t.dashboard.welcome}
-          </Text>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Text style={[styles.orgName, colors.typography.h3, { flexShrink: 1 }]} numberOfLines={1}>
-              {orgName ?? userName ?? ""}
+      <View style={[styles.dashInner, { paddingHorizontal: 16, paddingBottom: 12, marginTop: 6 }]}>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, marginRight: 12 }}>
+          <View style={[styles.avatarRing, { borderColor: colors.accent }]}>
+            <Image
+              source={require("@/assets/images/figma/user-profile.png")}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontFamily: "HankenGrotesk_700Bold",
+                fontSize: 22,
+                letterSpacing: -0.4,
+                color: colors.foreground,
+              }}
+              numberOfLines={1}
+            >
+              {orgName ?? userName ?? "Mdmak Tech"}
             </Text>
-            {orgType ? (
-              <View style={[styles.orgBadge, { backgroundColor: colors.accent }]}>
-                <Text style={styles.orgBadgeText}>{orgType}</Text>
-              </View>
-            ) : null}
           </View>
         </View>
-        {right}
+        <View style={{ flexDirection: "row", gap: 8, alignItems: "center", paddingLeft: 4 }}>
+          {right}
+        </View>
       </View>
     </View>
+  );
+}
+
+export function WelcomeHeroCard({
+  userName,
+  activeRfqs,
+  totalOffers,
+  onAction,
+  actionLabel,
+}: {
+  userName?: string;
+  activeRfqs?: number;
+  totalOffers?: number;
+  onAction?: () => void;
+  actionLabel?: string;
+}) {
+  const colors = useColors();
+
+  return (
+    <LinearGradient
+      colors={colors.gradientPrimary}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.heroCard, colors.shadow.md]}
+    >
+      <Text style={[styles.heroTitle, { fontFamily: "HankenGrotesk_700Bold" }]}>
+        Hello, {userName ?? "there"}
+      </Text>
+      <Text style={styles.heroDesc}>
+        You have <Text style={{ fontFamily: "Inter_700Bold", color: "#FFFFFF" }}>{activeRfqs ?? 0} active RFQs</Text> with <Text style={{ fontFamily: "Inter_700Bold", color: "#FFFFFF" }}>{totalOffers ?? 0} offers</Text> to review. Stay on top of your procurement.
+      </Text>
+      {onAction && (
+        <TouchableOpacity
+          style={styles.heroBtn}
+          onPress={onAction}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.heroBtnText}>{actionLabel ?? "View All RFQs"}</Text>
+          <Feather name="arrow-right" size={14} color={colors.cta} />
+        </TouchableOpacity>
+      )}
+    </LinearGradient>
+  );
+}
+
+export function QuickActionCard({
+  title,
+  icon,
+  bgColor,
+  onPress,
+}: {
+  title: string;
+  icon: keyof typeof Feather.glyphMap;
+  bgColor: string;
+  onPress?: () => void;
+}) {
+  const colors = useColors();
+
+  return (
+    <TouchableOpacity
+      style={[styles.quickActionCard, { backgroundColor: colors.card, borderColor: colors.border, ...colors.shadow.card }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.quickActionIcon, { backgroundColor: bgColor }]}>
+        <Feather name={icon} size={20} color={bgColor === colors.accentBlueSoft ? colors.primary : colors.secondary} />
+      </View>
+      <Text style={[styles.quickActionTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{title}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -123,37 +197,89 @@ const styles = StyleSheet.create({
     height: 34,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: 10,
   },
   center: { flex: 1, alignItems: "center" },
   title: {
     fontSize: 17,
     fontWeight: "700" as const,
-    color: "#F8FAFC",
   },
   subtitle: {
     fontSize: 12,
-    color: "rgba(248,250,252,0.65)",
     marginTop: 1,
   },
   rightSlot: { width: 34, alignItems: "flex-end" },
-
-  dashContainer: { paddingHorizontal: 16, paddingBottom: 20 },
   dashInner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  greeting: { color: "rgba(248,250,252,0.6)" },
-  orgName: { color: "#F8FAFC" },
-  orgBadge: {
-    marginLeft: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+  avatarRing: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
-  orgBadgeText: {
-    fontSize: 11,
-    fontWeight: "600" as const,
-    color: "#F8FAFC",
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  heroCard: {
+    padding: 20,
+    borderRadius: 12,
+    gap: 8,
+    overflow: "hidden",
+  },
+  heroTitle: {
+    fontSize: 26,
+    letterSpacing: -0.52,
+    color: "#FFFFFF",
+  },
+  heroDesc: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    lineHeight: 21,
+    color: "rgba(239,239,255,0.8)",
+  },
+  heroBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  heroBtnText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 12,
+    letterSpacing: 0.6,
+    color: "#0369A1",
+  },
+  quickActionCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
+    alignItems: "center",
+  },
+  quickActionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quickActionTitle: {
+    fontSize: 12,
+    letterSpacing: 0.6,
+    textAlign: "center",
   },
 });

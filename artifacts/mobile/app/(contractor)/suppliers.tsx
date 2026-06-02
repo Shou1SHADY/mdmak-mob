@@ -44,7 +44,7 @@ export default function SuppliersScreen() {
       const snap = await getDocs(q);
       const items = snap.docs.map((d) => ({
         id: d.id,
-        name: d.data().orgName ?? d.data().displayName ?? "Unknown",
+        name: d.data().orgName ?? d.data().displayName ?? t.common.unknown,
         city: d.data().city,
         specializations: d.data().specializations,
         serviceAreas: d.data().serviceAreas,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   list: { padding: 16, gap: 12 },
   card: { marginBottom: 12, gap: 12 },
   cardTop: { flexDirection: "row", gap: 14, alignItems: "center" },
-  avatar: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 48, height: 48, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   avatarText: { fontSize: 20, fontWeight: "700" as const },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   supplierName: { fontSize: 16, fontWeight: "700" as const },

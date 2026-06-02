@@ -7,8 +7,13 @@ import {
   sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCredential,
   User as FirebaseUser,
+  AuthErrorCodes,
 } from "firebase/auth";
+import { Platform } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import { makeRedirectUri, AuthRequest, ResponseType } from "expo-auth-session";
 import {
   doc,
   getDoc,
@@ -16,6 +21,14 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_SCOPES = ["openid", "profile", "email"];
+
+const GOOGLE_DISCOVERY = {
+  authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
+};
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
@@ -76,6 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const googleClientId = process.env.EXPO_PUBLIC_FIREBASE_CLIENT_ID;
 
   async function loadUserData(firebaseUser: FirebaseUser) {
     console.log("[Auth] loadUserData called for uid:", firebaseUser.uid);
@@ -220,26 +235,102 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signInWithGoogle(): Promise<AppUser> {
     console.log("[Auth] signInWithGoogle called");
-    const provider = new GoogleAuthProvider();
-    provider.addScope("profile");
-    provider.addScope("email");
 
-    const result = await signInWithPopup(auth, provider);
-    const fbUser = result.user;
-    console.log("[Auth] Google sign-in succeeded, uid:", fbUser.uid);
+    if (Platform.OS === "web") {
+      const provider = new GoogleAuthProvider();
+      provider.addScope("profile");
+      provider.addScope("email");
 
+      const result = await signInWithPopup(auth, provider);
+      const fbUser = result.user;
+      console.log("[Auth] Google sign-in succeeded, uid:", fbUser.uid);
+
+      let appUser = await loadUserData(fbUser);
+
+      if (!appUser) {
+        console.log("[Auth] New Google user, creating profile");
+        const organizationId = generateId();
+        const displayName = fbUser.displayName || fbUser.email?.split("@")[0] || "User";
+        const role: UserRole = "Contractor";
+
+        await setDoc(doc(db, "users", fbUser.uid), {
+          email: fbUser.email,
+          name: displayName,
+          role,
+          organizationId,
+          organizationRole: "owner",
+          companyName: displayName,
+          city: "",
+          profileCompleted: false,
+          createdAt: serverTimestamp(),
+        });
+
+        appUser = await loadUserData(fbUser);
+      }
+
+      if (!appUser) {
+        await signOut(auth);
+        throw new Error("Failed to set up user profile.");
+      }
+
+      return appUser;
+    }
+
+    if (!googleClientId) {
+      throw new Error(
+        "Google sign-in is not configured. Set EXPO_PUBLIC_FIREBASE_CLIENT_ID in your .env file."
+      );
+    }
+
+    const redirectUri = makeRedirectUri();
+    const authRequest = new AuthRequest({
+      clientId: googleClientId,
+      redirectUri,
+      scopes: GOOGLE_SCOPES,
+      responseType: ResponseType.IdToken,
+    });
+
+    const result = await authRequest.promptAsync(GOOGLE_DISCOVERY);
+    if (result.type !== "success") {
+      throw new Error(result.type === "cancel" ? "User cancelled Google sign-in." : "Google sign-in failed.");
+    }
+
+    const idToken = result.params.id_token;
+    if (!idToken) {
+      throw new Error("No ID token received from Google.");
+    }
+
+    const credential = GoogleAuthProvider.credential(idToken);
+    await signInWithCredential(auth, credential);
+
+    await new Promise<void>((resolve) => {
+      const check = setInterval(() => {
+        if (auth.currentUser) {
+          clearInterval(check);
+          resolve();
+        }
+      }, 200);
+      setTimeout(() => {
+        clearInterval(check);
+        resolve();
+      }, 15000);
+    });
+
+    if (!auth.currentUser) {
+      throw new Error("Google sign-in completed but authentication failed.");
+    }
+
+    const fbUser = auth.currentUser;
     let appUser = await loadUserData(fbUser);
 
     if (!appUser) {
-      console.log("[Auth] New Google user, creating profile");
       const organizationId = generateId();
       const displayName = fbUser.displayName || fbUser.email?.split("@")[0] || "User";
-      const role: UserRole = "Contractor";
 
       await setDoc(doc(db, "users", fbUser.uid), {
         email: fbUser.email,
         name: displayName,
-        role,
+        role: "Contractor",
         organizationId,
         organizationRole: "owner",
         companyName: displayName,

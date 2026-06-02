@@ -97,7 +97,7 @@ export default function SupplierProfileScreen() {
         </View>
         {editingSpecs ? (
           <View style={{ gap: 14 }}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>Select categories you supply:</Text>
+            <Text style={[styles.label, { color: colors.mutedForeground }]}>{t.supplierProfile.selectCategories}</Text>
             <View style={styles.chipsGrid}>
               {CATEGORIES.map((cat) => (
                 <TouchableOpacity
@@ -134,7 +134,7 @@ export default function SupplierProfileScreen() {
                 ))}
               </View>
             ) : (
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No specializations added yet</Text>
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.supplierProfile.noSpecializations}</Text>
             )}
           </View>
         )}
@@ -154,7 +154,7 @@ export default function SupplierProfileScreen() {
           >
             <Feather name={item.icon} size={18} color={colors.foreground} />
             <Text style={[styles.menuLabel, { color: colors.foreground }]}>{item.label}</Text>
-            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+            <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         ))}
       </Card>
@@ -167,8 +167,8 @@ export default function SupplierProfileScreen() {
 const styles = StyleSheet.create({
   container: { padding: 16, gap: 16 },
   avatarSection: { alignItems: "center", gap: 8, paddingVertical: 16 },
-  avatar: { width: 80, height: 80, borderRadius: 22, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 32, fontWeight: "700" as const, color: "#fff" },
+  avatar: { width: 80, height: 80, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  avatarText: { fontSize: 32, fontWeight: "700" as const, color: "#FFFFFF" },
   name: { fontSize: 22, fontWeight: "700" as const },
   email: { fontSize: 14 },
   badges: { flexDirection: "row", gap: 8 },

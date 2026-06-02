@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl, Platform,
+  View, Text, FlatList, TouchableOpacity, RefreshControl, Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
@@ -66,16 +66,18 @@ export default function MyOffersScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{t.dashboard.myOffers}</Text>
+      <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+          {t.dashboard.myOffers}
+        </Text>
         <View style={styles.filterRow}>
-          {[{ id: "all", label: "All" /* TODO: i18n */ }, ...OFFER_STATUSES].map((s) => (
+          {[{ id: "all", label: t.common.all }, ...OFFER_STATUSES].map((s) => (
             <TouchableOpacity
               key={s.id}
               style={[styles.filterChip, { backgroundColor: statusFilter === s.id ? colors.primary : colors.card, borderColor: statusFilter === s.id ? colors.primary : colors.border }]}
               onPress={() => setStatusFilter(s.id)}
             >
-              <Text style={[styles.filterText, { color: statusFilter === s.id ? "#fff" : colors.mutedForeground }]}>{s.label}</Text>
+              <Text style={[styles.filterText, { color: statusFilter === s.id ? "#fff" : colors.onSurfaceVariant }]}>{s.id === "all" ? s.label : (isRTL && (s as any).labelAr ? (s as any).labelAr : s.label)}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -90,7 +92,7 @@ export default function MyOffersScreen() {
           renderItem={({ item }) => <OfferCard offer={item} />}
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 80) }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchOffers(); }} tintColor={colors.primary} />}
-          ListEmptyComponent={<EmptyState icon="tag" title={t.dashboard.noOffers} subtitle={statusFilter !== "all" ? "No offers with this status" /* TODO: i18n */ : t.dashboard.noOffersDesc} />}
+          ListEmptyComponent={<EmptyState icon="tag" title={t.dashboard.noOffers} subtitle={statusFilter !== "all" ? t.offers.noOffersWithStatus : t.dashboard.noOffersDesc} />}
           scrollEnabled={!!filtered.length}
         />
       )}
@@ -98,11 +100,11 @@ export default function MyOffersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  topBar: { paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, gap: 12 },
+const styles = {
+  topBar: { paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, gap: 12 } as any,
   title: { fontSize: 24, fontWeight: "700" as const },
-  filterRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  filterChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6 },
+  filterRow: { flexDirection: "row" as const, gap: 8, flexWrap: "wrap" as const },
+  filterChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6 } as any,
   filterText: { fontSize: 12, fontWeight: "500" as const },
   list: { padding: 16 },
-});
+};

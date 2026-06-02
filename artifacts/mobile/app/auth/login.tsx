@@ -12,6 +12,8 @@ import {
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
@@ -92,10 +94,12 @@ export default function LoginScreen() {
       pendingRef.current = true;
     } catch (err: any) {
       if (err.code === "auth/popup-closed-by-user") return;
-      console.log("[Login] Google error:", err.code, err.message);
+      if (err.message?.includes("cancelled") || err.message?.includes("cancel")) return;
       const msg =
         err.code === "auth/popup-blocked"
-          ? "Pop-up blocked. Please allow pop-ups for this site."
+          ? t.auth.login.popupBlocked
+          : err.message?.includes("not configured")
+          ? t.auth.login.comingSoon
           : err.message || t.auth.errors.genericLogin;
       Alert.alert(t.auth.login.title, msg);
     } finally {
@@ -107,23 +111,44 @@ export default function LoginScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.hero, { backgroundColor: colors.primary, paddingTop: topPad + 32 }]}>
-        <View style={[styles.logoRing, { borderColor: colors.accent }]}>
-          <Text style={styles.logoGlyph}>م</Text>
+      <LinearGradient
+        colors={colors.gradientPrimary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.heroGradient, { paddingTop: topPad + 32 }]}
+      >
+        <View style={[styles.heroBg, { opacity: 0.08 }]}>
+          <Image
+            source={require("@/assets/images/login.png")}
+            style={{ width: "100%", height: "100%" }}
+            contentFit="cover"
+          />
         </View>
-        <Text style={styles.appName}>{isRTL ? t.common.appNameAr : t.common.appName}</Text>
-        <Text style={styles.appNameAr}>{isRTL ? t.common.appName : t.common.appNameAr}</Text>
-        <Text style={styles.tagline}>{t.common.tagline}</Text>
-      </View>
+        <View style={styles.heroContent}>
+          <View style={[styles.logoBox, colors.shadow.logo]}>
+            <Image
+              source={require("@/assets/images/figma/mdmak-logo.png")}
+              style={styles.logoImage}
+              contentFit="contain"
+            />
+          </View>
+          <Text style={styles.appName}>
+            {isRTL ? t.common.appNameAr : t.common.appName}
+          </Text>
+          <Text style={styles.tagline}>{t.common.tagline}</Text>
+        </View>
+      </LinearGradient>
 
       <ScrollView
         style={{ flex: 1, marginTop: -20 }}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.card, { borderRadius: colors.radius, backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.auth.login.title}</Text>
-          <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>{t.auth.login.subtitle}</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, ...colors.shadow.lg }]}>
+          <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+            {t.auth.login.title}
+          </Text>
+          <Text style={[styles.cardSub, { color: colors.outline }]}>{t.auth.login.subtitle}</Text>
           <View style={styles.form}>
             <Input
               label={t.auth.login.email}
@@ -148,37 +173,59 @@ export default function LoginScreen() {
               placeholder={t.auth.login.passwordPlaceholder}
               isRTL={isRTL}
             />
-            <Button title={t.auth.login.signIn} onPress={handleLogin} loading={loading} fullWidth size="lg" />
+            <Button
+              title={t.auth.login.signIn}
+              onPress={handleLogin}
+              loading={loading}
+              fullWidth
+              size="lg"
+              style={colors.shadow.primary as any}
+            />
 
             <View style={[styles.separator, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.separatorText, { color: colors.mutedForeground, backgroundColor: colors.card }]}>
-                {t.common.or}
+              <Text style={[styles.separatorText, { color: colors.outline, backgroundColor: colors.card }]}>
+                {t.auth.login.continueWith}
               </Text>
             </View>
 
             <TouchableOpacity
-              style={[styles.googleBtn, { borderColor: colors.border, borderRadius: colors.radiusSm }]}
+              style={[styles.socialBtn, { borderColor: colors.border }]}
               onPress={handleGoogleSignIn}
               disabled={googleLoading}
               activeOpacity={0.7}
             >
               {googleLoading ? (
-                <ActivityIndicator size="small" color={colors.secondary} />
+                <ActivityIndicator size="small" color={colors.foreground} />
               ) : (
                 <>
-                  <Text style={styles.googleIcon}>G</Text>
-                  <Text style={[styles.googleText, { color: colors.foreground }]}>
-                    Continue with Google
+                  <View style={styles.googleIconContainer}>
+                    <Text style={styles.googleG}>G</Text>
+                  </View>
+                  <Text style={[styles.socialText, { color: colors.foreground }]}>
+                    {t.auth.login.continueWithGoogle}
                   </Text>
                 </>
               )}
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.socialBtn, { borderColor: colors.border }]}
+              activeOpacity={0.7}
+              onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoonApple)}
+            >
+              <View style={styles.appleIconContainer}>
+                <Text style={styles.appleIcon}></Text>
+              </View>
+              <Text style={[styles.socialText, { color: colors.foreground }]}>
+                {t.auth.login.continueWithApple}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <TouchableOpacity style={styles.link} onPress={() => router.push("/auth/register")}>
-          <Text style={[styles.linkText, { color: colors.mutedForeground }]}>
+        <TouchableOpacity style={[styles.link, { paddingBottom: insets.bottom + 40 }]} onPress={() => router.push("/auth/register")}>
+          <Text style={[styles.linkText, { color: colors.outline }]}>
             {t.auth.login.noAccount}{" "}
-            <Text style={{ color: colors.cta, fontWeight: "700" }}>{t.auth.login.signUp}</Text>
+            <Text style={{ color: colors.primary, fontWeight: "700" }}>{t.auth.login.signUp}</Text>
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -187,39 +234,55 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    alignItems: "center",
+  heroGradient: {
     paddingBottom: 48,
     paddingHorizontal: 24,
-    gap: 6,
+    overflow: "hidden",
+    position: "relative",
   },
-  logoRing: {
+  heroBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  heroContent: {
+    alignItems: "center",
+    gap: 10,
+  },
+  logoBox: {
     width: 72,
     height: 72,
-    borderRadius: 20,
-    borderWidth: 2,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.95)",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(32,203,213,0.15)",
-    marginBottom: 4,
   },
-  logoGlyph: { fontSize: 36, fontWeight: "700" as const, color: "#20CBD5" },
-  appName: { fontSize: 24, fontWeight: "800" as const, color: "#F8FAFC" },
-  appNameAr: { fontSize: 18, fontWeight: "700" as const, color: "#20CBD5", letterSpacing: 0 },
-  tagline: { fontSize: 13, color: "rgba(248,250,252,0.6)", textAlign: "center" },
+  logoImage: {
+    width: 44,
+    height: 44,
+  },
+  appName: {
+    fontFamily: "HankenGrotesk_700Bold",
+    fontSize: 24,
+    color: "#FFFFFF",
+  },
+  tagline: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    color: "rgba(255,255,255,0.6)",
+    textAlign: "center",
+  },
   scroll: { paddingHorizontal: 20, paddingTop: 4 },
   card: {
     padding: 24,
     borderWidth: 1,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
     gap: 4,
+    borderRadius: 24,
   },
-  cardTitle: { fontSize: 20, fontWeight: "700" as const },
-  cardSub: { fontSize: 14, marginBottom: 12 },
+  cardTitle: { fontSize: 24 },
+  cardSub: { fontFamily: "Inter_400Regular", fontSize: 14, marginBottom: 12 },
   form: { gap: 14 },
   separator: {
     borderBottomWidth: 1,
@@ -227,12 +290,14 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   separatorText: {
-    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    letterSpacing: 0.6,
     paddingHorizontal: 12,
     position: "relative",
     top: 8,
   },
-  googleBtn: {
+  socialBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -240,15 +305,33 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     paddingVertical: 14,
     minHeight: 48,
+    borderRadius: 24,
   },
-  googleIcon: {
+  googleIconContainer: {
+    width: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  googleG: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#4285F4",
+  },
+  appleIconContainer: {
+    width: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  appleIcon: {
     fontSize: 20,
-    fontWeight: "700" as const,
+    color: "#000",
   },
-  googleText: {
+  socialText: {
+    fontFamily: "Inter_600SemiBold",
     fontSize: 15,
-    fontWeight: "600" as const,
   },
   link: { alignItems: "center", paddingVertical: 20 },
-  linkText: { fontSize: 14 },
+  linkText: { fontFamily: "Inter_400Regular", fontSize: 14 },
 });

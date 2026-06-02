@@ -51,13 +51,15 @@ export function Input({
 
   const borderColor = borderAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [colors.border, error ? colors.destructive : colors.accent],
+    outputRange: [colors.border, error ? colors.destructive : colors.primary],
   });
 
   const sp = colors.spacing;
   const typo = colors.typography;
 
   const hasMessage = !!error || !!helperText;
+
+  const iconSize = 16;
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -67,8 +69,10 @@ export function Input({
             fontSize: typo.label.fontSize,
             fontWeight: typo.label.fontWeight,
             lineHeight: typo.label.lineHeight,
-            color: colors.secondary,
+            letterSpacing: typo.label.letterSpacing,
+            color: colors.onSurfaceVariant,
             textAlign: isRTL ? "right" : "left",
+            textTransform: "uppercase",
           }}
         >
           {label}
@@ -80,38 +84,36 @@ export function Input({
           styles.inputContainer,
           {
             borderColor,
-            backgroundColor: colors.card,
-            borderRadius: colors.radiusSm,
-            borderWidth: focused ? 2 : 1.5,
-            minHeight: 48,
-            paddingHorizontal: sp.base,
+            backgroundColor: colors.surfaceGray,
+            borderRadius: colors.radius3xl,
+            borderWidth: focused ? 2 : 1,
+            minHeight: 52,
+            paddingHorizontal: 16,
           },
-          focused ? colors.shadow.sm : colors.shadow.none,
         ]}
       >
         {leftIcon && (
-          <Feather
-            name={leftIcon}
-            size={17}
-            color={focused ? colors.accent : colors.mutedForeground}
-            style={{
-              marginRight: isRTL ? 0 : sp.sm,
-              marginLeft: isRTL ? sp.sm : 0,
-            }}
-          />
+          <View style={{ marginRight: isRTL ? 0 : 8, marginLeft: isRTL ? 8 : 0 }}>
+            <Feather
+              name={leftIcon}
+              size={iconSize}
+              color={focused ? colors.primary : colors.outline}
+            />
+          </View>
         )}
         <TextInput
           style={[
             styles.input,
             {
-              fontSize: typo.body.fontSize,
-              lineHeight: typo.body.lineHeight,
+              fontSize: typo.bodySm.fontSize,
+              lineHeight: typo.bodySm.lineHeight,
               color: colors.foreground,
               textAlign: isRTL ? "right" : "left",
+              writingDirection: isRTL ? "rtl" : "ltr",
             },
             style,
           ]}
-          placeholderTextColor={colors.mutedForeground}
+          placeholderTextColor={colors.outline}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           accessibilityLabel={label}
@@ -121,13 +123,16 @@ export function Input({
         {rightIcon && (
           <TouchableOpacity
             onPress={onRightIconPress}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             style={{
-              padding: sp.xs,
-              marginLeft: isRTL ? 0 : sp.xs,
-              marginRight: isRTL ? sp.xs : 0,
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 6,
+              marginLeft: isRTL ? 0 : 2,
+              marginRight: isRTL ? 2 : 0,
             }}
           >
-            <Feather name={rightIcon} size={17} color={colors.mutedForeground} />
+            <Feather name={rightIcon} size={iconSize} color={colors.outline} />
           </TouchableOpacity>
         )}
       </Animated.View>
@@ -136,7 +141,7 @@ export function Input({
           style={{
             fontSize: typo.caption.fontSize,
             lineHeight: typo.caption.lineHeight,
-            color: error ? colors.destructive : colors.mutedForeground,
+            color: error ? colors.destructive : colors.outline,
             textAlign: isRTL ? "right" : "left",
             marginTop: sp.xs,
             marginLeft: sp.xs,
@@ -151,10 +156,10 @@ export function Input({
 }
 
 const styles = StyleSheet.create({
-  container: { gap: 6 },
+  container: { gap: 8 },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
-  input: { flex: 1, paddingVertical: 12 },
+  input: { flex: 1, paddingVertical: 14 },
 });

@@ -30,7 +30,7 @@ export function Card({
 
   const cardStyle: ViewStyle = {
     backgroundColor: glass ? "rgba(255,255,255,0.82)" : colors.card,
-    borderRadius: colors.radius,
+    borderRadius: colors.radiusXl,
     padding: colors.spacing.base,
     borderWidth: 1,
     borderColor: colors.border,

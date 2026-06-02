@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform,
+  View, Text, ScrollView, Alert, TouchableOpacity, Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -46,11 +46,10 @@ export default function SubmitOfferScreen() {
         updatedAt: serverTimestamp(),
       });
       Alert.alert(t.common.success, t.rfq.submitted, [
-        { text: "OK", onPress: () => router.back() },
+        { text: t.common.ok, onPress: () => router.back() },
       ]);
     } catch {
-      // TODO: i18n
-      Alert.alert(t.common.error, "Failed to submit offer. Please try again.");
+      Alert.alert(t.common.error, t.rfq.submitFailed);
     } finally {
       setLoading(false);
     }
@@ -58,25 +57,23 @@ export default function SubmitOfferScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.primary }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color="#F8FAFC" />
+      <View style={[{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14, paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={{ width: 34, height: 34, alignItems: "center", justifyContent: "center" }}>
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.rfq.submitOffer}</Text>
+        <Text style={{ fontSize: 17, fontWeight: "700" as const, color: colors.foreground }}>{t.rfq.submitOffer}</Text>
         <View style={{ width: 34 }} />
       </View>
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 60 }]} keyboardShouldPersistTaps="handled">
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {/* TODO: i18n */}
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Offer Details</Text>
-          {/* TODO: i18n */}
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-            Your offer will be submitted to the contractor for review.
+      <ScrollView contentContainerStyle={[{ padding: 16, gap: 16, paddingBottom: insets.bottom + 60 }]} keyboardShouldPersistTaps="handled">
+        <View style={[{ borderRadius: 16, padding: 18, borderWidth: 1, gap: 6, backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[{ fontSize: 18, fontWeight: "700" as const, color: colors.foreground }]}>{t.rfq.offerDetails}</Text>
+          <Text style={[{ fontSize: 14, lineHeight: 21, color: colors.outline }]}>
+            {t.rfq.offerSubmitInfo}
           </Text>
         </View>
 
-        <View style={styles.form}>
+        <View style={{ gap: 14 }}>
           <Input
             label={t.rfq.price}
             required
@@ -98,11 +95,10 @@ export default function SubmitOfferScreen() {
             style={{ height: 100, textAlignVertical: "top", paddingTop: 12 }}
           />
 
-          <View style={[styles.summaryCard, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
+          <View style={[{ borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: "row", gap: 10, alignItems: "flex-start", backgroundColor: colors.accentBlueSoft, borderColor: colors.primary + "30" }]}>
             <Feather name="info" size={16} color={colors.primary} />
-            {/* TODO: i18n */}
-            <Text style={[styles.summaryText, { color: colors.primary }]}>
-              Your price will be compared with other suppliers. The contractor will review and may accept, reject, or request a price reduction.
+            <Text style={[{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.primary }]}>
+              {t.rfq.offerPriceInfo}
             </Text>
           </View>
 
@@ -112,16 +108,3 @@ export default function SubmitOfferScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14 },
-  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
-  headerTitle: { fontSize: 17, fontWeight: "700" as const, color: "#F8FAFC" },
-  content: { padding: 16, gap: 16 },
-  card: { borderRadius: 16, padding: 18, borderWidth: 1, gap: 6 },
-  sectionTitle: { fontSize: 18, fontWeight: "700" as const },
-  subtitle: { fontSize: 14, lineHeight: 21 },
-  form: { gap: 14 },
-  summaryCard: { borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: "row", gap: 10, alignItems: "flex-start" },
-  summaryText: { flex: 1, fontSize: 13, lineHeight: 19 },
-});

@@ -62,7 +62,7 @@ export default function SupplierNotificationsScreen() {
     if (!ts) return "";
     try {
       const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleDateString("en-SA", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      return d.toLocaleDateString(isRTL ? "ar-SA" : "en-SA", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
     } catch { return ""; }
   };
 
@@ -95,7 +95,7 @@ export default function SupplierNotificationsScreen() {
             </View>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<EmptyState icon="bell" title="No notifications" subtitle="You're all caught up" />}
+        ListEmptyComponent={<EmptyState icon="bell" title={t.notifications.noNotifications} subtitle={t.notifications.allCaughtUp} />}
         scrollEnabled={!!notifications.length}
       />
     </View>

@@ -50,10 +50,12 @@ export default function ContractorChatsScreen() {
       <View
         style={[
           styles.topBar,
-          { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border },
+          { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.surface, borderBottomColor: colors.border },
         ]}
       >
-        <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{t.tabs.messages}</Text>
+        <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+          {t.tabs.messages}
+        </Text>
       </View>
       <FlatList
         data={chats}
@@ -67,14 +69,14 @@ export default function ContractorChatsScreen() {
               onPress={() => router.push(`/chat/${item.id}`)}
               activeOpacity={0.7}
             >
-              <View style={[styles.avatar, { backgroundColor: colors.primary + "20" }]}>
+              <View style={[styles.avatar, { backgroundColor: colors.accentBlueSoft }]}>
                 <Feather name="message-circle" size={22} color={colors.primary} />
               </View>
-              <View style={{ flex: 1, gap: 3 }}>
+              <View style={{ flex: 1, gap: 4 }}>
                 <Text style={[styles.chatTitle, { color: colors.foreground }]} numberOfLines={1}>
                   {item.rfqTitle ?? `RFQ #${item.rfqId.slice(0, 8)}`}
                 </Text>
-                <Text style={[styles.lastMsg, { color: colors.mutedForeground }]} numberOfLines={1}>
+                <Text style={[styles.lastMsg, { color: colors.outline }]} numberOfLines={1}>
                   {item.lastMessage ?? t.chat.noMessages}
                 </Text>
               </View>

@@ -18,6 +18,10 @@ export interface Translations {
     next: string;
     optional: string;
     all: string;
+    initializing: string;
+    secureGateway: string;
+    adminNotSupportedDesc: string;
+    unknown: string;
   };
   auth: {
     login: {
@@ -32,6 +36,13 @@ export interface Translations {
       hidePassword: string;
       emailPlaceholder: string;
       passwordPlaceholder: string;
+      continueWith: string;
+      continueWithGoogle: string;
+      continueWithApple: string;
+      comingSoon: string;
+      comingSoonMobile: string;
+      comingSoonApple: string;
+      popupBlocked: string;
     };
     register: {
       title: string;
@@ -102,6 +113,11 @@ export interface Translations {
     noOffersDesc: string;
     noOpenRfqs: string;
     noOpenRfqsDesc: string;
+    rfqOverview: string;
+    offersReceived: string;
+    thisMonth: string;
+    browseSuppliers: string;
+    browseOpenRfqs: string;
   };
   tabs: {
     dashboard: string;
@@ -125,6 +141,7 @@ export interface Translations {
     saveFailed: string;
     contact: string;
     organization: string;
+    notSet: string;
   };
   supplierProfile: {
     title: string;
@@ -133,6 +150,8 @@ export interface Translations {
     editSpecializations: string;
     verified: string;
     saveFailed: string;
+    selectCategories: string;
+    noSpecializations: string;
   };
   rfq: {
     createTitle: string;
@@ -182,6 +201,11 @@ export interface Translations {
     acceptOffer: string;
     rejectOffer: string;
     reduceOffer: string;
+    offerDetails: string;
+    offerSubmitInfo: string;
+    offerPriceInfo: string;
+    messageContractor: string;
+    submitFailed: string;
   };
   chat: {
     title: string;
@@ -189,6 +213,10 @@ export interface Translations {
     noMessages: string;
     noConversations: string;
     noConversationsDesc: string;
+  };
+  offers: {
+    title: string;
+    noOffersWithStatus: string;
   };
   notifications: {
     noNotifications: string;
@@ -219,6 +247,26 @@ export interface Translations {
     city: string;
     role: string;
     completeSetup: string;
+  };
+  welcome: {
+    skip: string;
+    step: string;
+    getStarted: string;
+    contactSales: string;
+    nextStep: string;
+    footer: string;
+    slide1Title: string;
+    slide1Desc: string;
+    slide2Title: string;
+    slide2Desc: string;
+    slide3Title: string;
+    slide3Desc: string;
+    trustedBy: string;
+    secured: string;
+    highPerformance: string;
+    secure: string;
+    fast: string;
+    optimizedCode: string;
   };
   errors: {
     generic: string;

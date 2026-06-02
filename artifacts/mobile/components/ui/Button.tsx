@@ -64,13 +64,12 @@ export function Button({
 
   const getContainerStyle = (): ViewStyle => {
     const base: ViewStyle = {
-      borderRadius: colors.radiusMd,
+      borderRadius: colors.radiusLg,
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",
       minHeight: 48,
       opacity: disabled ? 0.5 : 1,
-      ...colors.shadow.sm,
     };
     const sizes: Record<Size, ViewStyle> = {
       sm: { paddingHorizontal: colors.spacing.base, paddingVertical: colors.spacing.sm },
@@ -80,10 +79,12 @@ export function Button({
     const variants: Record<Variant, ViewStyle> = {
       primary: {
         backgroundColor: colors.cta,
-        borderWidth: 1,
-        borderColor: colors.primary,
+        ...colors.shadow.md,
       },
-      secondary: { backgroundColor: colors.muted },
+      secondary: {
+        backgroundColor: colors.accentBlueSoft,
+        ...colors.shadow.sm,
+      },
       ghost: { backgroundColor: "transparent" },
       destructive: { backgroundColor: colors.destructive },
       outline: {
@@ -103,7 +104,7 @@ export function Button({
   const getTextStyle = (): TextStyle => {
     const variants: Record<Variant, TextStyle> = {
       primary: { color: colors.ctaForeground },
-      secondary: { color: colors.secondary },
+      secondary: { color: colors.primary },
       ghost: { color: colors.cta },
       destructive: { color: colors.destructiveForeground },
       outline: { color: colors.foreground },

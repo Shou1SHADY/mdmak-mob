@@ -47,7 +47,7 @@ export default function TeamScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={24} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{t.team.title}</Text>
         <View style={{ width: 24 }} />

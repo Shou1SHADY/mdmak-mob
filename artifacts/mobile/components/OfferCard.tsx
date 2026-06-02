@@ -36,7 +36,7 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
   const { isRTL } = useLanguage();
   const statusInfo = OFFER_STATUSES.find((s) => s.id === offer.status) ?? {
     label: offer.status,
-    color: "#94a3b8",
+    color: "#747688",
   };
 
   const formatCurrency = (amount: string) =>
@@ -49,7 +49,8 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
-          borderRadius: colors.radius,
+          borderRadius: colors.radiusXl,
+          ...colors.shadow.sm,
         },
       ]}
       onPress={onPress}
@@ -57,15 +58,15 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
     >
       <View style={styles.topRow}>
         <View>
-          <Text style={[styles.priceLabel, { color: colors.mutedForeground }]}>{t.rfq.quotedPrice}</Text>
+          <Text style={[styles.priceLabel, { color: colors.outline, textTransform: "uppercase" }]}>{t.rfq.quotedPrice}</Text>
           <Text style={[styles.price, { color: colors.foreground }]}>{formatCurrency(offer.price)}</Text>
         </View>
         <StatusBadge label={statusInfo.label} color={statusInfo.color} />
       </View>
       {offer.supplierName && (
         <View style={styles.metaItem}>
-          <Feather name="briefcase" size={13} color={colors.mutedForeground} />
-          <Text style={[styles.metaText, { color: colors.secondary }]}>{offer.supplierName}</Text>
+          <Feather name="briefcase" size={13} color={colors.outline} />
+          <Text style={[styles.metaText, { color: colors.onSurfaceVariant }]}>{offer.supplierName}</Text>
         </View>
       )}
       {offer.rfqTitle && (
@@ -84,14 +85,9 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 8,
     marginBottom: 12,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  priceLabel: { fontSize: 11, fontWeight: "500" as const, marginBottom: 2 },
+  priceLabel: { fontSize: 11, fontWeight: "600" as const, letterSpacing: 0.5, marginBottom: 2 },
   price: { fontSize: 22, fontWeight: "700" as const },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 6 },
   metaText: { fontSize: 13, fontWeight: "500" as const },

@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebas
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
-import { useT } from "@/context/LanguageContext";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { OfferCard, OfferItem } from "@/components/OfferCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
@@ -20,6 +20,7 @@ export default function OrdersScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const t = useT();
+  const { isRTL } = useLanguage();
   const [orders, setOrders] = useState<OfferItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +57,7 @@ export default function OrdersScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color={colors.foreground} />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={24} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.foreground }]}>{t.orders.title}</Text>
         <View style={{ width: 24 }} />

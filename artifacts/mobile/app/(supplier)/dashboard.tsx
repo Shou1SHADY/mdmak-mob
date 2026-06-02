@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
-import { useT } from "@/context/LanguageContext";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { StatsCard } from "@/components/StatsCard";
 import { OfferCard, OfferItem } from "@/components/OfferCard";
@@ -16,12 +16,13 @@ import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { DashboardHeader } from "@/components/ScreenHeader";
+import { DashboardHeader, WelcomeHeroCard, QuickActionCard } from "@/components/ScreenHeader";
 
 export default function SupplierDashboard() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const t = useT();
+  const { isRTL } = useLanguage();
   const { user, organization } = useAuth();
   const [offers, setOffers] = useState<OfferItem[]>([]);
   const [recentRfqs, setRecentRfqs] = useState<RFQItem[]>([]);
@@ -69,10 +70,10 @@ export default function SupplierDashboard() {
         userName={user?.displayName}
         right={
           <TouchableOpacity
-            style={styles.bellBtn}
+            style={[styles.headerIconBtn, { backgroundColor: colors.accentBlueSoft }]}
             onPress={() => router.push("/(supplier)/notifications")}
           >
-            <Feather name="bell" size={19} color="#F8FAFC" />
+            <Feather name="bell" size={19} color={colors.primary} />
           </TouchableOpacity>
         }
       />
@@ -85,15 +86,38 @@ export default function SupplierDashboard() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); fetchData(); }}
-            tintColor={colors.accent}
+            tintColor={colors.primary}
           />
         }
       >
+        <WelcomeHeroCard
+          userName={user?.displayName}
+          activeRfqs={stats.openRfqs}
+          totalOffers={stats.totalOffers}
+          onAction={() => router.push("/(supplier)/rfqs")}
+          actionLabel={t.dashboard.browseOpenRfqs}
+        />
+
+        <View style={styles.quickActionsRow}>
+          <QuickActionCard
+            title={t.tabs.browseRfqs}
+            icon="search"
+            bgColor={colors.accentBlueSoft}
+            onPress={() => router.push("/(supplier)/rfqs")}
+          />
+          <QuickActionCard
+            title={t.dashboard.myOffers}
+            icon="tag"
+            bgColor={colors.accentPurpleSoft}
+            onPress={() => router.push("/(supplier)/offers")}
+          />
+        </View>
+
         <View style={styles.statsGrid}>
-          <StatsCard title={t.dashboard.myOffers} value={stats.totalOffers} icon="tag" color={colors.cta} />
+          <StatsCard title={t.dashboard.myOffers} value={stats.totalOffers} icon="tag" color={colors.primary} />
           <StatsCard title={t.dashboard.pending} value={stats.pending} icon="clock" color={colors.warning} />
           <StatsCard title={t.dashboard.accepted} value={stats.accepted} icon="check-circle" color={colors.success} />
-          <StatsCard title={t.dashboard.openRfqs} value={stats.openRfqs} icon="file-text" color={colors.accent} />
+          <StatsCard title={t.dashboard.openRfqs} value={stats.openRfqs} icon="file-text" color={colors.secondary} />
         </View>
 
         <SectionHeader title={t.dashboard.openRfqs} actionLabel={t.dashboard.browseAll} onAction={() => router.push("/(supplier)/rfqs")} />
@@ -117,14 +141,17 @@ export default function SupplierDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 18 },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  bellBtn: {
+  container: { padding: 16, gap: 16 },
+  headerIconBtn: {
     width: 36,
     height: 36,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(248,250,252,0.12)",
   },
+  quickActionsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
 });

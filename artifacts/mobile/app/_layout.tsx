@@ -3,8 +3,9 @@ import {
   Inter_500Medium,
   Inter_600SemiBold,
   Inter_700Bold,
-  useFonts,
+  useFonts as useInterFont,
 } from "@expo-google-fonts/inter";
+import { useFonts } from "expo-font";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -17,6 +18,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +28,7 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="welcome" />
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="auth/login" />
       <Stack.Screen name="auth/register" />
@@ -37,20 +40,27 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
+  const [interLoaded] = useInterFont({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
   });
 
+  const [hankenLoaded] = useFonts({
+    HankenGrotesk_400Regular: require("@/assets/fonts/HankenGrotesk_400Regular.ttf"),
+    HankenGrotesk_500Medium: require("@/assets/fonts/HankenGrotesk_500Medium.ttf"),
+    HankenGrotesk_600SemiBold: require("@/assets/fonts/HankenGrotesk_600SemiBold.ttf"),
+    HankenGrotesk_700Bold: require("@/assets/fonts/HankenGrotesk_700Bold.ttf"),
+  });
+
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if (interLoaded && hankenLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [interLoaded, hankenLoaded]);
 
-  if (!fontsLoaded && !fontError) return null;
+  if (!interLoaded || !hankenLoaded) return null;
 
   return (
     <SafeAreaProvider>
@@ -59,11 +69,13 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <KeyboardProvider>
               <ToastProvider>
-                <LanguageProvider>
-                  <AuthProvider>
-                    <RootLayoutNav />
-                  </AuthProvider>
-                </LanguageProvider>
+                <ThemeProvider>
+                  <LanguageProvider>
+                    <AuthProvider>
+                      <RootLayoutNav />
+                    </AuthProvider>
+                  </LanguageProvider>
+                </ThemeProvider>
               </ToastProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
