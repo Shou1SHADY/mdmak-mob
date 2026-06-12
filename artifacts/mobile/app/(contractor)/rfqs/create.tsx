@@ -1,13 +1,7 @@
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Alert,
-  TouchableOpacity,
-  Platform,
-  KeyboardAvoidingView,
+  View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform,
+  KeyboardAvoidingView, Dimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -20,6 +14,30 @@ import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { CATEGORIES, SAUDI_CITIES } from "@/constants/data";
+
+const { width: SCREEN_W } = Dimensions.get("window");
+const CARD_W = SCREEN_W > 400 ? 140 : 120;
+const CARD_H = 100;
+
+// Map category icons to Feather icons
+const ICON_MAP: Record<string, keyof typeof Feather.glyphMap> = {
+  iron_metals: "layers",
+  cement_concrete: "box",
+  bricks_blocks: "grid",
+  flooring_finishes: "square",
+  doors_windows: "sidebar",
+  electrical_lighting: "zap",
+  sanitary_plumbing: "droplet",
+  insulation_roofing: "home",
+  paints_colors: "pen-tool",
+  gypsum_ceilings: "minimize-2",
+  ready_mix: "truck",
+  equipment_machinery: "settings",
+  adhesives_chemicals: "box",
+  blacksmithing: "tool",
+  hvac: "wind",
+  wood: "feather",
+};
 
 export default function CreateRFQScreen() {
   const colors = useColors();
@@ -70,6 +88,9 @@ export default function CreateRFQScreen() {
 
   const totalSteps = 2;
 
+  const selectedCat = CATEGORIES.find((c) => c.label === category);
+  const isSmall = SCREEN_W < 375;
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -79,7 +100,7 @@ export default function CreateRFQScreen() {
         style={[
           styles.header,
           {
-            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
+            paddingTop: insets.top + (Platform.OS === "web" ? 48 : 10),
             backgroundColor: colors.surface,
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
@@ -100,6 +121,7 @@ export default function CreateRFQScreen() {
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         {step === 1 && (
           <View style={styles.form}>
@@ -124,34 +146,89 @@ export default function CreateRFQScreen() {
               isRTL={isRTL}
             />
 
-            <Text style={[styles.label, { color: colors.foreground }]}>{t.rfq.category} *</Text>
-            <View style={styles.grid}>
-              {CATEGORIES.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[
-                    styles.categoryChip,
-                    {
-                      borderColor: category === cat.label ? colors.primary : colors.border,
-                      backgroundColor: category === cat.label ? colors.accentBlueSoft : colors.card,
-                    },
-                  ]}
-                  onPress={() => setCategory(cat.label)}
-                >
-                  <Text
-                    style={[
-                      styles.categoryText,
-                      { color: category === cat.label ? colors.primary : colors.onSurfaceVariant },
-                    ]}
-                    numberOfLines={2}
+            {/* ── Category Selection ── */}
+            <View style={styles.catSection}>
+              <View style={[styles.catHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                <Text style={[styles.label, { color: colors.foreground }]}>{t.rfq.category}</Text>
+                <Text style={[styles.required, { color: colors.destructive }]}>*</Text>
+              </View>
+              {selectedCat && (
+                <View style={[styles.selectedChip, { backgroundColor: colors.primary + "12", borderColor: colors.primary }]}
                   >
-                    {isRTL ? cat.labelAr : cat.label}
+                  <Feather name={ICON_MAP[selectedCat.id] || "tag"} size={14} color={colors.primary} />
+                  <Text style={[styles.selectedChipText, { color: colors.primary }]}>
+                    {isRTL ? selectedCat.labelAr : selectedCat.label}
                   </Text>
-                </TouchableOpacity>
-              ))}
+                  <TouchableOpacity onPress={() => setCategory("")} style={{ padding: 2 }}>
+                    <Feather name="x" size={14} color={colors.primary} />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
-            <Button title={t.common.next} onPress={() => { if (!title.trim() || !category) { Alert.alert(t.rfq.missingTitle, t.rfq.fillTitleCategory); return; } setStep(2); }} fullWidth />
+            {/* Horizontal scrollable category cards */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.catScroll}
+              directionalLockEnabled
+            >
+              {CATEGORIES.map((cat) => {
+                const isActive = category === cat.label;
+                const icon = ICON_MAP[cat.id] || "tag";
+                return (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[
+                      styles.catCard,
+                      {
+                        width: isSmall ? 110 : CARD_W,
+                        height: isSmall ? 88 : CARD_H,
+                        backgroundColor: isActive ? colors.primary + "10" : colors.card,
+                        borderColor: isActive ? colors.primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => setCategory(isActive ? "" : cat.label)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.catIconBox, {
+                      backgroundColor: isActive ? colors.primary + "18" : colors.muted + "60",
+                    }]}>
+                      <Feather name={icon} size={20} color={isActive ? colors.primary : colors.outline} />
+                    </View>
+                    <Text
+                      style={[
+                        styles.catCardText,
+                        { color: isActive ? colors.primary : colors.foreground },
+                        isActive && { fontFamily: "Inter_600SemiBold" },
+                      ]}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
+                      {isRTL ? cat.labelAr : cat.label}
+                    </Text>
+                    {isActive && (
+                      <View style={[styles.checkMark, { backgroundColor: colors.primary }]}>
+                        <Feather name="check" size={10} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <Button
+              title={t.common.next}
+              onPress={() => {
+                if (!title.trim() || !category) {
+                  Alert.alert(t.rfq.missingTitle, t.rfq.fillTitleCategory);
+                  return;
+                }
+                setStep(2);
+              }}
+              fullWidth
+              size="lg"
+            />
           </View>
         )}
 
@@ -159,24 +236,64 @@ export default function CreateRFQScreen() {
           <View style={styles.form}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.rfq.locationTimeline}</Text>
 
-            <Text style={[styles.label, { color: colors.foreground }]}>{t.rfq.city} *</Text>
-            <View style={styles.cityGrid}>
-              {SAUDI_CITIES.map((c) => (
-                <TouchableOpacity
-                  key={c}
-                  style={[
-                    styles.cityChip,
-                    {
-                      borderColor: city === c ? colors.primary : colors.border,
-                      backgroundColor: city === c ? colors.primary : "transparent",
-                    },
-                  ]}
-                  onPress={() => setCity(c)}
-                >
-                  <Text style={[styles.cityText, { color: city === c ? "#fff" : colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{c}</Text>
-                </TouchableOpacity>
-              ))}
+            {/* ── City Selection ── */}
+            <View style={styles.catSection}>
+              <View style={[styles.catHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                <Text style={[styles.label, { color: colors.foreground }]}>{t.rfq.city}</Text>
+                <Text style={[styles.required, { color: colors.destructive }]}>*</Text>
+              </View>
+              {city && (
+                <View style={[styles.selectedChip, { backgroundColor: colors.cta + "12", borderColor: colors.cta }]}>
+                  <Feather name="map-pin" size={14} color={colors.cta} />
+                  <Text style={[styles.selectedChipText, { color: colors.cta }]}>{city}</Text>
+                  <TouchableOpacity onPress={() => setCity("")} style={{ padding: 2 }}>
+                    <Feather name="x" size={14} color={colors.cta} />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cityScroll}
+              directionalLockEnabled
+            >
+              {SAUDI_CITIES.map((c) => {
+                const isActive = city === c;
+                return (
+                  <TouchableOpacity
+                    key={c}
+                    style={[
+                      styles.cityCard,
+                      {
+                        backgroundColor: isActive ? colors.cta + "10" : colors.card,
+                        borderColor: isActive ? colors.cta : colors.border,
+                      },
+                    ]}
+                    onPress={() => setCity(isActive ? "" : c)}
+                    activeOpacity={0.75}
+                  >
+                    <Feather name="map-pin" size={14} color={isActive ? colors.cta : colors.outline} />
+                    <Text
+                      style={[
+                        styles.cityCardText,
+                        { color: isActive ? colors.cta : colors.foreground },
+                        isActive && { fontFamily: "Inter_600SemiBold" },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {c}
+                    </Text>
+                    {isActive && (
+                      <View style={[styles.checkMark, { backgroundColor: colors.cta }]}>
+                        <Feather name="check" size={10} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
 
             <Input
               label={t.rfq.deadlineOptional}
@@ -210,21 +327,143 @@ export default function CreateRFQScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14 },
-  backBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 10 },
-  headerTitle: { fontSize: 18, fontWeight: "700" as const },
-  stepLabel: { fontSize: 14 },
-  progressBar: { height: 3 },
-  progressFill: { height: 3, borderRadius: 2 },
-  content: { padding: 20 },
-  form: { gap: 16 },
-  sectionTitle: { fontSize: 20, fontWeight: "700" as const, marginBottom: 4 },
-  label: { fontSize: 14, fontWeight: "500" as const, textTransform: "uppercase" as const, letterSpacing: 0.5 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  categoryChip: { borderRadius: 12, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8, flexBasis: "47%", flexGrow: 1, minWidth: 120 },
-  categoryText: { fontSize: 13, fontWeight: "500" as const, textAlign: "center" },
-  cityGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  cityChip: { borderRadius: 24, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7, maxWidth: 140 },
-  cityText: { fontSize: 13, fontWeight: "500" as const },
-  btnRow: { flexDirection: "row", gap: 12, marginTop: 8 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    fontFamily: "HankenGrotesk_700Bold",
+  },
+  stepLabel: {
+    fontSize: 14,
+    fontFamily: "Inter_600SemiBold",
+  },
+  progressBar: {
+    height: 3,
+  },
+  progressFill: {
+    height: 3,
+    borderRadius: 2,
+  },
+  content: {
+    padding: 20,
+  },
+  form: {
+    gap: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    fontFamily: "HankenGrotesk_700Bold",
+    marginBottom: 4,
+  },
+
+  // Category section
+  catSection: {
+    gap: 10,
+  },
+  catHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.5,
+  },
+  required: {
+    fontSize: 14,
+    fontWeight: "700" as const,
+  },
+  selectedChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  selectedChipText: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+  },
+
+  // Category cards
+  catScroll: {
+    gap: 10,
+    paddingRight: 20,
+  },
+  catCard: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    padding: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  catIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  catCardText: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  checkMark: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // City cards
+  cityScroll: {
+    gap: 8,
+    paddingRight: 20,
+  },
+  cityCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 1.5,
+  },
+  cityCardText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+  },
+
+  btnRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
 });

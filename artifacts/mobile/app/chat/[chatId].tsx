@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView,
+  View, Text, FlatList, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView, Alert,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import {
-  collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, updateDoc, doc,
+  collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc, setDoc, getDoc,
 } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -32,31 +32,96 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [chatTitle, setChatTitle] = useState<string>("");
 
+  // Validate chatId
+  const validChatId = chatId && typeof chatId === "string" && chatId.length > 0;
+
+  // Load chat metadata
   useEffect(() => {
-    if (!chatId) return;
+    if (!validChatId) return;
+    const fetchChat = async () => {
+      try {
+        const chatDoc = await getDoc(doc(db, "chats", chatId));
+        if (chatDoc.exists()) {
+          setChatTitle(chatDoc.data().rfqTitle || `Chat #${chatId.slice(0, 8)}`);
+        } else {
+          setChatError("Chat not found");
+        }
+      } catch (e: any) {
+        console.warn("[Chat] Fetch chat error:", e);
+      }
+    };
+    fetchChat();
+  }, [validChatId, chatId]);
+
+  // Messages listener with error handling
+  useEffect(() => {
+    if (!validChatId) {
+      setChatError(t.common.error);
+      return;
+    }
     const q = query(
       collection(db, "messages"),
       where("chatId", "==", chatId),
       orderBy("timestamp", "desc")
     );
-    return onSnapshot(q, (snap) => {
-      setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)));
-    });
-  }, [chatId]);
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setChatError(null);
+        setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)));
+      },
+      (err) => {
+        console.error("[Chat] Messages listener error:", err);
+        setChatError(err.message || "Failed to load messages");
+      }
+    );
+    return unsub;
+  }, [validChatId, chatId, t.common.error]);
 
   const sendMessage = async () => {
     if (!text.trim() || sending) return;
+    if (!user?.uid) {
+      Alert.alert(t.common.error, "You must be signed in to send messages");
+      return;
+    }
+    if (!validChatId) {
+      Alert.alert(t.common.error, "Invalid chat ID");
+      return;
+    }
+
     const msg = text.trim();
     setText("");
     setSending(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      // 1. Create message
       await addDoc(collection(db, "messages"), {
-        chatId, senderId: user?.uid, text: msg,
-        timestamp: serverTimestamp(), read: false,
+        chatId,
+        senderId: user.uid,
+        text: msg,
+        timestamp: serverTimestamp(),
+        read: false,
       });
-      await updateDoc(doc(db, "chats", chatId), { lastMessage: msg, updatedAt: serverTimestamp() });
+
+      // 2. Update chat metadata (setDoc with merge creates if missing)
+      await setDoc(
+        doc(db, "chats", chatId),
+        {
+          lastMessage: msg,
+          updatedAt: serverTimestamp(),
+          lastMessageSenderId: user.uid,
+        },
+        { merge: true }
+      );
+    } catch (err: any) {
+      console.error("[Chat] Send failed:", err);
+      Alert.alert(t.common.error, err.message || "Failed to send message");
+      setText(msg); // restore text so user can retry
     } finally {
       setSending(false);
     }
@@ -75,19 +140,33 @@ export default function ChatScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      {/* Header */}
       <View
         style={[
-          { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 14, paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
+          { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 14, paddingTop: insets.top + (Platform.OS === "web" ? 48 : 10), backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
         ]}
       >
         <TouchableOpacity onPress={() => router.back()} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }} accessibilityLabel={t.common.back} accessibilityRole="button">
           <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1, marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
-          <Text style={{ fontSize: 15, fontWeight: "700" as const, color: colors.foreground, textAlign: isRTL ? "right" : "left" }} numberOfLines={1} ellipsizeMode="tail">{t.chat.title}</Text>
-          <Text style={{ fontSize: 11, color: colors.outline, marginTop: 1, textAlign: isRTL ? "right" : "left" }} numberOfLines={1}>#{chatId?.slice(0, 8)}</Text>
+          <Text style={{ fontSize: 15, fontWeight: "700" as const, color: colors.foreground, textAlign: isRTL ? "right" : "left" }} numberOfLines={1} ellipsizeMode="tail">
+            {chatTitle || t.chat.title}
+          </Text>
+          <Text style={{ fontSize: 11, color: colors.outline, marginTop: 1, textAlign: isRTL ? "right" : "left" }} numberOfLines={1}>
+            #{chatId?.slice(0, 8)}
+          </Text>
         </View>
       </View>
+
+      {/* Error banner */}
+      {chatError && (
+        <View style={{ backgroundColor: colors.destructive + "15", padding: 12, borderBottomWidth: 1, borderBottomColor: colors.destructive + "30" }}>
+          <Text style={{ color: colors.destructive, fontSize: 13, fontFamily: "Inter_500Medium", textAlign: "center" }}>
+            {chatError}
+          </Text>
+        </View>
+      )}
 
       <FlatList
         data={messages}
@@ -132,8 +211,19 @@ export default function ChatScreen() {
           );
         }}
         scrollEnabled={!!messages.length}
+        ListEmptyComponent={
+          !chatError ? (
+            <View style={{ alignItems: "center", paddingVertical: 40, gap: 8 }}>
+              <Feather name="message-circle" size={32} color={colors.outline} />
+              <Text style={{ color: colors.outline, fontSize: 14, fontFamily: "Inter_500Medium" }}>
+                {t.chat.noMessages}
+              </Text>
+            </View>
+          ) : null
+        }
       />
 
+      {/* Input area */}
       <View
         style={{
           flexDirection: "row",
@@ -181,11 +271,15 @@ export default function ChatScreen() {
             ...(text.trim() ? colors.shadow.md : {}),
           }}
           onPress={sendMessage}
-          disabled={!text.trim() || sending}
+          disabled={!text.trim() || sending || !validChatId}
           accessibilityLabel={t.common.send || "Send"}
           accessibilityRole="button"
         >
-          <Feather name="send" size={17} color={text.trim() ? "#FFFFFF" : colors.outline} />
+          {sending ? (
+            <Text style={{ color: text.trim() ? "#FFFFFF" : colors.outline, fontSize: 12 }}>…</Text>
+          ) : (
+            <Feather name="send" size={17} color={text.trim() ? "#FFFFFF" : colors.outline} />
+          )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
