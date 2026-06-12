@@ -1,19 +1,17 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, FlatList, StyleSheet, Platform,
+  View, FlatList, StyleSheet, Platform,
 } from "react-native";
-import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
-import { useT, useLanguage } from "@/context/LanguageContext";
+import { useT } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { OfferCard, OfferItem } from "@/components/OfferCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { router } from "expo-router";
-import { TouchableOpacity } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import { OFFER_STATUS } from "@/constants/data";
 
 export default function OrdersScreen() {
@@ -21,32 +19,40 @@ export default function OrdersScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const t = useT();
-  const { isRTL } = useLanguage();
   const [orders, setOrders] = useState<OfferItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrders = async () => {
-      if (!user?.organizationId) return;
+      if (!user?.organizationId) { setLoading(false); return; }
       try {
-        const q = query(
-          collection(db, "offers"),
-          where("organizationId", "==", user.organizationId),
-          where("status", "==", OFFER_STATUS.ACCEPTED),
-          orderBy("createdAt", "desc")
+        // No orderBy — avoids composite index requirement; filter + sort client-side
+        const snap = await getDocs(
+          query(
+            collection(db, "offers"),
+            where("organizationId", "==", user.organizationId),
+            where("status", "==", OFFER_STATUS.ACCEPTED)
+          )
         );
-        const snap = await getDocs(q);
         const items: OfferItem[] = await Promise.all(
-          snap.docs.map(async (d) => {
-            const offer = { id: d.id, ...d.data() } as OfferItem;
-            try {
-              const rfqDoc = await getDoc(doc(db, "rfqs", offer.rfqId));
-              if (rfqDoc.exists()) offer.rfqTitle = rfqDoc.data().title;
-            } catch {}
-            return offer;
-          })
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() } as OfferItem))
+            .sort((a, b) => {
+              const ta = typeof a.createdAt?.toDate === "function" ? a.createdAt.toDate().getTime() : 0;
+              const tb = typeof b.createdAt?.toDate === "function" ? b.createdAt.toDate().getTime() : 0;
+              return tb - ta;
+            })
+            .map(async (offer) => {
+              try {
+                const rfqDoc = await getDoc(doc(db, "rfqs", offer.rfqId));
+                if (rfqDoc.exists()) offer.rfqTitle = (rfqDoc.data() as any).title;
+              } catch {}
+              return offer;
+            })
         );
         setOrders(items);
+      } catch (e: any) {
+        console.warn("[Orders]", e.message);
       } finally {
         setLoading(false);
       }
@@ -56,21 +62,16 @@ export default function OrdersScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={24} color={colors.foreground} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.foreground }]}>{t.orders.title}</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <ScreenHeader title={t.orders.title} showBack />
       {loading ? (
-        <View style={{ padding: 16 }}>{[1, 2].map((k) => <CardSkeleton key={k} />)}</View>
+        <View style={{ padding: 16, gap: 10 }}>{[1, 2].map((k) => <CardSkeleton key={k} />)}</View>
       ) : (
         <FlatList
           data={orders}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <OfferCard offer={item} />}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 40 }]}
+          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 100) }]}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={<EmptyState icon="package" title={t.orders.noOrders} subtitle={t.orders.noOrdersDesc} />}
         />
       )}
@@ -79,7 +80,5 @@ export default function OrdersScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, minHeight: 56 },
-  title: { fontSize: 18, fontWeight: "700" as const },
   list: { padding: 16 },
 });

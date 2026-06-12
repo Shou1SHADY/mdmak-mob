@@ -177,6 +177,12 @@ export interface Translations {
     contact: string;
     organization: string;
     notSet: string;
+    manageTeam: string;
+    notifPreferences: string;
+    viewOrders: string;
+    completenessTitle: string;
+    profileComplete: string;
+    fieldsRemaining: string;
   };
   supplierProfile: {
     title: string;

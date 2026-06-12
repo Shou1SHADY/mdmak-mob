@@ -161,5 +161,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  input: { flex: 1, paddingVertical: 14 },
+  input: { flex: 1, paddingVertical: 14, paddingHorizontal: 4 },
 });

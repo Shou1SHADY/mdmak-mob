@@ -179,6 +179,12 @@ const ar: Translations = {
     contact: "جهة الاتصال",
     organization: "المنشأة",
     notSet: "غير محدد",
+    manageTeam: "إدارة أعضاء الفريق",
+    notifPreferences: "إعدادات الإشعارات",
+    viewOrders: "عرض الطلبات",
+    completenessTitle: "اكتمال الملف الشخصي",
+    profileComplete: "ملفك الشخصي مكتمل",
+    fieldsRemaining: "حقول ناقصة",
   },
   supplierProfile: {
     title: "حسابي",

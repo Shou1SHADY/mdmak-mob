@@ -1,68 +1,106 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { Platform, View } from "react-native";
+import { Platform, View, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
 
-const TAB_ICON_SIZE = 22;
-
-function TabIcon({ name, color, focused, colors }: { name: keyof typeof Feather.glyphMap; color: string; focused: boolean; colors: ReturnType<typeof useColors> }) {
+function TabIcon({
+  name,
+  focused,
+  colors,
+}: {
+  name: keyof typeof Feather.glyphMap;
+  focused: boolean;
+  colors: ReturnType<typeof useColors>;
+}) {
   return (
-    <View style={{
-      width: 40,
-      height: 32,
-      borderRadius: 10,
-      backgroundColor: focused ? colors.glowBlue : "transparent",
-      alignItems: "center",
-      justifyContent: "center",
-    }}>
-      <Feather name={name} size={TAB_ICON_SIZE} color={color} />
+    <View
+      style={[
+        styles.iconWrap,
+        focused && {
+          backgroundColor: colors.cta + "18",
+          borderColor: colors.cta + "22",
+          borderWidth: 1,
+        },
+      ]}
+    >
+      <Feather
+        name={name}
+        size={21}
+        color={focused ? colors.cta : colors.outline}
+      />
     </View>
   );
 }
 
-const sharedTabOptions = (colors: ReturnType<typeof useColors>, isWeb: boolean) => ({
-  tabBarActiveTintColor: colors.cta,
-  tabBarInactiveTintColor: colors.outline,
-  headerShown: false,
-  tabBarStyle: {
-    backgroundColor: colors.surface,
-    borderTopWidth: 0,
-    elevation: 0,
-    height: isWeb ? 82 : 66,
-    paddingBottom: isWeb ? 14 : 8,
-    paddingTop: 6,
-    paddingHorizontal: 12,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-  } as any,
-  tabBarLabelStyle: {
-    fontSize: 11,
-    fontWeight: "600" as const,
-    marginTop: 4,
-  } as any,
-  tabBarItemStyle: {
-    gap: 0,
-    paddingHorizontal: 6,
-  } as any,
-});
-
 export default function ContractorLayout() {
   const colors = useColors();
   const t = useT();
+  const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const bottomOffset = (insets.bottom || 0) + 10;
+
+  const tabBarStyle = isWeb
+    ? {
+        backgroundColor: colors.surface,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+        height: 82,
+        paddingBottom: 14,
+        paddingTop: 6,
+        paddingHorizontal: 12,
+        elevation: 0,
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+      }
+    : {
+        position: "absolute" as const,
+        left: 12,
+        right: 12,
+        bottom: bottomOffset,
+        height: 72,
+        borderRadius: 22,
+        backgroundColor: colors.surface,
+        borderTopWidth: 0,
+        paddingBottom: 6,
+        paddingTop: 0,
+        paddingHorizontal: 4,
+        shadowColor: "#0A1120",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.14,
+        shadowRadius: 28,
+        elevation: 18,
+      };
 
   return (
-    <Tabs screenOptions={sharedTabOptions(colors, isWeb)}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.cta,
+        tabBarInactiveTintColor: colors.outline,
+        tabBarStyle: tabBarStyle as any,
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontFamily: "Inter_600SemiBold",
+          marginTop: 2,
+          letterSpacing: 0.15,
+        } as any,
+        tabBarItemStyle: {
+          paddingVertical: 4,
+          gap: 0,
+        } as any,
+      }}
+    >
       <Tabs.Screen
         name="dashboard"
         options={{
           title: t.tabs.dashboard,
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="grid" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="grid" focused={focused} colors={colors} />
           ),
         }}
       />
@@ -70,8 +108,8 @@ export default function ContractorLayout() {
         name="rfqs/index"
         options={{
           title: t.tabs.rfqs,
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="file-text" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="file-text" focused={focused} colors={colors} />
           ),
         }}
       />
@@ -79,8 +117,8 @@ export default function ContractorLayout() {
         name="compare"
         options={{
           title: t.tabs.compare,
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="bar-chart-2" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="bar-chart-2" focused={focused} colors={colors} />
           ),
         }}
       />
@@ -88,8 +126,8 @@ export default function ContractorLayout() {
         name="chats"
         options={{
           title: t.tabs.messages,
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="message-circle" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="message-circle" focused={focused} colors={colors} />
           ),
         }}
       />
@@ -97,8 +135,8 @@ export default function ContractorLayout() {
         name="profile"
         options={{
           title: t.tabs.profile,
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="user" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="user" focused={focused} colors={colors} />
           ),
         }}
       />
@@ -110,3 +148,15 @@ export default function ContractorLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconWrap: {
+    width: 46,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+});

@@ -179,6 +179,12 @@ const en: Translations = {
     contact: "Contact",
     organization: "Organization",
     notSet: "Not set",
+    manageTeam: "Manage team members",
+    notifPreferences: "Notification preferences",
+    viewOrders: "View your orders",
+    completenessTitle: "Profile Completeness",
+    profileComplete: "Your profile is complete",
+    fieldsRemaining: "fields remaining",
   },
   supplierProfile: {
     title: "Profile",

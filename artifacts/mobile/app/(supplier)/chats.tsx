@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, FlatList, StyleSheet, TouchableOpacity, Platform,
+  View, Text, FlatList, StyleSheet, TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ScreenHeader } from "@/components/ScreenHeader";
 
 interface ChatThread {
   id: string;
@@ -59,26 +60,13 @@ export default function SupplierChatsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[
-        styles.topBar,
-        { paddingTop: insets.top + (Platform.OS === "web" ? 48 : 12), backgroundColor: colors.background, borderBottomColor: colors.border },
-      ]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}
-          accessibilityLabel={t.common.back}
-          accessibilityRole="button"
-        >
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={24} color={colors.foreground} />
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.foreground }]}>{t.tabs.messages}</Text>
-        <View style={{ width: 44 }} />
-      </View>
+      <ScreenHeader title={t.tabs.messages} />
 
       <FlatList
         data={chats}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 80 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const unread = item.unreadSupplier ?? 0;
           const hasUnread = unread > 0;
@@ -156,15 +144,6 @@ export default function SupplierChatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-  },
-  title: { fontSize: 18, fontWeight: "700" as const, fontFamily: "HankenGrotesk_700Bold" },
   list: { paddingTop: 4 },
 
   chatItem: {

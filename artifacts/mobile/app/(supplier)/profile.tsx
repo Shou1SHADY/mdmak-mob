@@ -241,10 +241,10 @@ export default function SupplierProfileScreen() {
             </View>
             <View style={{ flex: 1, marginHorizontal: 10 }}>
               <Text style={[styles.compTitle, { color: colors.foreground }]}>
-                {completeness === 100 ? t.common.success : "Profile Completeness"}
+                {completeness === 100 ? t.common.success : t.profile.completenessTitle}
               </Text>
               <Text style={[styles.compSubtitle, { color: colors.outline }]}>
-                {completeness === 100 ? "Your profile is complete" : `${missingFields.length} fields remaining`}
+                {completeness === 100 ? t.profile.profileComplete : `${missingFields.length} ${t.profile.fieldsRemaining}`}
               </Text>
             </View>
             <Text style={[styles.compPct, { color: completeness === 100 ? colors.success : colors.cta }]}>
@@ -376,20 +376,20 @@ export default function SupplierProfileScreen() {
         <Card style={{ borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 6 }}>
           <MenuRow
             icon="users" label={t.profile.teamMembers} color="#0369A1"
-            subtitle="Manage team members"
+            subtitle={t.profile.manageTeam}
             onPress={() => router.push("/(supplier)/team")}
             isRTL={isRTL}
           />
           <MenuRow
             icon="bell" label={t.profile.notifications} color="#f59e0b"
-            subtitle="Notification preferences"
+            subtitle={t.profile.notifPreferences}
             onPress={() => router.push("/(supplier)/notifications")}
             isRTL={isRTL}
             isLast={false}
           />
           <MenuRow
             icon="package" label={t.profile.orders} color="#8b5cf6"
-            subtitle="View your orders"
+            subtitle={t.profile.viewOrders}
             onPress={() => router.push("/(supplier)/orders")}
             isRTL={isRTL}
             isLast={false}

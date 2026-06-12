@@ -8,12 +8,11 @@ import {
   Platform,
   ActivityIndicator,
   KeyboardAvoidingView,
-  ScrollView,
   Dimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { useColors } from "@/hooks/useColors";
@@ -22,8 +21,8 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
-const { height: SCREEN_H } = Dimensions.get("window");
-const isSmall = SCREEN_H < 700;
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
+const HERO_H = Math.max(SCREEN_H * 0.40, 260);
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -116,122 +115,113 @@ export default function LoginScreen() {
     }
   };
 
-  const topPad = insets.top + (Platform.OS === "web" ? 67 : 0);
-  const heroH = isSmall ? SCREEN_H * 0.28 : SCREEN_H * 0.32;
+  const topPad = insets.top + (Platform.OS === "web" ? 72 : 20);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-    >
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        bounces={false}
+    <View style={[styles.root, { backgroundColor: "#0A1123" }]}>
+      {/* ── Hero — background photo ── */}
+      <View style={[styles.hero, { height: HERO_H }]}>
+        {/* Background photo */}
+        <Image
+          source={require("@/assets/images/login.png")}
+          style={{ position: "absolute", width: SCREEN_W, height: HERO_H }}
+          contentFit="cover"
+          contentPosition="center"
+        />
+        {/* Navy blue overlay */}
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(15,23,42,0.82)" }]} />
+        {/* Logo + tagline centred in hero */}
+        <View style={[styles.heroContent, { paddingTop: topPad }]}>
+          <Image
+            source={require("@/assets/images/figma/logo1.png")}
+            style={styles.logo}
+            contentFit="contain"
+          />
+          <View style={styles.taglineRow}>
+            <Text style={styles.tagline}>{t.common.tagline}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* ── Form panel — overlaps hero by 44px ── */}
+      <KeyboardAvoidingView
+        style={[styles.kav, { marginTop: -44 }]}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        {/* ── Hero gradient banner ── */}
-        <LinearGradient
-          colors={colors.gradientPrimary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.hero, { height: heroH, paddingTop: topPad }]}
-        >
-          {/* subtle background texture */}
-          <View style={styles.heroBg}>
-            <Image
-              source={require("@/assets/images/login.png")}
-              style={{ width: "100%", height: "100%" }}
-              contentFit="cover"
-            />
-          </View>
-
-          {/* Logo + brand */}
-          <View style={styles.heroContent}>
-            <Image
-              source={require("@/assets/images/figma/logo1.png")}
-              style={styles.logo}
-              contentFit="contain"
-            />
-            <Text style={[styles.tagline, { color: "rgba(255,255,255,0.6)" }]}>
-              {t.common.tagline}
-            </Text>
-          </View>
-        </LinearGradient>
-
-        {/* ── Form card ── */}
-        <View style={[styles.card, { backgroundColor: colors.card, ...colors.shadow.lg }]}>
-
-          {/* Card handle indicator */}
+        <View style={[styles.panel, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
+          {/* Handle */}
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-          <Text style={[styles.cardTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-            {t.auth.login.title}
-          </Text>
-          <Text style={[styles.cardSub, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
-            {t.auth.login.subtitle}
-          </Text>
+          {/* No scroll — all content fits in one view */}
+          <View style={styles.inner}>
+            {/* Heading */}
+            <Text style={[styles.heading, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+              {t.auth.login.title}
+            </Text>
+            <Text style={[styles.subheading, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
+              {t.auth.login.subtitle}
+            </Text>
 
-          <View style={styles.form}>
-            <Input
-              label={t.auth.login.email}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              leftIcon="mail"
-              error={errors.email}
-              placeholder={t.auth.login.emailPlaceholder}
-              isRTL={isRTL}
-            />
-            <View>
+            {/* Fields */}
+            <View style={styles.fields}>
+              <Input
+                label={t.auth.login.email}
+                value={email}
+                onChangeText={(v) => { setEmail(v); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                leftIcon="mail"
+                error={errors.email}
+                placeholder={t.auth.login.emailPlaceholder}
+                isRTL={isRTL}
+              />
               <Input
                 label={t.auth.login.password}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(v) => { setPassword(v); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
                 secureTextEntry={!showPass}
+                autoComplete="current-password"
                 leftIcon="lock"
                 rightIcon={showPass ? "eye-off" : "eye"}
-                onRightIconPress={() => setShowPass(!showPass)}
+                onRightIconPress={() => setShowPass((p) => !p)}
                 error={errors.password}
                 placeholder={t.auth.login.passwordPlaceholder}
                 isRTL={isRTL}
               />
-              {/* Forgot password */}
-              <TouchableOpacity
-                style={[styles.forgotBtn, { alignSelf: isRTL ? "flex-start" : "flex-end" }]}
-                onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoon)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.forgotText, { color: colors.cta }]}>
-                  {t.auth.login.forgotPassword}
-                </Text>
-              </TouchableOpacity>
             </View>
 
+            {/* Forgot password */}
+            <TouchableOpacity
+              style={[styles.forgot, { alignSelf: isRTL ? "flex-start" : "flex-end" }]}
+              onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoon)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.forgotText, { color: colors.cta }]}>
+                {t.auth.login.forgotPassword}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Sign in */}
             <Button
               title={t.auth.login.signIn}
               onPress={handleLogin}
               loading={loading}
               fullWidth
               size="lg"
-              style={colors.shadow.primary as any}
             />
 
-            {/* Separator */}
-            <View style={styles.separatorRow}>
-              <View style={[styles.separatorLine, { backgroundColor: colors.border }]} />
-              <Text style={[styles.separatorLabel, { color: colors.outline }]}>
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerText, { color: colors.outline }]}>
                 {t.auth.login.continueWith}
               </Text>
-              <View style={[styles.separatorLine, { backgroundColor: colors.border }]} />
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
-            {/* Social buttons row */}
-            <View style={styles.socialRow}>
-              {/* Google */}
+            {/* Social buttons */}
+            <View style={[styles.socialRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <TouchableOpacity
                 style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
                 onPress={handleGoogleSignIn}
@@ -239,7 +229,7 @@ export default function LoginScreen() {
                 activeOpacity={0.75}
               >
                 {googleLoading ? (
-                  <ActivityIndicator size="small" color={colors.foreground} />
+                  <ActivityIndicator size="small" color={colors.outline} />
                 ) : (
                   <>
                     <Text style={styles.googleG}>G</Text>
@@ -248,128 +238,143 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
 
-              {/* Apple */}
               <TouchableOpacity
                 style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
                 activeOpacity={0.75}
                 onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoonApple)}
               >
-                <Text style={styles.appleIcon}></Text>
+                <Ionicons name="logo-apple" size={18} color={colors.foreground} />
                 <Text style={[styles.socialLabel, { color: colors.foreground }]}>Apple</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Spacer pushes signup to bottom */}
+            <View style={{ flex: 1 }} />
+
+            {/* Sign up */}
+            <TouchableOpacity
+              style={styles.signupRow}
+              onPress={() => router.push("/auth/register")}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.signupText, { color: colors.outline }]}>
+                {t.auth.login.noAccount}{" "}
+                <Text style={{ color: colors.cta, fontFamily: "Inter_700Bold" }}>
+                  {t.auth.login.signUp}
+                </Text>
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-
-        {/* ── Sign up link ── */}
-        <TouchableOpacity
-          style={[styles.signupRow, { paddingBottom: Math.max(insets.bottom + 16, 24) }]}
-          onPress={() => router.push("/auth/register")}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.signupText, { color: colors.outline }]}>
-            {t.auth.login.noAccount}{" "}
-            <Text style={{ color: colors.cta, fontFamily: "Inter_700Bold" }}>
-              {t.auth.login.signUp}
-            </Text>
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+
+  // Hero — photo background container
   hero: {
     overflow: "hidden",
-    position: "relative",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heroBg: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.07,
   },
   heroContent: {
+    flex: 1,
     alignItems: "center",
-    gap: 6,
-    paddingBottom: 28,
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    paddingBottom: 32,
+    gap: 10,
   },
   logo: {
-    width: isSmall ? 160 : 190,
-    height: isSmall ? 52 : 62,
+    width: 210,
+    height: 70,
   },
-  appName: {
-    fontFamily: "HankenGrotesk_700Bold",
-    fontSize: isSmall ? 20 : 22,
-    color: "#FFFFFF",
-    letterSpacing: -0.3,
+  taglineRow: {
+    paddingHorizontal: 8,
   },
   tagline: {
     fontFamily: "Inter_400Regular",
-    fontSize: 12,
+    fontSize: 13.5,
+    color: "rgba(255,255,255,0.72)",
     textAlign: "center",
-    paddingHorizontal: 32,
+    lineHeight: 20,
   },
 
-  card: {
-    marginTop: -24,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 28,
+  // Form panel
+  kav: {
     flex: 1,
+  },
+  panel: {
+    flex: 1,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingTop: 10,
   },
   handle: {
     width: 36,
     height: 4,
     borderRadius: 2,
     alignSelf: "center",
-    marginBottom: 20,
-    opacity: 0.4,
+    marginBottom: 4,
+    opacity: 0.3,
   },
-  cardTitle: {
+
+  // Static inner content (no scroll)
+  inner: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 10,
+  },
+  heading: {
     fontFamily: "HankenGrotesk_700Bold",
-    fontSize: 24,
-    letterSpacing: -0.3,
+    fontSize: 22,
+    letterSpacing: -0.4,
+    marginBottom: 3,
   },
-  cardSub: {
+  subheading: {
     fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    marginTop: 4,
-    marginBottom: 20,
+    fontSize: 13.5,
+    lineHeight: 20,
+    marginBottom: 14,
   },
 
-  form: { gap: 14 },
-
-  forgotBtn: {
-    marginTop: 6,
-    paddingVertical: 2,
+  // Fields
+  fields: {
+    gap: 10,
+    marginBottom: 8,
+  },
+  forgot: {
+    paddingVertical: 4,
+    marginBottom: 12,
   },
   forgotText: {
     fontFamily: "Inter_500Medium",
-    fontSize: 12.5,
+    fontSize: 13,
   },
 
-  separatorRow: {
+  // Divider
+  divider: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginVertical: 2,
+    marginTop: 12,
+    marginBottom: 12,
   },
-  separatorLine: {
+  dividerLine: {
     flex: 1,
     height: 1,
   },
-  separatorLabel: {
+  dividerText: {
     fontFamily: "Inter_500Medium",
     fontSize: 12,
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
 
+  // Social
   socialRow: {
-    flexDirection: "row",
     gap: 12,
   },
   socialBtn: {
@@ -379,33 +384,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     borderWidth: 1.5,
-    paddingVertical: 12,
-    minHeight: 48,
+    paddingVertical: 13,
+    minHeight: 50,
     borderRadius: 14,
   },
   googleG: {
     fontSize: 17,
-    fontWeight: "800",
+    fontWeight: "800" as const,
     color: "#4285F4",
     lineHeight: 20,
-  },
-  appleIcon: {
-    fontSize: 19,
-    color: "#000",
-    lineHeight: 21,
   },
   socialLabel: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
   },
 
+  // Sign up
   signupRow: {
     alignItems: "center",
-    paddingTop: 16,
-    backgroundColor: "transparent",
+    marginTop: 14,
+    paddingBottom: 20,
   },
   signupText: {
     fontFamily: "Inter_400Regular",
-    fontSize: 13.5,
+    fontSize: 14,
   },
 });

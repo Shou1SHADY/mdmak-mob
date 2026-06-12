@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity, RefreshControl, Platform, StyleSheet, Alert,
+  View, Text, FlatList, TextInput, TouchableOpacity,
+  RefreshControl, Platform, StyleSheet, ScrollView,
 } from "react-native";
 import { router } from "expo-router";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -29,13 +30,21 @@ export default function BrowseRFQsScreen() {
 
   const fetchRFQs = async () => {
     try {
-      const q = query(collection(db, "rfqs"), where("status", "in", ["New", "Active", "Under Review"]), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RFQItem));
+      // No orderBy — avoids composite index requirement; sort client-side
+      const snap = await getDocs(
+        query(collection(db, "rfqs"), where("status", "in", ["New", "Active", "Under Review"]))
+      );
+      const items = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as RFQItem))
+        .sort((a, b) => {
+          const ta = typeof a.createdAt?.toDate === "function" ? a.createdAt.toDate().getTime() : 0;
+          const tb = typeof b.createdAt?.toDate === "function" ? b.createdAt.toDate().getTime() : 0;
+          return tb - ta;
+        });
       setRfqs(items);
       applyFilters(items, search, categoryFilter);
     } catch (e: any) {
-      Alert.alert(t.common.error, e.message || t.common.loading);
+      console.warn("[BrowseRFQs]", e.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -45,11 +54,15 @@ export default function BrowseRFQsScreen() {
   const applyFilters = (items: RFQItem[], s: string, cat: string) => {
     let res = items;
     if (cat !== "All") res = res.filter((r) => r.category === cat);
-    if (s.trim()) res = res.filter((r) =>
-      r.title.toLowerCase().includes(s.toLowerCase()) ||
-      r.city.toLowerCase().includes(s.toLowerCase()) ||
-      r.category.toLowerCase().includes(s.toLowerCase())
-    );
+    if (s.trim()) {
+      const q = s.toLowerCase();
+      res = res.filter(
+        (r) =>
+          r.title.toLowerCase().includes(q) ||
+          r.city.toLowerCase().includes(q) ||
+          r.category.toLowerCase().includes(q)
+      );
+    }
     setFiltered(res);
   };
 
@@ -63,11 +76,22 @@ export default function BrowseRFQsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScreenHeader title={t.tabs.browseRfqs} />
+      <ScreenHeader
+        title={t.tabs.browseRfqs}
+        right={
+          filtered.length > 0 ? (
+            <View style={[styles.countBadge, { backgroundColor: colors.cta + "15", borderColor: colors.cta + "30" }]}>
+              <Text style={[styles.countText, { color: colors.cta }]}>{filtered.length}</Text>
+            </View>
+          ) : undefined
+        }
+      />
 
-      <View style={[styles.filterBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+      {/* Search + filters */}
+      <View style={[styles.filterBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        {/* Search box */}
         <View style={[styles.searchBox, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-          <Feather name="search" size={16} color={colors.outline} />
+          <Feather name="search" size={15} color={colors.outline} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
             placeholder={t.rfq.searchPlaceholder}
@@ -76,42 +100,55 @@ export default function BrowseRFQsScreen() {
             onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }} accessibilityLabel={t.common.close} accessibilityRole="button">
-              <Feather name="x" size={14} color={colors.outline} />
+            <TouchableOpacity
+              onPress={() => setSearch("")}
+              style={styles.clearBtn}
+              accessibilityLabel={t.common.close}
+            >
+              <Feather name="x" size={13} color={colors.outline} />
             </TouchableOpacity>
           )}
         </View>
-        <View style={styles.filterRow}>
-          {categoryOptions.slice(0, 8).map((item) => {
+
+        {/* Horizontal category chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsScroll}
+        >
+          {categoryOptions.map((item) => {
             const active = categoryFilter === item.label;
             return (
               <TouchableOpacity
                 key={item.label}
                 style={[
-                  styles.filterChip,
-                  {
-                    backgroundColor: active ? colors.primary : colors.surface,
-                    borderColor: active ? colors.primary : colors.border,
-                    borderRadius: colors.radiusFull,
-                    ...(active ? colors.shadow.sm : {}),
-                  },
+                  styles.chip,
+                  active
+                    ? { backgroundColor: colors.cta, borderColor: colors.cta }
+                    : { backgroundColor: colors.surface, borderColor: colors.border },
                 ]}
                 onPress={() => setCategoryFilter(item.label)}
-                accessibilityLabel={isRTL ? item.labelAr : item.label}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >
-                <Text style={[styles.filterText, { color: active ? "#FFFFFF" : colors.onSurfaceVariant }]} numberOfLines={1} ellipsizeMode="tail">
+                <Text
+                  style={[
+                    styles.chipText,
+                    { color: active ? "#FFFFFF" : colors.onSurfaceVariant },
+                  ]}
+                >
                   {isRTL ? item.labelAr : item.label}
                 </Text>
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
       </View>
 
       {loading ? (
-        <View style={{ padding: 16 }}>{[1, 2, 3].map((k) => <CardSkeleton key={k} />)}</View>
+        <View style={{ padding: 16, gap: 10 }}>
+          {[1, 2, 3].map((k) => <CardSkeleton key={k} />)}
+        </View>
       ) : (
         <FlatList
           data={filtered}
@@ -119,9 +156,25 @@ export default function BrowseRFQsScreen() {
           renderItem={({ item }) => (
             <RFQCard rfq={item} onPress={() => router.push(`/(supplier)/rfq/${item.id}`)} />
           )}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 80) }]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchRFQs(); }} tintColor={colors.primary} />}
-          ListEmptyComponent={<EmptyState icon="search" title={t.rfq.noRfqsFound} subtitle={t.rfq.tryAdjustingFilters} />}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 100) },
+          ]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => { setRefreshing(true); fetchRFQs(); }}
+              tintColor={colors.cta}
+            />
+          }
+          ListEmptyComponent={
+            <EmptyState
+              icon="search"
+              title={t.rfq.noRfqsFound}
+              subtitle={t.rfq.tryAdjustingFilters}
+            />
+          }
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -129,43 +182,59 @@ export default function BrowseRFQsScreen() {
 }
 
 const styles = StyleSheet.create({
+  countBadge: {
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  countText: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+  },
   filterBar: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    gap: 12,
     paddingTop: 12,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    gap: 10,
   },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    paddingHorizontal: 16,
-    height: 44,
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    height: 42,
+    marginHorizontal: 16,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: "Inter_400Regular",
   },
-  filterRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  clearBtn: {
+    width: 28,
+    height: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chipsScroll: {
+    paddingHorizontal: 16,
     gap: 8,
   },
-  filterChip: {
+  chip: {
     borderWidth: 1,
+    borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
-  filterText: {
+  chipText: {
     fontSize: 13,
-    fontWeight: "500",
     fontFamily: "Inter_500Medium",
   },
   list: {
     padding: 16,
+    gap: 0,
   },
 });

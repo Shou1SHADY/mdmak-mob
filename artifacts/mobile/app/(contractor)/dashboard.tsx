@@ -43,7 +43,7 @@ function slicePath(cx: number, cy: number, oR: number, iR: number, sDeg: number,
 }
 slicePath.GAP = 3;
 
-function DonutChart({ slices, total, size = 150 }: { slices: DonutSlice[]; total: number; size?: number }) {
+function DonutChart({ slices, total, size = 150, textColor = "#0F172A" }: { slices: DonutSlice[]; total: number; size?: number; textColor?: string }) {
   const cx = size / 2;
   const cy = size / 2;
   const oR = size / 2 - 4;
@@ -73,7 +73,7 @@ function DonutChart({ slices, total, size = 150 }: { slices: DonutSlice[]; total
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       {paths.map((p, i) => <Path key={i} d={p.d} fill={p.color} />)}
       <Circle cx={cx} cy={cy} r={iR - 2} fill="none" />
-      <SvgText x={cx} y={cy - 6} textAnchor="middle" fontSize={22} fontWeight="700" fill="#0F172A" fontFamily="HankenGrotesk_700Bold">{total}</SvgText>
+      <SvgText x={cx} y={cy - 6} textAnchor="middle" fontSize={22} fontWeight="700" fill={textColor} fontFamily="HankenGrotesk_700Bold">{total}</SvgText>
       <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize={10} fill="#94a3b8" fontFamily="Inter_500Medium">RFQs</SvgText>
     </Svg>
   );
@@ -273,40 +273,34 @@ export default function ContractorDashboard() {
             </TouchableOpacity>
           </View>
 
-          {/* Donut + Legend */}
-          <View style={[styles.chartRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-            <DonutChart slices={donutSlices} total={stats.total} size={140} />
-            <View style={styles.legendList}>
-              {statusRows.map((s) => (
-                <View key={s.id} style={[styles.legendRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <View style={[styles.legendDot, { backgroundColor: s.color }]} />
-                  <Text style={[styles.legendLabel, { color: colors.foreground }]} numberOfLines={1}>
-                    {isRTL ? s.labelAr : s.labelEn}
-                  </Text>
-                  <View style={{ flex: 1 }} />
-                  <Text style={[styles.legendValue, { color: colors.outline }]}>{s.count}</Text>
-                  {stats.total > 0 && (
-                    <View style={[styles.legendPctBadge, { backgroundColor: s.color + "18" }]}>
-                      <Text style={[styles.legendPctText, { color: s.color }]}>{pct(s.count)}%</Text>
-                    </View>
-                  )}
-                </View>
-              ))}
-            </View>
+          {/* Donut — centered */}
+          <View style={styles.chartCenter}>
+            <DonutChart
+              slices={donutSlices}
+              total={stats.total}
+              size={160}
+              textColor={colors.foreground}
+            />
           </View>
 
-          {/* Segmented bar (micro-visual) */}
+          {/* Legend — 2-column grid, only non-zero statuses */}
           {stats.total > 0 && (
-            <View style={styles.segmentedTrack}>
-              {statusRows.map((s) => {
-                if (s.count === 0) return null;
-                return (
-                  <View
-                    key={s.id}
-                    style={[styles.segment, { flex: s.count, backgroundColor: s.color }]}
-                  />
-                );
-              })}
+            <View style={styles.legendGrid}>
+              {statusRows.filter((s) => s.count > 0).map((s) => (
+                <View
+                  key={s.id}
+                  style={[
+                    styles.legendItem,
+                    { flexDirection: isRTL ? "row-reverse" : "row", borderColor: s.color + "28", backgroundColor: s.color + "0C" },
+                  ]}
+                >
+                  <View style={[styles.legendDot, { backgroundColor: s.color }]} />
+                  <Text style={[styles.legendLabel, { color: colors.outline }]} numberOfLines={1}>
+                    {isRTL ? s.labelAr : s.labelEn}
+                  </Text>
+                  <Text style={[styles.legendCount, { color: s.color }]}>{s.count}</Text>
+                </View>
+              ))}
             </View>
           )}
 
@@ -387,20 +381,22 @@ const styles = StyleSheet.create({
   viewAllPillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
 
   // Donut + legend
-  chartRow: { alignItems: "center", gap: 14 },
-  legendList: { flex: 1, gap: 8, justifyContent: "center" },
-  legendRow: { alignItems: "center", gap: 8 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendLabel: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
-  legendValue: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  legendPctBadge: { borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
-  legendPctText: { fontSize: 10, fontFamily: "Inter_700Bold" },
-
-  // Segmented bar
-  segmentedTrack: {
-    flexDirection: "row", height: 6, borderRadius: 3, overflow: "hidden", gap: 1,
+  chartCenter: { alignItems: "center", justifyContent: "center", paddingVertical: 4 },
+  legendGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  legendItem: {
+    width: "47%",
+    flexGrow: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
-  segment: { height: "100%" },
+  legendDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
+  legendLabel: { flex: 1, fontSize: 11, fontFamily: "Inter_500Medium" },
+  legendCount: { fontSize: 13, fontFamily: "Inter_700Bold", flexShrink: 0 },
 
   // Footer
   overviewFooter: { paddingTop: 14, borderTopWidth: 1, alignItems: "center" },
