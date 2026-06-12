@@ -34,7 +34,7 @@ const sharedTabOptions = (colors: ReturnType<typeof useColors>, isWeb: boolean) 
     paddingBottom: isWeb ? 14 : 8,
     paddingTop: 6,
     paddingHorizontal: 12,
-    shadowColor: "#0F172A",
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -42,7 +42,6 @@ const sharedTabOptions = (colors: ReturnType<typeof useColors>, isWeb: boolean) 
   tabBarLabelStyle: {
     fontSize: 11,
     fontWeight: "600" as const,
-    letterSpacing: 0.2,
     marginTop: 4,
   } as any,
   tabBarItemStyle: {

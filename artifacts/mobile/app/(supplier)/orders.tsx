@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { router } from "expo-router";
 import { TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { OFFER_STATUS } from "@/constants/data";
 
 export default function OrdersScreen() {
   const colors = useColors();
@@ -31,7 +32,7 @@ export default function OrdersScreen() {
         const q = query(
           collection(db, "offers"),
           where("organizationId", "==", user.organizationId),
-          where("status", "==", "مقبول"),
+          where("status", "==", OFFER_STATUS.ACCEPTED),
           orderBy("createdAt", "desc")
         );
         const snap = await getDocs(q);
@@ -71,7 +72,6 @@ export default function OrdersScreen() {
           renderItem={({ item }) => <OfferCard offer={item} />}
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 40 }]}
           ListEmptyComponent={<EmptyState icon="package" title={t.orders.noOrders} subtitle={t.orders.noOrdersDesc} />}
-          scrollEnabled={!!orders.length}
         />
       )}
     </View>
@@ -79,7 +79,7 @@ export default function OrdersScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
+  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, minHeight: 56 },
   title: { fontSize: 18, fontWeight: "700" as const },
   list: { padding: 16 },
 });

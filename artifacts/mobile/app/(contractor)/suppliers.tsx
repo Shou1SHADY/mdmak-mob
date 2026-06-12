@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   Platform,
+  Alert,
 } from "react-native";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -52,6 +53,8 @@ export default function SuppliersScreen() {
       } as Supplier));
       setSuppliers(items);
       setFiltered(items);
+    } catch (e: any) {
+      Alert.alert(t.common.error, e.message || t.common.loading);
     } finally {
       setLoading(false);
     }
@@ -89,6 +92,11 @@ export default function SuppliersScreen() {
             value={search}
             onChangeText={setSearch}
           />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch("")} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }} accessibilityLabel={t.common.close} accessibilityRole="button">
+              <Feather name="x" size={14} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -130,7 +138,7 @@ export default function SuppliersScreen() {
                 <View style={styles.specRow}>
                   {item.specializations.slice(0, 3).map((spec, i) => (
                     <View key={i} style={[styles.specChip, { backgroundColor: colors.muted }]}>
-                      <Text style={[styles.specText, { color: colors.mutedForeground }]}>{spec}</Text>
+                      <Text style={[styles.specText, { color: colors.mutedForeground }]} numberOfLines={1} ellipsizeMode="tail">{spec}</Text>
                     </View>
                   ))}
                   {item.specializations.length > 3 && (
@@ -143,7 +151,6 @@ export default function SuppliersScreen() {
             </Card>
           )}
           ListEmptyComponent={<EmptyState icon="users" title={t.suppliers.noSuppliers} subtitle={t.suppliers.noSuppliersDesc} />}
-          scrollEnabled={!!filtered.length}
         />
       )}
     </View>
@@ -166,6 +173,6 @@ const styles = StyleSheet.create({
   metaText: { fontSize: 13 },
   specRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   specChip: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  specText: { fontSize: 12, fontWeight: "500" as const },
+  specText: { fontSize: 12, fontWeight: "500" as const, maxWidth: 120 },
   moreText: { fontSize: 12, alignSelf: "center" },
 });

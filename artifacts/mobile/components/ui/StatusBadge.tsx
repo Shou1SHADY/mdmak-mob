@@ -21,7 +21,7 @@ export function StatusBadge({ label, color, size = "md" }: StatusBadgeProps) {
         },
       ]}
     >
-      <Text style={[styles.text, { color, fontSize: size === "sm" ? 11 : 12 }]}>
+      <Text style={[styles.text, { color, fontSize: size === "sm" ? 11 : 12, fontFamily: "Inter_600SemiBold" }]}>
         {label}
       </Text>
     </View>
@@ -34,5 +34,5 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     borderWidth: 1,
   },
-  text: { fontWeight: "600" as const },
+  text: {},
 });

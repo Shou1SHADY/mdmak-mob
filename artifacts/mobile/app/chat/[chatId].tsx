@@ -80,12 +80,12 @@ export default function ChatScreen() {
           { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 14, paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
         ]}
       >
-        <TouchableOpacity onPress={() => router.back()} style={{ width: 34, height: 34, alignItems: "center", justifyContent: "center" }}>
+        <TouchableOpacity onPress={() => router.back()} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }} accessibilityLabel={t.common.back} accessibilityRole="button">
           <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={{ fontSize: 15, fontWeight: "700" as const, color: colors.foreground }}>{t.chat.title}</Text>
-          <Text style={{ fontSize: 11, color: colors.outline, marginTop: 1 }}>#{chatId?.slice(0, 8)}</Text>
+        <View style={{ flex: 1, marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
+          <Text style={{ fontSize: 15, fontWeight: "700" as const, color: colors.foreground, textAlign: isRTL ? "right" : "left" }} numberOfLines={1} ellipsizeMode="tail">{t.chat.title}</Text>
+          <Text style={{ fontSize: 11, color: colors.outline, marginTop: 1, textAlign: isRTL ? "right" : "left" }} numberOfLines={1}>#{chatId?.slice(0, 8)}</Text>
         </View>
       </View>
 
@@ -96,22 +96,35 @@ export default function ChatScreen() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16, gap: 6 }}
         renderItem={({ item }) => {
           const isMe = item.senderId === user?.uid;
+          const align =
+            isMe
+              ? isRTL ? "flex-start" : "flex-end"
+              : isRTL ? "flex-end" : "flex-start";
           return (
-            <View style={[isMe ? { justifyContent: "flex-end" } : { justifyContent: "flex-start" }, { flexDirection: "row", marginBottom: 4 }]}>
+            <View style={{ flexDirection: "row", justifyContent: align as any, marginBottom: 4 }}>
               <View
                 style={{
-                  backgroundColor: isMe ? colors.primary : colors.card,
+                  backgroundColor: isMe ? colors.primary : colors.surface,
                   borderColor: isMe ? "transparent" : colors.border,
                   borderWidth: isMe ? 0 : 1,
-                  borderRadius: 16,
+                  borderRadius: 18,
                   maxWidth: "74%",
                   paddingHorizontal: 14,
-                  paddingVertical: 9,
-                  gap: 2,
+                  paddingVertical: 10,
+                  gap: 3,
+                  ...colors.shadow.sm,
                 }}
+                accessibilityLabel={isMe ? `${t.chat.sentByYou}: ${item.text}` : item.text}
+                accessibilityRole="text"
               >
-                <Text style={{ fontSize: 15, lineHeight: 21, color: isMe ? "#fff" : colors.foreground }}>{item.text}</Text>
-                <Text style={{ fontSize: 10, textAlign: isRTL ? "left" : "right", color: isMe ? "rgba(255,255,255,0.6)" : colors.outline }}>
+                <Text style={{ fontSize: 15, lineHeight: 22, color: isMe ? "#FFFFFF" : colors.foreground }}>
+                  {item.text}
+                </Text>
+                <Text style={{
+                  fontSize: 10,
+                  textAlign: isRTL ? "left" : "right",
+                  color: isMe ? colors.textWhite60 : colors.outline,
+                }}>
                   {formatTime(item.timestamp)}
                 </Text>
               </View>
@@ -129,16 +142,17 @@ export default function ChatScreen() {
           paddingHorizontal: 14,
           paddingTop: 10,
           paddingBottom: insets.bottom + (Platform.OS === "web" ? 10 : 8),
-          backgroundColor: colors.card,
+          backgroundColor: colors.surface,
           borderTopWidth: 1,
           borderTopColor: colors.border,
+          ...colors.shadow.nav,
         }}
       >
         <TextInput
           style={{
             flex: 1,
             color: colors.foreground,
-            backgroundColor: colors.surfaceGray,
+            backgroundColor: colors.muted,
             borderColor: colors.border,
             borderRadius: 24,
             borderWidth: 1.5,
@@ -146,6 +160,7 @@ export default function ChatScreen() {
             paddingVertical: 10,
             fontSize: 15,
             maxHeight: 100,
+            lineHeight: 22,
           }}
           placeholder={t.chat.typeMessage}
           placeholderTextColor={colors.outline}
@@ -153,20 +168,24 @@ export default function ChatScreen() {
           onChangeText={setText}
           multiline
           maxLength={500}
+          accessibilityLabel={t.chat.typeMessage}
         />
         <TouchableOpacity
           style={{
-            width: 42,
-            height: 42,
+            width: 44,
+            height: 44,
             alignItems: "center",
             justifyContent: "center",
-            borderRadius: 12,
-            backgroundColor: text.trim() ? colors.primary : colors.surfaceGray,
+            borderRadius: 14,
+            backgroundColor: text.trim() ? colors.cta : colors.muted,
+            ...(text.trim() ? colors.shadow.md : {}),
           }}
           onPress={sendMessage}
           disabled={!text.trim() || sending}
+          accessibilityLabel={t.common.send || "Send"}
+          accessibilityRole="button"
         >
-          <Feather name="send" size={17} color={text.trim() ? "#fff" : colors.outline} />
+          <Feather name="send" size={17} color={text.trim() ? "#FFFFFF" : colors.outline} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

@@ -1,19 +1,20 @@
-import designTokens from "@/constants/colors";
+import { useTheme } from "@/context/ThemeContext";
 
 export function useColors() {
+  const theme = useTheme();
   return {
-    ...designTokens.light,
-    radius: designTokens.radius.xl,
-    radiusMd: designTokens.radius.md,
-    radiusSm: designTokens.radius.sm,
-    radiusXs: designTokens.radius.xs,
-    radiusLg: designTokens.radius.lg,
-    radiusXl: designTokens.radius.xl,
-    radius2xl: designTokens.radius["2xl"],
-    radius3xl: designTokens.radius["3xl"],
-    radiusFull: designTokens.radius.full,
-    spacing: designTokens.spacing,
-    shadow: designTokens.shadow,
-    typography: designTokens.typography,
-  };
+    ...theme.tokens.colors,
+    radius: theme.tokens.radius.xl,
+    radiusMd: theme.tokens.radius.md,
+    radiusSm: theme.tokens.radius.sm,
+    radiusXs: theme.tokens.radius.xs,
+    radiusLg: theme.tokens.radius.lg,
+    radiusXl: theme.tokens.radius.xl,
+    radius2xl: theme.tokens.radius["2xl"],
+    radius3xl: theme.tokens.radius["3xl"],
+    radiusFull: theme.tokens.radius.full,
+    spacing: theme.tokens.spacing,
+    shadow: theme.tokens.shadow,
+    typography: theme.tokens.typography,
+  } as const;
 }

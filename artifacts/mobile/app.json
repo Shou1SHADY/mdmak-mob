@@ -1,24 +1,41 @@
 {
   "expo": {
     "name": "Mdmak Tech",
-    "slug": "mobile",
+    "slug": "mdmak-tech",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "mdmaktech",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/icon.png",
+      "image": "./assets/images/splash-bg.png",
       "resizeMode": "contain",
       "backgroundColor": "#0F172A"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.mdmaktech.app"
+      "bundleIdentifier": "com.mdmaktech.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Mdmak Tech uses your camera to upload profile photos and product images.",
+        "NSPhotoLibraryUsageDescription": "Mdmak Tech needs access to your photos to upload product images and profile pictures.",
+        "NSLocationWhenInUseUsageDescription": "Mdmak Tech uses your location to connect you with nearby suppliers and contractors.",
+        "NSFaceIDUsageDescription": "Mdmak Tech supports Face ID for secure authentication.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.mdmaktech.app"
+      "package": "com.mdmaktech.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0F172A"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png",
@@ -32,6 +49,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "mdmak-tech"
+      }
     }
   }
 }

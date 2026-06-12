@@ -6,7 +6,7 @@ type CardElevation = "flat" | "raised" | "high";
 
 interface CardProps {
   children: ReactNode;
-  style?: ViewStyle;
+  style?: ViewStyle | ViewStyle[];
   onPress?: () => void;
   glass?: boolean;
   elevation?: CardElevation;

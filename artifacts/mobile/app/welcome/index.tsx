@@ -5,201 +5,244 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  Platform,
+  ScrollView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Animated,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const isSmall = SCREEN_HEIGHT < 700;
 
-const ONBOARDING_DATA = [
+// Illustration area height — adapts to screen
+const IMAGE_SECTION_H = Math.round(SCREEN_HEIGHT * (isSmall ? 0.42 : 0.48));
+
+const SLIDES = [
   {
     id: 1,
-    titleKey: "slide1Title" as const,
-    descKey: "slide1Desc" as const,
-    image: require("@/assets/images/figma/saudi-professionals.png"),
-    features: [
-      { icon: "shield" as const, labelKey: "secure" as const, sublabelKey: null as string | null },
-      { icon: "zap" as const, labelKey: "fast" as const, sublabelKey: "optimizedCode" as const },
+    titleKey:  "slide1Title"  as const,
+    descKey:   "slide1Desc"   as const,
+    image:     require("@/assets/images/figma/saudi-professionals.png"),
+    chips: [
+      { icon: "shield"  as const, labelKey: "secure"        as const },
+      { icon: "zap"     as const, labelKey: "fast"          as const },
     ],
   },
   {
     id: 2,
-    titleKey: "slide2Title" as const,
-    descKey: "slide2Desc" as const,
-    image: require("@/assets/images/figma/saudi-mobile-dev.png"),
-    features: [],
+    titleKey: "slide2Title"  as const,
+    descKey:  "slide2Desc"   as const,
+    image:    require("@/assets/images/figma/saudi-mobile-dev.png"),
+    chips: [],
   },
   {
     id: 3,
-    titleKey: "slide3Title" as const,
-    descKey: "slide3Desc" as const,
-    image: require("@/assets/images/figma/cloud-transformation.png"),
-    badges: ["secured" as const, "highPerformance" as const],
+    titleKey: "slide3Title"  as const,
+    descKey:  "slide3Desc"   as const,
+    image:    require("@/assets/images/figma/cloud-transformation.png"),
+    chips: [
+      { icon: "lock" as const, labelKey: "secured"         as const },
+      { icon: "zap"  as const, labelKey: "highPerformance" as const },
+    ],
   },
 ];
+
+// Animated pill dot for pagination
+function PaginationDot({ active }: { active: boolean }) {
+  const animWidth = useRef(new Animated.Value(active ? 24 : 8)).current;
+  const animOpacity = useRef(new Animated.Value(active ? 1 : 0.3)).current;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.spring(animWidth,   { toValue: active ? 24 : 8, useNativeDriver: false, tension: 80, friction: 10 }),
+      Animated.timing(animOpacity, { toValue: active ? 1 : 0.3, duration: 200, useNativeDriver: true }),
+    ]).start();
+  }, [active]);
+
+  return (
+    <Animated.View style={{ width: animWidth, height: 8, borderRadius: 4, opacity: animOpacity, backgroundColor: "#0369A1" }} />
+  );
+}
 
 export default function WelcomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const t = useT();
+  const t      = useT();
   const { isRTL } = useLanguage();
+
   const [currentPage, setCurrentPage] = useState(0);
-  const scrollX = useRef(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const isLast = currentPage === SLIDES.length - 1;
 
-  const isLast = currentPage === ONBOARDING_DATA.length - 1;
-  const data = ONBOARDING_DATA[currentPage];
-  const stepNum = currentPage + 1;
-
-  const handleNext = () => {
-    if (currentPage < ONBOARDING_DATA.length - 1) {
-      setCurrentPage(currentPage + 1);
-    }
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    if (page !== currentPage) setCurrentPage(page);
   };
 
-  const handleSkip = () => {
-    router.replace("/auth/login" as any);
-  };
-
-  const handleGetStarted = () => {
-    router.replace("/auth/login" as any);
-  };
+  const goTo = (page: number) => scrollRef.current?.scrollTo({ x: page * SCREEN_WIDTH, animated: true });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Top Bar */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
-        <Text style={[styles.brandText, { color: colors.primary, fontFamily: "HankenGrotesk_700Bold" }]}>
-          {isRTL ? t.common.appNameAr : t.common.appName}
-        </Text>
-        <TouchableOpacity onPress={handleSkip} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <Text style={[styles.skipText, { color: colors.onSurfaceVariant }]}>{t.welcome.skip}</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Main Content */}
-      <View style={styles.mainContent}>
-        {/* Illustration */}
-        <View style={styles.illustrationSection}>
-          <View style={[styles.glowCircle, { backgroundColor: colors.glowBlue }]} />
-          <View style={[styles.glowCircleSecondary, { backgroundColor: colors.atmosphericPurple }]} />
-          <View style={styles.imageWrapper}>
-            <Image
-              source={data.image}
-              style={styles.illustration}
-              contentFit="cover"
-              transition={300}
-            />
-          </View>
+      {/* ── Slides ── */}
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexDirection: isRTL ? "row-reverse" : "row" }}
+        directionalLockEnabled
+      >
+        {SLIDES.map((slide, index) => (
+          <View key={slide.id} style={styles.page}>
 
-          {data.badges && (
-            <View style={styles.badgesRow}>
-              {data.badges.map((badge) => (
-                <View key={badge} style={[styles.badge, { backgroundColor: colors.accentBlueSoft }]}>
-                  <Feather name={badge === "secured" ? "lock" : "zap"} size={14} color={colors.primary} />
-                  <Text style={[styles.badgeText, { color: colors.primary }]}>{t.welcome[badge]}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Content */}
-        <View style={styles.contentSection}>
-          <View style={[styles.stepBadge, { backgroundColor: colors.accentBlueSoft }]}>
-            <Text style={[styles.stepText, { color: colors.primary }]}>
-              {t.welcome.step.replace("{n}", String(stepNum))}
-            </Text>
-          </View>
-
-          <Text style={[styles.title, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
-            {t.welcome[data.titleKey]}
-          </Text>
-          <Text style={[styles.description, { color: colors.onSurfaceVariant }]}>
-            {t.welcome[data.descKey]}
-          </Text>
-        </View>
-      </View>
-
-      {/* Pagination & Actions */}
-      <View style={[styles.bottomSection, { paddingBottom: insets.bottom + 24 }]}>
-        {/* Pagination Dots */}
-        <View style={styles.paginationRow}>
-          <View style={styles.paginationDots}>
-            {ONBOARDING_DATA.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: index === currentPage ? colors.primary : colors.border,
-                    width: index === currentPage ? 24 : 8,
-                  },
-                ]}
+            {/* ── Image section ── */}
+            <View style={[styles.imageSection, { height: IMAGE_SECTION_H, backgroundColor: colors.background }]}>
+              {/* Illustration */}
+              <Image
+                source={slide.image}
+                style={styles.illustration}
+                contentFit="cover"
+                transition={250}
               />
-            ))}
+
+              {/* Feature chips */}
+              {slide.chips.length > 0 && (
+                <View style={styles.chipsRow}>
+                  {slide.chips.map((chip) => (
+                    <View
+                      key={chip.labelKey}
+                      style={[styles.chip, { backgroundColor: colors.accentBlueSoft, borderColor: colors.border }]}
+                    >
+                      <Feather name={chip.icon} size={12} color={colors.cta} />
+                      <Text style={[styles.chipText, { color: colors.cta }]}>{t.welcome[chip.labelKey]}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* ── Content section ── */}
+            <View style={styles.contentSection}>
+              {/* Step badge */}
+              <View style={[styles.stepBadge, { backgroundColor: colors.accentBlueSoft }]}>
+                <Text style={[styles.stepText, { color: colors.cta }]}>
+                  {t.welcome.step.replace("{n}", String(index + 1))} / {SLIDES.length}
+                </Text>
+              </View>
+
+              <Text style={[styles.title, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+                {t.welcome[slide.titleKey]}
+              </Text>
+              <Text style={[styles.description, { color: colors.onSurfaceVariant }]}>
+                {t.welcome[slide.descKey]}
+              </Text>
+            </View>
+
           </View>
+        ))}
+      </ScrollView>
+
+      {/* ── Fixed bottom controls ── */}
+      <View style={[styles.bottomSection, { paddingBottom: Math.max(insets.bottom + 24, 36) }]}>
+
+        {/* Pagination dots */}
+        <View style={styles.dotsRow}>
+          {SLIDES.map((_, i) => (
+            <PaginationDot key={i} active={i === currentPage} />
+          ))}
         </View>
 
-        {/* Actions */}
+        {/* Action buttons */}
         <View style={styles.actionsRow}>
           {isLast ? (
+            /* ── Last slide: full-width Get Started ── */
+            <TouchableOpacity
+              style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.cta }]}
+              onPress={() => router.replace("/auth/login" as any)}
+              activeOpacity={0.82}
+            >
+              {isRTL && <Feather name="arrow-left" size={17} color="#FFFFFF" />}
+              <Text style={styles.primaryBtnText}>{t.welcome.getStarted}</Text>
+              {!isRTL && <Feather name="arrow-right" size={17} color="#FFFFFF" />}
+            </TouchableOpacity>
+
+          ) : isRTL ? (
+            /* ── RTL: [← Next] [Back icon on right] ── */
             <>
               <TouchableOpacity
-                style={[styles.primaryBtn, { backgroundColor: colors.primary, ...colors.shadow.primary }]}
-                onPress={handleGetStarted}
-                activeOpacity={0.8}
+                style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.cta }]}
+                onPress={() => goTo(currentPage + 1)}
+                activeOpacity={0.82}
               >
-                <Text style={styles.primaryBtnText}>{t.welcome.getStarted}</Text>
+                <Feather name="arrow-left" size={17} color="#FFFFFF" />
+                <Text style={styles.primaryBtnText}>{t.welcome.nextStep}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.outlineBtn, { borderColor: colors.border }]}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.outlineBtnText, { color: colors.primary }]}>{t.welcome.contactSales}</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <View style={{ flex: 1 }} />
-              {currentPage > 0 && (
+              {currentPage > 0 ? (
                 <TouchableOpacity
-                  style={[styles.secondaryBtn, { borderColor: colors.border }]}
-                  onPress={() => setCurrentPage(currentPage - 1)}
+                  style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  onPress={() => goTo(currentPage - 1)}
                   activeOpacity={0.8}
                 >
-                  <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={18} color={colors.onSurfaceVariant} />
+                  <Feather name="arrow-right" size={18} color={colors.onSurfaceVariant} />
                 </TouchableOpacity>
+              ) : (
+                <View style={styles.iconBtnSpacer} />
+              )}
+            </>
+
+          ) : (
+            /* ── LTR: [Back icon on left] [Next →] ── */
+            <>
+              {currentPage > 0 ? (
+                <TouchableOpacity
+                  style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  onPress={() => goTo(currentPage - 1)}
+                  activeOpacity={0.8}
+                >
+                  <Feather name="arrow-left" size={18} color={colors.onSurfaceVariant} />
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.iconBtnSpacer} />
               )}
               <TouchableOpacity
-                style={[styles.primaryBtn, { backgroundColor: colors.primary, ...colors.shadow.primary }]}
-                onPress={handleNext}
-                activeOpacity={0.8}
+                style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.cta }]}
+                onPress={() => goTo(currentPage + 1)}
+                activeOpacity={0.82}
               >
                 <Text style={styles.primaryBtnText}>{t.welcome.nextStep}</Text>
-                <Feather name={isRTL ? "arrow-left" : "arrow-right"} size={18} color="#FFFFFF" />
+                <Feather name="arrow-right" size={17} color="#FFFFFF" />
               </TouchableOpacity>
             </>
           )}
         </View>
 
-        {!isLast && (
-          <Text style={[styles.footerNote, { color: colors.mutedForeground }]}>
-            {t.welcome.trustedBy}
-          </Text>
-        )}
-      </View>
+        {/* Skip / secondary links */}
+        <View style={styles.secondaryRow}>
+          {isLast ? (
+            <TouchableOpacity onPress={() => router.replace("/auth/login" as any)} activeOpacity={0.7}>
+              <Text style={[styles.secondaryText, { color: colors.onSurfaceVariant }]}>
+                {t.welcome.contactSales}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => router.replace("/auth/login" as any)} activeOpacity={0.7}>
+              <Text style={[styles.secondaryText, { color: colors.mutedForeground }]}>
+                {t.welcome.skip}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
-      {/* Footer */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}>
-        <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
-          {t.welcome.footer}
-        </Text>
       </View>
     </View>
   );
@@ -207,171 +250,153 @@ export default function WelcomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingBottom: 8,
-  },
-  brandText: { fontSize: 20, letterSpacing: -0.5 },
-  skipText: { fontFamily: "Inter_400Regular", fontSize: 16 },
-  mainContent: { flex: 1, paddingHorizontal: 24 },
-  illustrationSection: {
+
+  page: {
+    width: SCREEN_WIDTH,
     flex: 1,
+  },
+
+  // ── Image section ──
+  imageSection: {
+    width: "100%",
+    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    marginBottom: 28,
   },
-  glowCircle: {
-    position: "absolute",
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    top: "15%",
-  },
-  glowCircleSecondary: {
-    position: "absolute",
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    top: "20%",
-    left: "20%",
-  },
-  imageWrapper: {
-    width: SCREEN_WIDTH - 80,
-    height: SCREEN_WIDTH - 80,
-    borderRadius: 24,
-    overflow: "hidden",
-    ...Platform.select({
-      default: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 25 },
-        shadowOpacity: 0.15,
-        shadowRadius: 25,
-        elevation: 20,
-      },
-    }),
-  },
+
   illustration: {
     width: "100%",
     height: "100%",
   },
-  badgesRow: {
+
+  chipsRow: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    right: 20,
     flexDirection: "row",
+    justifyContent: "center",
     gap: 8,
-    marginTop: 16,
   },
-  badge: {
+
+  chip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 9999,
+    borderWidth: 1,
   },
-  badgeText: {
+
+  chipText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
-    letterSpacing: 0.6,
+    fontSize: 11.5,
+    letterSpacing: 0.3,
   },
+
+  // ── Content section ──
   contentSection: {
+    paddingHorizontal: 28,
+    paddingTop: 40,
     alignItems: "center",
-    gap: 12,
-    paddingBottom: 24,
+    gap: 16,
+    flex: 1,
   },
+
   stepBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 9999,
   },
+
   stepText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
-    letterSpacing: 0.6,
+    fontSize: 11.5,
+    letterSpacing: 0.5,
   },
+
   title: {
-    fontSize: 26,
-    letterSpacing: -0.52,
+    fontSize: Math.min(26, SCREEN_WIDTH * 0.065),
     textAlign: "center",
+    lineHeight: Math.min(26, SCREEN_WIDTH * 0.065) * 1.35,
   },
+
   description: {
     fontFamily: "Inter_400Regular",
-    fontSize: 16,
-    lineHeight: 26,
+    fontSize: Math.min(15, SCREEN_WIDTH * 0.04),
+    lineHeight: Math.min(15, SCREEN_WIDTH * 0.04) * 1.7,
     textAlign: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
+    paddingBottom: 12,
   },
+
+  // ── Bottom controls ──
   bottomSection: {
     paddingHorizontal: 24,
-    gap: 20,
+    paddingTop: 8,
+    gap: 16,
   },
-  paginationRow: {
+
+  dotsRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-  },
-  paginationDots: {
-    flexDirection: "row",
     gap: 6,
-    alignItems: "center",
   },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-  },
+
   actionsRow: {
     flexDirection: "row",
     gap: 12,
     alignItems: "center",
   },
+
   primaryBtn: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
+    height: 52,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    shadowColor: "#0369A1",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    elevation: 8,
   },
+
   primaryBtnText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 16,
     color: "#FFFFFF",
   },
-  outlineBtn: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  outlineBtnText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
-  },
-  secondaryBtn: {
+
+  iconBtn: {
     width: 52,
     height: 52,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
   },
-  footerNote: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-    textAlign: "center",
-    letterSpacing: 0.5,
+
+  iconBtnSpacer: {
+    width: 52,
+    height: 52,
   },
-  footer: {
+
+  secondaryRow: {
     alignItems: "center",
-    paddingTop: 8,
+    paddingBottom: 4,
   },
-  footerText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-    textAlign: "center",
+
+  secondaryText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 14,
   },
 });

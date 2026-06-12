@@ -1,17 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  View, Text, ScrollView, Alert, TouchableOpacity, Platform,
+  View, Text, ScrollView, Alert, TouchableOpacity, Platform, KeyboardAvoidingView,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { OFFER_STATUS } from "@/constants/data";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { ScreenHeader } from "@/components/ScreenHeader";
 
 export default function SubmitOfferScreen() {
   const colors = useColors();
@@ -23,8 +25,24 @@ export default function SubmitOfferScreen() {
   const [price, setPrice] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+
+  useEffect(() => {
+    const checkDuplicate = async () => {
+      if (!user?.organizationId || !rfqId) return;
+      const q = query(
+        collection(db, "offers"),
+        where("rfqId", "==", rfqId),
+        where("organizationId", "==", user.organizationId)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) setAlreadySubmitted(true);
+    };
+    checkDuplicate();
+  }, [rfqId, user?.organizationId]);
 
   const handleSubmit = async () => {
+    if (alreadySubmitted) return;
     const priceNum = parseFloat(price);
     if (!price || isNaN(priceNum) || priceNum <= 0) {
       Alert.alert(t.common.error, t.rfq.invalidPrice);
@@ -41,7 +59,8 @@ export default function SubmitOfferScreen() {
         submittedByUserId: user?.uid,
         submittedByUserName: user?.displayName,
         price,
-        status: "قيد المراجعة",
+        notes: notes.trim() || null,
+        status: OFFER_STATUS.UNDER_REVIEW,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -56,14 +75,11 @@ export default function SubmitOfferScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14, paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={{ width: 34, height: 34, alignItems: "center", justifyContent: "center" }}>
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
-        </TouchableOpacity>
-        <Text style={{ fontSize: 17, fontWeight: "700" as const, color: colors.foreground }}>{t.rfq.submitOffer}</Text>
-        <View style={{ width: 34 }} />
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScreenHeader title={t.rfq.submitOffer} showBack />
 
       <ScrollView contentContainerStyle={[{ padding: 16, gap: 16, paddingBottom: insets.bottom + 60 }]} keyboardShouldPersistTaps="handled">
         <View style={[{ borderRadius: 16, padding: 18, borderWidth: 1, gap: 6, backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -73,26 +89,37 @@ export default function SubmitOfferScreen() {
           </Text>
         </View>
 
-        <View style={{ gap: 14 }}>
+        {alreadySubmitted && (
+          <View style={[{ borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: "row", gap: 10, alignItems: "flex-start", backgroundColor: colors.warning + "18", borderColor: colors.warning + "50" }]}>
+            <Feather name="alert-circle" size={16} color={colors.warning} />
+            <Text style={[{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.warning }]}>
+              {t.rfq.alreadySubmitted}
+            </Text>
+          </View>
+        )}
+
+        <View style={{ gap: 14, opacity: alreadySubmitted ? 0.5 : 1 }}>
           <Input
             label={t.rfq.price}
             required
             value={price}
-            onChangeText={setPrice}
+            onChangeText={alreadySubmitted ? undefined : setPrice}
             keyboardType="numeric"
             leftIcon="dollar-sign"
             placeholder={t.rfq.pricePlaceholder}
             isRTL={isRTL}
+            editable={!alreadySubmitted}
           />
           <Input
             label={t.rfq.notes}
             value={notes}
-            onChangeText={setNotes}
+            onChangeText={alreadySubmitted ? undefined : setNotes}
             multiline
             numberOfLines={4}
             placeholder={t.rfq.notesPlaceholder}
             isRTL={isRTL}
             style={{ height: 100, textAlignVertical: "top", paddingTop: 12 }}
+            editable={!alreadySubmitted}
           />
 
           <View style={[{ borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: "row", gap: 10, alignItems: "flex-start", backgroundColor: colors.accentBlueSoft, borderColor: colors.primary + "30" }]}>
@@ -102,9 +129,9 @@ export default function SubmitOfferScreen() {
             </Text>
           </View>
 
-          <Button title={t.rfq.submitOffer} onPress={handleSubmit} loading={loading} fullWidth />
+          <Button title={t.rfq.submitOffer} onPress={handleSubmit} loading={loading} fullWidth disabled={alreadySubmitted} />
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

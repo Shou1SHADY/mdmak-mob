@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, FlatList, StyleSheet, TouchableOpacity, Platform,
+  View, Text, FlatList, StyleSheet, TouchableOpacity, Platform, Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -35,6 +35,8 @@ export default function SupplierTeamScreen() {
         const q = query(collection(db, "users"), where("organizationId", "==", user.organizationId));
         const snap = await getDocs(q);
         setMembers(snap.docs.map((d) => ({ uid: d.id, ...d.data() } as TeamMember)));
+      } catch (e: any) {
+        Alert.alert(t.common.error, e.message || t.common.loading);
       } finally {
         setLoading(false);
       }
@@ -63,32 +65,31 @@ export default function SupplierTeamScreen() {
               </Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.memberName, { color: colors.foreground }]}>{item.displayName}</Text>
-              <Text style={[styles.memberEmail, { color: colors.mutedForeground }]}>{item.email}</Text>
+              <Text style={[styles.memberName, { color: colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{item.displayName}</Text>
+              <Text style={[styles.memberEmail, { color: colors.mutedForeground }]} numberOfLines={1} ellipsizeMode="tail">{item.email}</Text>
             </View>
             <View style={[styles.roleBadge, { backgroundColor: colors.muted }]}>
               <Text style={[styles.roleText, { color: colors.mutedForeground }]}>
-                {item.role.charAt(0).toUpperCase() + item.role.slice(1)}
+                {item.role?.charAt(0)?.toUpperCase() ?? "?"}{item.role ? item.role.slice(1) : ""}
               </Text>
             </View>
           </View>
         )}
         ListEmptyComponent={<EmptyState icon="users" title={t.team.noMembers} subtitle={t.team.noMembersDesc} />}
-        scrollEnabled={!!members.length}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
+  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, minHeight: 56 },
   title: { fontSize: 18, fontWeight: "700" as const },
   list: { paddingTop: 8 },
-  memberItem: { flexDirection: "row", gap: 14, padding: 16, borderBottomWidth: 1, alignItems: "center" },
+  memberItem: { flexDirection: "row", gap: 14, padding: 16, borderBottomWidth: 1, alignItems: "center", flexWrap: "nowrap" },
   avatar: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   avatarText: { fontSize: 18, fontWeight: "700" as const },
-  memberName: { fontSize: 15, fontWeight: "600" as const },
-  memberEmail: { fontSize: 13, marginTop: 2 },
-  roleBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  memberName: { fontSize: 15, fontWeight: "600" as const, flexShrink: 1 },
+  memberEmail: { fontSize: 13, marginTop: 2, flexShrink: 1 },
+  roleBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 100 },
   roleText: { fontSize: 12, fontWeight: "500" as const },
 });

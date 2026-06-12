@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, Platform,
+  View, Text, ScrollView, StyleSheet, Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
@@ -12,6 +12,7 @@ import { db } from "@/lib/firebase";
 import { RFQItem } from "@/components/RFQCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import { RFQ_STATUSES } from "@/constants/data";
 
 export default function SupplierRFQDetailScreen() {
@@ -32,7 +33,10 @@ export default function SupplierRFQDetailScreen() {
     fetch();
   }, [id]);
 
-  const statusInfo = rfq ? (RFQ_STATUSES.find((s) => s.id === rfq.status) ?? { label: rfq.status, color: colors.outline }) : null;
+  const statusData = rfq ? RFQ_STATUSES.find((s) => s.id === rfq.status) : null;
+  const statusInfo = statusData
+    ? { label: isRTL ? statusData.labelAr : statusData.label, color: statusData.color }
+    : rfq ? { label: rfq.status, color: colors.outline } : null;
 
   if (loading || !rfq) {
     return (
@@ -44,23 +48,17 @@ export default function SupplierRFQDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10), backgroundColor: colors.primary }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color="#FFFFFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{t.rfq.detail}</Text>
-        <View style={{ width: 34 }} />
-      </View>
+      <ScreenHeader title={t.rfq.detail} showBack />
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}>
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, ...colors.shadow.sm }]}>
           <View style={styles.topRow}>
             <Text style={[styles.category, { color: colors.primary }]}>{rfq.category}</Text>
             {statusInfo && <StatusBadge label={statusInfo.label} color={statusInfo.color} />}
           </View>
-          <Text style={[styles.rfqTitle, { color: colors.foreground }]}>{rfq.title}</Text>
+          <Text style={[styles.rfqTitle, { color: colors.foreground, lineHeight: isRTL ? 34 : 26 }]} numberOfLines={3} ellipsizeMode="tail">{rfq.title}</Text>
            {rfq.description && (
-            <Text style={[styles.desc, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>{rfq.description}</Text>
+            <Text style={[styles.desc, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={4} ellipsizeMode="tail">{rfq.description}</Text>
            )}
           <View style={styles.metaGrid}>
             <View style={styles.metaRow}>
@@ -86,7 +84,7 @@ export default function SupplierRFQDetailScreen() {
           />
           <Button
             title={t.rfq.messageContractor}
-            onPress={() => {}}
+            onPress={() => router.push("/(supplier)/chats")}
             variant="outline"
             fullWidth
           />
@@ -97,17 +95,14 @@ export default function SupplierRFQDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14 },
-  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
-  headerTitle: { fontSize: 17, fontWeight: "700" as const, color: "#FFFFFF", flex: 1, textAlign: "center", marginHorizontal: 8 },
   content: { padding: 16, gap: 16 },
   card: { borderRadius: 16, padding: 18, borderWidth: 1, gap: 10 },
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  category: { fontSize: 12, fontWeight: "600" as const, textTransform: "uppercase", letterSpacing: 0.5 },
-  rfqTitle: { fontSize: 20, fontWeight: "700" as const, lineHeight: 26 },
-  desc: { fontSize: 14, lineHeight: 22 },
+  category: { fontSize: 12, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "Inter_600SemiBold", flex: 1, marginRight: 8 },
+  rfqTitle: { fontSize: 20, fontWeight: "700", lineHeight: 26, fontFamily: "HankenGrotesk_700Bold" },
+  desc: { fontSize: 14, lineHeight: 22, fontFamily: "Inter_400Regular" },
   metaGrid: { gap: 8, marginTop: 4 },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  metaText: { fontSize: 14 },
+  metaText: { fontSize: 14, fontFamily: "Inter_400Regular" },
   btnGroup: { gap: 10 },
 });

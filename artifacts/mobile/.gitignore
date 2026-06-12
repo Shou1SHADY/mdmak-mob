@@ -42,4 +42,12 @@ yarn-error.*
 *.tsbuildinfo
 .vercel
 
+# tests
+coverage/
+
+# misc
+*.log
+
 .env
+
+../../../.env*

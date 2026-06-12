@@ -30,8 +30,19 @@ export const RFQ_STATUSES = [
   { id: "New", label: "New", labelAr: "جديد", color: "#3b82f6" },
   { id: "Active", label: "Active", labelAr: "نشط", color: "#06b6d4" },
   { id: "Under Review", label: "Under Review", labelAr: "قيد المراجعة", color: "#f59e0b" },
+  { id: "Awarded", label: "Awarded", labelAr: "تم الترسية", color: "#12A063" },
   { id: "Closed", label: "Closed", labelAr: "مغلق", color: "#22c55e" },
 ];
+
+export const OFFER_STATUS = {
+  UNDER_REVIEW: "قيد المراجعة",
+  ACCEPTED: "مقبول",
+  REJECTED: "مرفوض",
+  PRICE_REDUCTION: "مطلوب تخفيض",
+  DELIVERED: "تم التسليم",
+  IN_TRANSIT: "جاري التوصيل",
+  IN_PREPARATION: "قيد التجهيز",
+} as const;
 
 export const OFFER_STATUSES = [
   { id: "قيد المراجعة", label: "Under Review", labelAr: "قيد المراجعة", color: "#f59e0b" },

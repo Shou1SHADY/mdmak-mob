@@ -1,11 +1,12 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Platform, ViewStyle } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Platform, ViewStyle, Modal, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
+import { SaudiArabiaFlag, UKFlag } from "@/components/ui/FlagIcon";
 import { Image } from "expo-image";
 
 interface ScreenHeaderProps {
@@ -19,6 +20,7 @@ interface ScreenHeaderProps {
 export function ScreenHeader({ title, subtitle, showBack = false, right, style }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { isRTL } = useLanguage();
 
   return (
     <View
@@ -36,14 +38,14 @@ export function ScreenHeader({ title, subtitle, showBack = false, right, style }
       <View style={styles.row}>
         {showBack ? (
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather name="arrow-left" size={22} color={colors.foreground} />
+            <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 34 }} />
         )}
         <View style={styles.center}>
-          <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={1}>{title}</Text>
-          {subtitle && <Text style={[styles.subtitle, { color: colors.outline }]}>{subtitle}</Text>}
+          <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
+          {subtitle && <Text style={[styles.subtitle, { color: colors.outline }]} numberOfLines={1} ellipsizeMode="tail">{subtitle}</Text>}
         </View>
         <View style={styles.rightSlot}>{right ?? <View style={{ width: 34 }} />}</View>
       </View>
@@ -67,48 +69,142 @@ export function DashboardHeader({
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const t = useT();
-  const { isRTL } = useLanguage();
+  const { isRTL, language, setLanguage } = useLanguage();
+  const [showSheet, setShowSheet] = useState(false);
+
+  const CurrentFlag = language === "ar" ? SaudiArabiaFlag : UKFlag;
 
   return (
-    <View
-      style={[
-        {
-          paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
-          backgroundColor: colors.surfaceSecondary,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-        },
-        style,
-      ]}
-    >
-      <View style={[styles.dashInner, { paddingHorizontal: 16, paddingBottom: 12, marginTop: 6 }]}>
-        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, marginRight: 12 }}>
-          <View style={[styles.avatarRing, { borderColor: colors.accent }]}>
-            <Image
-              source={require("@/assets/images/figma/user-profile.png")}
-              style={styles.avatar}
-              contentFit="cover"
-            />
+    <>
+      <View
+        style={[
+          {
+            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 4),
+            backgroundColor: colors.surface,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+          },
+          style,
+        ]}
+      >
+        <View style={[styles.dashInner, { paddingHorizontal: 16, paddingBottom: 10, marginTop: 4 }]}>
+          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, marginRight: isRTL ? 0 : 10, marginLeft: isRTL ? 10 : 0 }}>
+            <View style={[styles.avatarRing, { borderColor: colors.accent, width: 38, height: 38, borderRadius: 19 }]}>
+              <Image
+                source={require("@/assets/images/figma/user-profile.png")}
+                style={{ width: 34, height: 34, borderRadius: 17 }}
+                contentFit="cover"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{ fontFamily: "HankenGrotesk_700Bold", fontSize: 17, color: colors.foreground, letterSpacing: -0.2 }}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {orgName ?? userName ?? "Mdmak Tech"}
+              </Text>
+              {orgType && (
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.outline, marginTop: 1 }}>
+                  {orgType}
+                </Text>
+              )}
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                fontFamily: "HankenGrotesk_700Bold",
-                fontSize: 22,
-                letterSpacing: -0.4,
-                color: colors.foreground,
-              }}
-              numberOfLines={1}
+
+          <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 8, alignItems: "center" }}>
+            {/* Language flag button — shows current language flag, opens picker */}
+            <TouchableOpacity
+              style={styles.langBtn}
+              onPress={() => setShowSheet(true)}
+              accessibilityLabel="Change language"
+              accessibilityRole="button"
+              activeOpacity={0.8}
             >
-              {orgName ?? userName ?? "Mdmak Tech"}
-            </Text>
+              <CurrentFlag width={50} height={32} />
+            </TouchableOpacity>
+            {right}
           </View>
-        </View>
-        <View style={{ flexDirection: "row", gap: 8, alignItems: "center", paddingLeft: 4 }}>
-          {right}
         </View>
       </View>
-    </View>
+
+      {/* Language Picker Bottom Sheet */}
+      <Modal
+        visible={showSheet}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSheet(false)}
+        statusBarTranslucent
+      >
+        <View style={styles.modalOuter}>
+          {/* Backdrop */}
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowSheet(false)} />
+
+          {/* Sheet */}
+          <View style={[styles.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}>
+            {/* Handle */}
+            <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
+
+            {/* Title */}
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
+              {language === "ar" ? "اختر اللغة" : "Select Language"}
+            </Text>
+
+            {/* Arabic option */}
+            <TouchableOpacity
+              style={[
+                styles.langOption,
+                {
+                  backgroundColor: language === "ar" ? colors.primary + "08" : "transparent",
+                  borderColor: language === "ar" ? colors.primary + "30" : colors.border,
+                },
+              ]}
+              onPress={() => { setLanguage("ar"); setShowSheet(false); }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.flagWrap}>
+                <SaudiArabiaFlag width={52} height={34} />
+              </View>
+              <Text style={[styles.langOptionText, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+                عربي
+              </Text>
+              <View style={{ flex: 1 }} />
+              {language === "ar" && (
+                <View style={[styles.checkCircle, { backgroundColor: colors.success }]}>
+                  <Feather name="check" size={13} color="#fff" />
+                </View>
+              )}
+            </TouchableOpacity>
+
+            {/* English option */}
+            <TouchableOpacity
+              style={[
+                styles.langOption,
+                {
+                  backgroundColor: language === "en" ? colors.primary + "08" : "transparent",
+                  borderColor: language === "en" ? colors.primary + "30" : colors.border,
+                },
+              ]}
+              onPress={() => { setLanguage("en"); setShowSheet(false); }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.flagWrap}>
+                <UKFlag width={52} height={34} />
+              </View>
+              <Text style={[styles.langOptionText, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+                English
+              </Text>
+              <View style={{ flex: 1 }} />
+              {language === "en" && (
+                <View style={[styles.checkCircle, { backgroundColor: colors.success }]}>
+                  <Feather name="check" size={13} color="#fff" />
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -126,6 +222,8 @@ export function WelcomeHeroCard({
   actionLabel?: string;
 }) {
   const colors = useColors();
+  const t = useT();
+  const { isRTL } = useLanguage();
 
   return (
     <LinearGradient
@@ -134,20 +232,24 @@ export function WelcomeHeroCard({
       end={{ x: 1, y: 1 }}
       style={[styles.heroCard, colors.shadow.md]}
     >
-      <Text style={[styles.heroTitle, { fontFamily: "HankenGrotesk_700Bold" }]}>
-        Hello, {userName ?? "there"}
+      <Text style={[styles.heroTitle, { fontFamily: "HankenGrotesk_700Bold", textAlign: isRTL ? "right" : "left", letterSpacing: isRTL ? 0 : -0.52 }]}>
+        {t.dashboard.greeting} {userName ?? ""}
       </Text>
-      <Text style={styles.heroDesc}>
-        You have <Text style={{ fontFamily: "Inter_700Bold", color: "#FFFFFF" }}>{activeRfqs ?? 0} active RFQs</Text> with <Text style={{ fontFamily: "Inter_700Bold", color: "#FFFFFF" }}>{totalOffers ?? 0} offers</Text> to review. Stay on top of your procurement.
+      <Text style={[styles.heroDesc, { textAlign: isRTL ? "right" : "left" }]}>
+        {t.dashboard.heroYouHave}{" "}
+        <Text style={{ fontFamily: "Inter_700Bold", color: "#FFFFFF" }}>{activeRfqs ?? 0}</Text>
+        {" "}{t.dashboard.heroActiveRfqsAnd}{" "}
+        <Text style={{ fontFamily: "Inter_700Bold", color: "#FFFFFF" }}>{totalOffers ?? 0}</Text>
+        {" "}{t.dashboard.heroOffersReview}
       </Text>
       {onAction && (
         <TouchableOpacity
-          style={styles.heroBtn}
+          style={[styles.heroBtn, { alignSelf: isRTL ? "flex-end" : "flex-start" }]}
           onPress={onAction}
           activeOpacity={0.8}
         >
-          <Text style={styles.heroBtnText}>{actionLabel ?? "View All RFQs"}</Text>
-          <Feather name="arrow-right" size={14} color={colors.cta} />
+          <Text style={styles.heroBtnText}>{actionLabel ?? t.dashboard.viewAll}</Text>
+          <Feather name={isRTL ? "arrow-left" : "arrow-right"} size={14} color={colors.cta} />
         </TouchableOpacity>
       )}
     </LinearGradient>
@@ -158,25 +260,44 @@ export function QuickActionCard({
   title,
   icon,
   bgColor,
+  iconColor,
   onPress,
 }: {
   title: string;
   icon: keyof typeof Feather.glyphMap;
   bgColor: string;
+  iconColor?: string;
   onPress?: () => void;
 }) {
   const colors = useColors();
+  const resolvedIconColor = iconColor ?? colors.cta;
 
   return (
     <TouchableOpacity
-      style={[styles.quickActionCard, { backgroundColor: colors.card, borderColor: colors.border, ...colors.shadow.card }]}
+      style={[
+        styles.quickActionCard,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          borderTopWidth: 3,
+          borderTopColor: resolvedIconColor,
+          ...colors.shadow.sm,
+        },
+      ]}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.75}
+      accessibilityLabel={title}
+      accessibilityRole="button"
     >
-      <View style={[styles.quickActionIcon, { backgroundColor: bgColor }]}>
-        <Feather name={icon} size={20} color={bgColor === colors.accentBlueSoft ? colors.primary : colors.secondary} />
+      <View style={[styles.quickActionIcon, { backgroundColor: bgColor, borderRadius: 10 }]}>
+        <Feather name={icon} size={22} color={resolvedIconColor} />
       </View>
-      <Text style={[styles.quickActionTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{title}</Text>
+      <Text
+        style={[styles.quickActionTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}
+        numberOfLines={2}
+      >
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -193,21 +314,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   backBtn: {
-    width: 34,
-    height: 34,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
   },
   center: { flex: 1, alignItems: "center" },
-  title: {
-    fontSize: 17,
-    fontWeight: "700" as const,
-  },
-  subtitle: {
-    fontSize: 12,
-    marginTop: 1,
-  },
+  title: { fontSize: 17, fontWeight: "700" as const },
+  subtitle: { fontSize: 12, marginTop: 1 },
   rightSlot: { width: 34, alignItems: "flex-end" },
   dashInner: {
     flexDirection: "row",
@@ -223,11 +338,65 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  langBtn: {
+    width: 50,
+    height: 32,
+    borderRadius: 7,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.12)",
   },
+  // ── Bottom sheet ──────────────────────────────────────
+  modalOuter: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  sheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    gap: 10,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 8,
+  },
+  sheetTitle: {
+    fontSize: 15,
+    fontFamily: "HankenGrotesk_700Bold",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  langOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+  },
+  flagWrap: {
+    borderRadius: 6,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)",
+  },
+  langOptionText: {
+    fontSize: 17,
+  },
+  checkCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // ── Hero card ─────────────────────────────────────────
   heroCard: {
     padding: 20,
     borderRadius: 12,
@@ -262,6 +431,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     color: "#0369A1",
   },
+  // ── Quick action ──────────────────────────────────────
   quickActionCard: {
     flex: 1,
     padding: 16,

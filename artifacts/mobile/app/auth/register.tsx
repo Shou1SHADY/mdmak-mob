@@ -7,6 +7,7 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -103,7 +104,10 @@ export default function RegisterScreen() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       {/* Dark header */}
       <View style={[styles.hero, { backgroundColor: colors.primary, paddingTop: topPad + 16 }]}>
         <TouchableOpacity onPress={() => (step > 1 ? setStep(1) : router.back())} style={styles.backBtn}>
@@ -206,7 +210,7 @@ export default function RegisterScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -218,7 +222,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     gap: 0,
   },
-  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+  backBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   heroCenter: { flex: 1, alignItems: "center", gap: 10 },
   heroTitle: { fontSize: 20, fontWeight: "700" as const, color: "#FFFFFF" },
   stepTrack: { flexDirection: "row", gap: 8 },

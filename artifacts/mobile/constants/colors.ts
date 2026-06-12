@@ -10,7 +10,7 @@ const colors = {
     cardForeground: "#020617",
 
     primary: "#0F172A",
-    primaryForeground: "#ffffff",
+    primaryForeground: "#FFFFFF",
 
     cta: "#0369A1",
     ctaForeground: "#FFFFFF",
@@ -80,6 +80,87 @@ const colors = {
     glowTeal: "rgba(32, 203, 213, 0.1)",
   },
 
+  dark: {
+    text: "#F8FAFC",
+    tint: "#38BDF8",
+
+    background: "#0B1221",
+    foreground: "#F1F5F9",
+
+    card: "#131C30",
+    cardForeground: "#F1F5F9",
+
+    primary: "#0F172A",
+    primaryForeground: "#F8FAFC",
+
+    cta: "#38BDF8",
+    ctaForeground: "#0B1221",
+
+    secondary: "#94A3B8",
+    secondaryForeground: "#0B1221",
+
+    muted: "#1C2A42",
+    mutedForeground: "#94A3B8",
+
+    accent: "#20CBD5",
+    accentForeground: "#0B1221",
+
+    destructive: "#F87171",
+    destructiveForeground: "#0B1221",
+
+    success: "#4ADE80",
+    successForeground: "#0B1221",
+
+    warning: "#FBBF24",
+    warningForeground: "#0B1221",
+
+    border: "#1E2D45",
+    input: "#1E2D45",
+
+    surface: "#131C30",
+    surfaceSecondary: "#0F1828",
+
+    tabBar: "#131C30",
+    header: "#0F1828",
+
+    drawerBg: "#0B1221",
+    drawerText: "#F8FAFC",
+    drawerActive: "#38BDF8",
+    drawerHover: "#1C2A42",
+
+    accentBlueSoft: "#1C2A42",
+    accentPurpleSoft: "#1E2A42",
+    surfaceGray: "#1C2A42",
+    outline: "#64748B",
+    onSurfaceVariant: "#94A3B8",
+
+    chartColors: ["#38BDF8", "#20CBD5", "#4ADE80", "#94A3B8", "#64748B"],
+
+    gradientPrimary: ["#0B1221", "#131C30"] as [string, string],
+    gradientBlue: ["#0284C7", "#0369A1"] as [string, string],
+    gradientTeal: ["#0B1221", "#0369A1"] as [string, string],
+    gradientGlass: ["rgba(255,255,255,0.06)", "rgba(255,255,255,0.02)"] as [string, string],
+
+    textWhite: "#F8FAFC",
+    textWhite80: "rgba(248,250,252,0.85)",
+    textWhite60: "rgba(248,250,252,0.65)",
+    textWhite40: "rgba(248,250,252,0.45)",
+    textWhite12: "rgba(248,250,252,0.15)",
+
+    pillBlue: "#1C2A42",
+    pillLavender: "#1E2A42",
+    pillBlueText: "#94A3B8",
+    pillTeal: "#20CBD5",
+    tealAccent: "#20CBD5",
+    purpleAccent: "#818CF8",
+    whatsappGreen: "#25D366",
+
+    atmosphericBlue: "rgba(56, 189, 248, 0.06)",
+    atmosphericPurple: "rgba(129, 140, 248, 0.06)",
+    glowBlue: "rgba(56, 189, 248, 0.12)",
+    glowTeal: "rgba(32, 203, 213, 0.12)",
+  },
+
   radius: {
     xs: 4,
     sm: 6,
@@ -112,60 +193,60 @@ const colors = {
       elevation: 0,
     },
     sm: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 2 },
+      shadowColor: "#0A1120",
+      shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.04,
-      shadowRadius: 8,
-      elevation: 2,
+      shadowRadius: 6,
+      elevation: 1,
     },
     md: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.05,
-      shadowRadius: 20,
-      elevation: 4,
+      shadowColor: "#0A1120",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 16,
+      elevation: 3,
     },
     lg: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.08,
-      shadowRadius: 40,
-      elevation: 8,
+      shadowColor: "#0A1120",
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.07,
+      shadowRadius: 32,
+      elevation: 6,
     },
     xl: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.1,
-      shadowRadius: 50,
-      elevation: 12,
-    },
-    primary: {
-      shadowColor: "#0F172A",
+      shadowColor: "#0A1120",
       shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.2,
-      shadowRadius: 25,
+      shadowOpacity: 0.09,
+      shadowRadius: 40,
       elevation: 10,
     },
-    card: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.05,
-      shadowRadius: 20,
-      elevation: 4,
-    },
-    nav: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: -4 },
-      shadowOpacity: 0.05,
+    primary: {
+      shadowColor: "#0369A1",
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.2,
       shadowRadius: 20,
       elevation: 8,
     },
+    card: {
+      shadowColor: "#0A1120",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 14,
+      elevation: 3,
+    },
+    nav: {
+      shadowColor: "#0A1120",
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 16,
+      elevation: 6,
+    },
     logo: {
-      shadowColor: "#0F172A",
-      shadowOffset: { width: 0, height: 20 },
-      shadowOpacity: 0.15,
-      shadowRadius: 50,
-      elevation: 25,
+      shadowColor: "#0369A1",
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.18,
+      shadowRadius: 36,
+      elevation: 20,
     },
   },
 

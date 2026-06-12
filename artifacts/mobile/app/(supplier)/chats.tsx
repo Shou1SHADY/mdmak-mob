@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
-import { useT } from "@/context/LanguageContext";
+import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -17,9 +17,11 @@ interface ChatThread {
   rfqId: string;
   contractorOrgId: string;
   supplierOrgId: string;
+  rfqTitle?: string;
   lastMessage?: string;
   unreadContractor?: number;
   unreadSupplier?: number;
+  updatedAt?: any;
 }
 
 export default function SupplierChatsScreen() {
@@ -27,6 +29,7 @@ export default function SupplierChatsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const t = useT();
+  const { isRTL } = useLanguage();
   const [chats, setChats] = useState<ChatThread[]>([]);
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export default function SupplierChatsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>{t.tabs.messages}</Text>
+        <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{t.tabs.messages}</Text>
       </View>
       <FlatList
         data={chats}
@@ -59,10 +62,10 @@ export default function SupplierChatsScreen() {
                 <Feather name="message-circle" size={22} color={colors.accent} />
               </View>
               <View style={{ flex: 1, gap: 3 }}>
-                <Text style={[styles.chatTitle, { color: colors.foreground }]} numberOfLines={1}>
-                  RFQ #{item.rfqId.slice(0, 8)}
+                <Text style={[styles.chatTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={1}>
+                  {item.rfqTitle ?? `RFQ #${item.rfqId.slice(0, 8)}`}
                 </Text>
-                <Text style={[styles.lastMsg, { color: colors.mutedForeground }]} numberOfLines={1}>
+                <Text style={[styles.lastMsg, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={1}>
                   {item.lastMessage ?? t.chat.noMessages}
                 </Text>
               </View>
@@ -75,7 +78,6 @@ export default function SupplierChatsScreen() {
           );
         }}
         ListEmptyComponent={<EmptyState icon="message-circle" title={t.chat.noConversations} subtitle={t.chat.noConversationsDesc} />}
-        scrollEnabled={!!chats.length}
       />
     </View>
   );

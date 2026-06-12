@@ -34,7 +34,7 @@ const sharedTabOptions = (colors: ReturnType<typeof useColors>, isWeb: boolean) 
     paddingBottom: isWeb ? 14 : 8,
     paddingTop: 6,
     paddingHorizontal: 12,
-    shadowColor: "#0F172A",
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -42,7 +42,6 @@ const sharedTabOptions = (colors: ReturnType<typeof useColors>, isWeb: boolean) 
   tabBarLabelStyle: {
     fontSize: 11,
     fontWeight: "600" as const,
-    letterSpacing: 0.2,
     marginTop: 4,
   } as any,
   tabBarItemStyle: {
@@ -77,11 +76,11 @@ export default function ContractorLayout() {
         }}
       />
       <Tabs.Screen
-        name="suppliers"
+        name="compare"
         options={{
-          title: t.tabs.suppliers,
+          title: t.tabs.compare,
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="users" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
+            <TabIcon name="bar-chart-2" color={focused ? colors.cta : colors.outline} focused={focused} colors={colors} />
           ),
         }}
       />
@@ -107,6 +106,7 @@ export default function ContractorLayout() {
       <Tabs.Screen name="rfqs/[id]" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="team" options={{ href: null }} />
+      <Tabs.Screen name="suppliers" options={{ href: null }} />
     </Tabs>
   );
 }

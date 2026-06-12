@@ -22,6 +22,11 @@ export interface Translations {
     secureGateway: string;
     adminNotSupportedDesc: string;
     unknown: string;
+    send: string;
+    search: string;
+    retry: string;
+    back: string;
+    close: string;
   };
   auth: {
     login: {
@@ -42,6 +47,7 @@ export interface Translations {
       comingSoon: string;
       comingSoonMobile: string;
       comingSoonApple: string;
+      forgotPassword: string;
       popupBlocked: string;
     };
     register: {
@@ -118,6 +124,11 @@ export interface Translations {
     thisMonth: string;
     browseSuppliers: string;
     browseOpenRfqs: string;
+    greeting: string;
+    heroYouHave: string;
+    heroActiveRfqsAnd: string;
+    heroOffersReview: string;
+    compareOffers: string;
   };
   tabs: {
     dashboard: string;
@@ -128,6 +139,30 @@ export interface Translations {
     messages: string;
     profile: string;
     notifications: string;
+    compare: string;
+  };
+  compare: {
+    title: string;
+    subtitle: string;
+    noRfqs: string;
+    noRfqsDesc: string;
+    offersCount: string;
+    backToList: string;
+    sortPrice: string;
+    sortDuration: string;
+    sortDate: string;
+    bestLabel: string;
+    noOffers: string;
+    noOffersDesc: string;
+    currency: string;
+    accept: string;
+    days: string;
+    weeks: string;
+    months: string;
+    pending: string;
+    accepted: string;
+    rejected: string;
+    reduction: string;
   };
   profile: {
     title: string;
@@ -206,6 +241,63 @@ export interface Translations {
     offerPriceInfo: string;
     messageContractor: string;
     submitFailed: string;
+    alreadySubmitted: string;
+    // New RFQ creation workflow
+    products: string;
+    productsHelp: string;
+    addProduct: string;
+    removeProduct: string;
+    productLabel: string;
+    productName: string;
+    productNamePlaceholder: string;
+    quantity: string;
+    unitOfMeasure: string;
+    unitPlaceholder: string;
+    specifications: string;
+    specPlaceholder: string;
+    subCategory: string;
+    selectSubCategory: string;
+    otherCategory: string;
+    otherCategoryPlaceholder: string;
+    pdfFiles: string;
+    pdfAttached: string;
+    pdfAttachedDesc: string;
+    clickUploadPdf: string;
+    pdfTechnicalDesc: string;
+    uploadError: string;
+    uploadSuccess: string;
+    uploadSuccessDesc: string;
+    uploadFailed: string;
+    cityLabel: string;
+    selectCity: string;
+    districtLabel: string;
+    selectDistrict: string;
+    supplyInfo: string;
+    supplyInfoHelp: string;
+    supplyInfoNote: string;
+    deadlineLabel: string;
+    deadlineDisplay: string;
+    stepRequestDetails: string;
+    stepLocationDate: string;
+    prev: string;
+    next: string;
+    errorsTitle: string;
+    valTitleRequired: string;
+    valProductRequired: string;
+    valCityRequired: string;
+    valDeadlineRequired: string;
+    aiEnhance: string;
+    aiEnhanced: string;
+    aiEnhancedDesc: string;
+    aiNotAvailable: string;
+    aiNotAvailableDesc: string;
+    aiDraftFailed: string;
+    incompleteData: string;
+    toastSaved: string;
+    toastSavedDesc: string;
+    toastPublished: string;
+    toastPublishedDesc: string;
+    publishNow: string;
   };
   chat: {
     title: string;
@@ -213,6 +305,7 @@ export interface Translations {
     noMessages: string;
     noConversations: string;
     noConversationsDesc: string;
+    sentByYou: string;
   };
   offers: {
     title: string;
@@ -272,5 +365,10 @@ export interface Translations {
     generic: string;
     notFound: string;
     goHome: string;
+    somethingWentWrong: string;
+    pleaseReload: string;
+    tryAgain: string;
+    errorDetails: string;
+    closeErrorDetails: string;
   };
 }

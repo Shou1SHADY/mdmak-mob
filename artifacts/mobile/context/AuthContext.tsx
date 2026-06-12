@@ -22,6 +22,11 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
+/* eslint-disable no-console */
+const devLog = (...args: any[]) => { if (__DEV__) console.log(...args); };
+const devWarn = (...args: any[]) => { if (__DEV__) console.warn(...args); };
+const devError = (...args: any[]) => { if (__DEV__) console.error(...args); };
+
 WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_SCOPES = ["openid", "profile", "email"];
@@ -46,6 +51,7 @@ export interface AppUser {
   phone?: string;
   city?: string;
   emailVerified: boolean;
+  profileCompleted: boolean;
 }
 
 export interface Organization {
@@ -93,23 +99,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const googleClientId = process.env.EXPO_PUBLIC_FIREBASE_CLIENT_ID;
 
   async function loadUserData(firebaseUser: FirebaseUser) {
-    console.log("[Auth] loadUserData called for uid:", firebaseUser.uid);
+    devLog("[Auth] loadUserData called for uid:", firebaseUser.uid);
     const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
     if (!userDoc.exists()) {
-      console.log("[Auth] No Firestore user doc found");
+      devLog("[Auth] No Firestore user doc found");
       return null;
     }
     const data = userDoc.data();
-    console.log("[Auth] User doc fields:", Object.keys(data).join(", "));
+    devLog("[Auth] User doc fields:", Object.keys(data).join(", "));
     let orgId = data.organizationId || data.orgId || "";
     if (!orgId) {
-      console.log("[Auth] No organizationId found, generating one...");
+      devLog("[Auth] No organizationId found, generating one...");
       orgId = generateId();
       try {
         await setDoc(doc(db, "users", firebaseUser.uid), { organizationId: orgId }, { merge: true });
-        console.log("[Auth] Saved organizationId:", orgId);
+        devLog("[Auth] Saved organizationId:", orgId);
       } catch (e) {
-        console.warn("[Auth] Failed to save organizationId:", e);
+        devWarn("[Auth] Failed to save organizationId:", e);
       }
     }
     const appUser: AppUser = {
@@ -122,22 +128,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       phone: data.phone,
       city: data.city,
       emailVerified: firebaseUser.emailVerified,
+      profileCompleted: data.profileCompleted ?? true,
     };
     setUser(appUser);
-    console.log("[Auth] User state set, orgId:", appUser.organizationId, "role:", appUser.role);
+    devLog("[Auth] User state set, orgId:", appUser.organizationId, "role:", appUser.role);
 
     setOrganization({
       id: orgId,
       type: data.role === "Supplier" ? "supplier" : "contractor",
       name: data.companyName ?? data.orgName ?? "",
+      crNumber: data.crNumber,
       city: data.city,
+      specializations: data.specializations ?? [],
+      serviceAreas: data.serviceAreas ?? [],
+      verified: data.verified ?? false,
     });
     return appUser;
   }
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log("[Auth] onAuthStateChanged:", firebaseUser?.uid ?? "signed out");
+      devLog("[Auth] onAuthStateChanged:", firebaseUser?.uid ?? "signed out");
       try {
         if (firebaseUser) {
           await loadUserData(firebaseUser);
@@ -146,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setOrganization(null);
         }
       } catch (e) {
-        console.log("[Auth] onAuthStateChanged error:", e);
+        devLog("[Auth] onAuthStateChanged error:", e);
         setUser(null);
         setOrganization(null);
       } finally {
@@ -157,14 +168,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function login(email: string, password: string): Promise<AppUser> {
-    console.log("[Auth] login called for:", email);
+    devLog("[Auth] login called for:", email);
     const cred = await signInWithEmailAndPassword(auth, email, password);
-    console.log("[Auth] Firebase sign-in succeeded, uid:", cred.user.uid);
+    devLog("[Auth] Firebase sign-in succeeded, uid:", cred.user.uid);
     let appUser;
     try {
       appUser = await loadUserData(cred.user);
     } catch (e: any) {
-      console.log("[Auth] Firestore read failed:", e.code, e.message);
+      devLog("[Auth] Firestore read failed:", e.code, e.message);
       await signOut(auth);
       if (e.code === "permission-denied") {
         throw new Error("Firestore permission denied. Please check Firestore security rules.");
@@ -172,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw e;
     }
     if (!appUser) {
-      console.log("[Auth] No user profile, signing out");
+      devLog("[Auth] No user profile, signing out");
       await signOut(auth);
       throw new Error("User profile not found. Please re-register.");
     }
@@ -188,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     city: string
   ): Promise<AppUser> {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    console.log("[Auth] Firebase sign-up succeeded, uid:", cred.user.uid);
+    devLog("[Auth] Firebase sign-up succeeded, uid:", cred.user.uid);
     await sendEmailVerification(cred.user);
 
     const organizationId = generateId();
@@ -206,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: serverTimestamp(),
       });
     } catch (e: any) {
-      console.log("[Auth] Firestore write failed:", e.code, e.message);
+      devLog("[Auth] Firestore write failed:", e.code, e.message);
       if (e.code === "permission-denied") {
         throw new Error("Firestore permission denied. Please check Firestore security rules.");
       }
@@ -234,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithGoogle(): Promise<AppUser> {
-    console.log("[Auth] signInWithGoogle called");
+    devLog("[Auth] signInWithGoogle called");
 
     if (Platform.OS === "web") {
       const provider = new GoogleAuthProvider();
@@ -243,12 +254,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const result = await signInWithPopup(auth, provider);
       const fbUser = result.user;
-      console.log("[Auth] Google sign-in succeeded, uid:", fbUser.uid);
+      devLog("[Auth] Google sign-in succeeded, uid:", fbUser.uid);
 
       let appUser = await loadUserData(fbUser);
 
       if (!appUser) {
-        console.log("[Auth] New Google user, creating profile");
+        devLog("[Auth] New Google user, creating profile");
         const organizationId = generateId();
         const displayName = fbUser.displayName || fbUser.email?.split("@")[0] || "User";
         const role: UserRole = "Contractor";

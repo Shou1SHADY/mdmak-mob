@@ -89,7 +89,6 @@ export default function ContractorChatsScreen() {
           );
         }}
         ListEmptyComponent={<EmptyState icon="message-circle" title={t.chat.noConversations} subtitle={t.chat.noConversationsDesc} />}
-        scrollEnabled={!!chats.length}
       />
     </View>
   );

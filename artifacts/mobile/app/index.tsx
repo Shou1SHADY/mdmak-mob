@@ -6,11 +6,32 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { useEffect, useRef } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-function AnimatedDot({ delay, size, top, left, opacity }: { delay: number; size: number; top: `${number}%`; left: `${number}%`; opacity: number }) {
+// Responsive scale helpers
+const isSmallScreen = SCREEN_HEIGHT < 700; // iPhone SE, older Androids
+const LOGO_BOX = isSmallScreen ? 160 : 200;
+const LOGO_IMG = isSmallScreen ? 104 : 136;
+const LOADER_WIDTH = Math.min(SCREEN_WIDTH * 0.44, 200);
+
+function AnimatedDot({
+  delay,
+  size,
+  top,
+  left,
+  opacity,
+}: {
+  delay: number;
+  size: number;
+  top: `${number}%`;
+  left: `${number}%`;
+  opacity: number;
+}) {
   const anim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
@@ -22,6 +43,7 @@ function AnimatedDot({ delay, size, top, left, opacity }: { delay: number; size:
     loop.start();
     return () => loop.stop();
   }, []);
+
   return (
     <Animated.View
       style={{
@@ -44,6 +66,7 @@ export default function Index() {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   const logoScale = useRef(new Animated.Value(0.3)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
@@ -78,6 +101,10 @@ export default function Index() {
   }, [loading]);
 
   if (loading) {
+    // Safe-area-aware padding: push content below notch, footer above home bar
+    const topPad = Math.max(insets.top, 16);
+    const bottomPad = Math.max(insets.bottom + 28, isSmallScreen ? 36 : 52);
+
     return (
       <LinearGradient
         colors={colors.gradientPrimary}
@@ -90,26 +117,25 @@ export default function Index() {
             key={i}
             delay={i * 400}
             size={6 + (i % 3) * 4}
-            top={`${10 + (i * 17) % 80}%`}
-            left={`${5 + (i * 22) % 85}%`}
+            top={`${10 + ((i * 17) % 80)}%`}
+            left={`${5 + ((i * 22) % 85)}%`}
             opacity={0.1 + (i % 3) * 0.04}
           />
         ))}
 
-        <View style={styles.content}>
+        {/* Center section — logo, name, tagline */}
+        <View style={[styles.centerSection, { paddingTop: topPad }]}>
           <Animated.View
             style={{
               transform: [{ scale: logoScale }],
               opacity: logoOpacity,
             }}
           >
-            <View style={[styles.logoBox, colors.shadow.logo]}>
-              <Image
-                source={require("@/assets/images/figma/mdmak-logo.png")}
-                style={styles.logoImage}
-                contentFit="contain"
-              />
-            </View>
+            <Image
+              source={require("@/assets/images/figma/logo2.png")}
+              style={{ width: LOGO_BOX, height: LOGO_BOX }}
+              contentFit="contain"
+            />
           </Animated.View>
 
           <Animated.View
@@ -119,7 +145,7 @@ export default function Index() {
               transform: [{ translateY: titleSlide }],
             }}
           >
-            <Text style={styles.appName}>
+            <Text style={[styles.appName, isSmallScreen && styles.appNameSm]}>
               {isRTL ? t.common.appNameAr : t.common.appName}
             </Text>
           </Animated.View>
@@ -131,63 +157,82 @@ export default function Index() {
               paddingHorizontal: 40,
             }}
           >
-            <Text style={styles.tagline}>
+            <Text style={[styles.tagline, isSmallScreen && styles.taglineSm]}>
               {t.common.tagline}
             </Text>
           </Animated.View>
+        </View>
 
-          <Animated.View style={[styles.loaderSection, { opacity: barOpacity }]}>
+        {/* Bottom section — loader + secure footer, respects home indicator */}
+        <View style={[styles.bottomSection, { paddingBottom: bottomPad }]}>
+          <Animated.View style={[styles.loaderBlock, { opacity: barOpacity }]}>
             <View style={styles.loaderTrack}>
               <Animated.View
                 style={[
                   styles.loaderBar,
                   {
-                    width: barWidth.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
+                    width: barWidth.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ["0%", "100%"],
+                    }),
                   },
                 ]}
               />
             </View>
             <Text style={styles.loadingText}>{t.common.initializing}</Text>
           </Animated.View>
-        </View>
 
-        <Animated.View style={[styles.footer, { opacity: footerOpacity }]}>
-          <Text style={styles.footerGlobe}>○</Text>
-          <Text style={styles.footerText}>{t.common.secureGateway}</Text>
-        </Animated.View>
+          <Animated.View style={[styles.footerRow, { opacity: footerOpacity }]}>
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={13}
+              color="rgba(255,255,255,0.5)"
+            />
+            <Text style={styles.footerText}>{t.common.secureGateway}</Text>
+          </Animated.View>
+        </View>
       </LinearGradient>
     );
   }
 
-  if (!user) return <Redirect href={"/welcome/index" as any} />;
-  if (user && !user.organizationId) return <Redirect href="/onboarding" />;
+  if (!user) return <Redirect href={"/welcome" as any} />;
+  if (user && !user.profileCompleted) return <Redirect href="/onboarding" />;
   if (user.role === "Contractor") return <Redirect href="/(contractor)/dashboard" />;
   if (user.role === "Supplier") return <Redirect href="/(supplier)/dashboard" />;
 
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
-      <Text style={{ color: colors.foreground, fontSize: 16 }}>{t.auth.errors.adminNotSupported}</Text>
-      <Text style={{ color: colors.outline, fontSize: 14, marginTop: 8 }}>{t.common.adminNotSupportedDesc}</Text>
+    <View
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: colors.background,
+      }}
+    >
+      <Text style={{ color: colors.foreground, fontSize: 16 }}>
+        {t.auth.errors.adminNotSupported}
+      </Text>
+      <Text style={{ color: colors.outline, fontSize: 14, marginTop: 8 }}>
+        {t.common.adminNotSupportedDesc}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  splash: { flex: 1, overflow: "hidden" },
-  content: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  logoBox: {
-    width: 128,
-    height: 128,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.95)",
+  splash: {
+    flex: 1,
+    overflow: "hidden",
+  },
+
+  // Center: fills remaining space and centers content
+  centerSection: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    gap: 14,
   },
-  logoImage: {
-    width: 80,
-    height: 80,
-  },
+
   appName: {
     fontFamily: "HankenGrotesk_700Bold",
     fontSize: 26,
@@ -195,54 +240,65 @@ const styles = StyleSheet.create({
     letterSpacing: -0.65,
     textAlign: "center",
   },
+  appNameSm: {
+    fontSize: 22,
+  },
+
   tagline: {
     fontFamily: "Inter_400Regular",
-    fontSize: 16,
-    lineHeight: 26,
-    color: "rgba(255,255,255,0.8)",
+    fontSize: 15,
+    lineHeight: 24,
+    color: "rgba(255,255,255,0.75)",
     textAlign: "center",
   },
-  loaderSection: {
-    position: "absolute",
-    bottom: 160,
+  taglineSm: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+
+  // Bottom: loader + footer, stays at the bottom with safe-area padding
+  bottomSection: {
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 40,
+  },
+
+  loaderBlock: {
     alignItems: "center",
     gap: 8,
   },
+
   loaderTrack: {
-    width: SCREEN_WIDTH * 0.4,
+    width: LOADER_WIDTH,
     height: 3,
     borderRadius: 2,
     overflow: "hidden",
     backgroundColor: "rgba(255,255,255,0.15)",
   },
+
   loaderBar: {
     height: "100%",
     borderRadius: 2,
     backgroundColor: "#FFFFFF",
   },
+
   loadingText: {
     fontFamily: "Inter_500Medium",
-    fontSize: 11,
-    color: "rgba(255,255,255,0.4)",
+    fontSize: 10.5,
+    color: "rgba(255,255,255,0.38)",
     textTransform: "uppercase",
-    letterSpacing: 1.1,
+    letterSpacing: 1.2,
   },
-  footer: {
-    position: "absolute",
-    bottom: 60,
+
+  footerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  footerGlobe: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.6)",
-  },
+
   footerText: {
     fontFamily: "Inter_500Medium",
     fontSize: 11,
-    lineHeight: 14,
-    color: "rgba(255,255,255,0.6)",
-    textAlign: "center",
+    color: "rgba(255,255,255,0.5)",
   },
 });

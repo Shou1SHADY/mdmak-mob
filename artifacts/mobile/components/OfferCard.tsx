@@ -12,6 +12,7 @@ export interface OfferItem {
   organizationId: string;
   supplierId?: string;
   price: string;
+  notes?: string;
   status: string;
   createdAt?: any;
   updatedAt?: any;
@@ -34,13 +35,20 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
-  const statusInfo = OFFER_STATUSES.find((s) => s.id === offer.status) ?? {
-    label: offer.status,
-    color: "#747688",
-  };
+
+  const statusData = OFFER_STATUSES.find((s) => s.id === offer.status);
+  const statusInfo = statusData
+    ? { label: isRTL ? statusData.labelAr : statusData.label, color: statusData.color }
+    : { label: offer.status, color: "#747688" };
+
+  const accentColor = statusInfo.color;
 
   const formatCurrency = (amount: string) =>
-    new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(parseFloat(amount));
+    new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", {
+      style: "currency",
+      currency: "SAR",
+      maximumFractionDigits: 0,
+    }).format(parseFloat(amount));
 
   return (
     <TouchableOpacity
@@ -50,30 +58,92 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
           backgroundColor: colors.card,
           borderColor: colors.border,
           borderRadius: colors.radiusXl,
+          borderStartWidth: 4,
+          borderStartColor: accentColor,
           ...colors.shadow.sm,
         },
       ]}
       onPress={onPress}
       activeOpacity={onPress ? 0.82 : 1}
+      accessibilityLabel={`${t.rfq.quotedPrice}: ${formatCurrency(offer.price)}, ${statusInfo.label}`}
+      accessibilityRole={onPress ? "button" : "none"}
     >
+      {/* Price + status row */}
       <View style={styles.topRow}>
-        <View>
-          <Text style={[styles.priceLabel, { color: colors.outline, textTransform: "uppercase" }]}>{t.rfq.quotedPrice}</Text>
-          <Text style={[styles.price, { color: colors.foreground }]}>{formatCurrency(offer.price)}</Text>
+        <View style={{ flex: 1 }}>
+          <Text
+            style={[
+              styles.priceLabel,
+              { color: colors.outline, textAlign: isRTL ? "right" : "left" },
+            ]}
+          >
+            {t.rfq.quotedPrice}
+          </Text>
+          <Text
+            style={[
+              styles.price,
+              { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold", textAlign: isRTL ? "right" : "left" },
+            ]}
+          >
+            {formatCurrency(offer.price)}
+          </Text>
         </View>
-        <StatusBadge label={statusInfo.label} color={statusInfo.color} />
+        <View style={styles.badgeRow}>
+          <StatusBadge label={statusInfo.label} color={accentColor} />
+          {onPress && (
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={15}
+              color={colors.outline}
+            />
+          )}
+        </View>
       </View>
-      {offer.supplierName && (
-        <View style={styles.metaItem}>
+
+      {/* Supplier name */}
+      {(offer.supplierName || offer.companyName) && (
+        <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <Feather name="briefcase" size={13} color={colors.outline} />
-          <Text style={[styles.metaText, { color: colors.onSurfaceVariant }]}>{offer.supplierName}</Text>
+          <Text
+            style={[styles.metaText, { color: colors.onSurfaceVariant, textAlign: isRTL ? "right" : "left" }]}
+          >
+            {offer.companyName || offer.supplierName}
+          </Text>
         </View>
       )}
+
+      {/* RFQ title */}
       {offer.rfqTitle && (
-        <Text style={[styles.rfqTitle, { color: colors.foreground }]} numberOfLines={1}>
-          {offer.rfqTitle}
-        </Text>
+        <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+          <Feather name="file-text" size={13} color={colors.outline} />
+          <Text
+            style={[styles.rfqTitle, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left", flex: 1 }]}
+            numberOfLines={1}
+          >
+            {offer.rfqTitle}
+          </Text>
+        </View>
       )}
+
+      {/* Notes */}
+      {offer.notes ? (
+        <View
+          style={[
+            styles.notesRow,
+            { backgroundColor: colors.surfaceGray, borderRadius: colors.radiusMd, flexDirection: isRTL ? "row-reverse" : "row" },
+          ]}
+        >
+          <Feather name="message-square" size={12} color={colors.outline} style={{ marginTop: 1 }} />
+          <Text
+            style={[styles.notesText, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left", flex: 1 }]}
+            numberOfLines={2}
+          >
+            {offer.notes}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Action buttons */}
       {actions && <View style={styles.actions}>{actions}</View>}
     </TouchableOpacity>
   );
@@ -83,15 +153,59 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     padding: 16,
-    gap: 8,
+    gap: 10,
     marginBottom: 12,
   },
-  topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  priceLabel: { fontSize: 11, fontWeight: "600" as const, letterSpacing: 0.5, marginBottom: 2 },
-  price: { fontSize: 22, fontWeight: "700" as const },
-  metaItem: { flexDirection: "row", alignItems: "center", gap: 6 },
-  metaText: { fontSize: 13, fontWeight: "500" as const },
-  rfqTitle: { fontSize: 14, fontWeight: "600" as const },
-  notes: { fontSize: 13, lineHeight: 19 },
-  actions: { flexDirection: "row", gap: 8, marginTop: 4, flexWrap: "wrap" },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingTop: 2,
+  },
+  priceLabel: {
+    fontSize: 10,
+    fontWeight: "600",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    marginBottom: 3,
+    fontFamily: "Inter_600SemiBold",
+  },
+  price: {
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  metaItem: {
+    alignItems: "center",
+    gap: 6,
+  },
+  metaText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+  },
+  rfqTitle: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+  },
+  notesRow: {
+    gap: 6,
+    padding: 10,
+    alignItems: "flex-start",
+  },
+  notesText: {
+    fontSize: 13,
+    lineHeight: 19,
+    fontFamily: "Inter_400Regular",
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 4,
+    flexWrap: "wrap",
+  },
 });

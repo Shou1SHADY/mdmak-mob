@@ -3,11 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Alert,
   TouchableOpacity,
   Platform,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  ScrollView,
+  Dimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,6 +21,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+
+const { height: SCREEN_H } = Dimensions.get("window");
+const isSmall = SCREEN_H < 700;
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -46,9 +51,13 @@ export default function LoginScreen() {
   useEffect(() => {
     if (user && pendingRef.current) {
       pendingRef.current = false;
-      const dashboard =
-        user.role === "Supplier" ? "/(supplier)/dashboard" : "/(contractor)/dashboard";
-      router.replace(dashboard);
+      if (!user.profileCompleted) {
+        router.replace("/onboarding");
+      } else {
+        const dashboard =
+          user.role === "Supplier" ? "/(supplier)/dashboard" : "/(contractor)/dashboard";
+        router.replace(dashboard);
+      }
     }
   }, [user]);
 
@@ -108,47 +117,63 @@ export default function LoginScreen() {
   };
 
   const topPad = insets.top + (Platform.OS === "web" ? 67 : 0);
+  const heroH = isSmall ? SCREEN_H * 0.28 : SCREEN_H * 0.32;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <LinearGradient
-        colors={colors.gradientPrimary}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.heroGradient, { paddingTop: topPad + 32 }]}
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
       >
-        <View style={[styles.heroBg, { opacity: 0.08 }]}>
-          <Image
-            source={require("@/assets/images/login.png")}
-            style={{ width: "100%", height: "100%" }}
-            contentFit="cover"
-          />
-        </View>
-        <View style={styles.heroContent}>
-          <View style={[styles.logoBox, colors.shadow.logo]}>
+        {/* ── Hero gradient banner ── */}
+        <LinearGradient
+          colors={colors.gradientPrimary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.hero, { height: heroH, paddingTop: topPad }]}
+        >
+          {/* subtle background texture */}
+          <View style={styles.heroBg}>
             <Image
-              source={require("@/assets/images/figma/mdmak-logo.png")}
-              style={styles.logoImage}
-              contentFit="contain"
+              source={require("@/assets/images/login.png")}
+              style={{ width: "100%", height: "100%" }}
+              contentFit="cover"
             />
           </View>
-          <Text style={styles.appName}>
-            {isRTL ? t.common.appNameAr : t.common.appName}
-          </Text>
-          <Text style={styles.tagline}>{t.common.tagline}</Text>
-        </View>
-      </LinearGradient>
 
-      <ScrollView
-        style={{ flex: 1, marginTop: -20 }}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, ...colors.shadow.lg }]}>
-          <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+          {/* Logo + brand */}
+          <View style={styles.heroContent}>
+            <Image
+              source={require("@/assets/images/figma/logo1.png")}
+              style={styles.logo}
+              contentFit="contain"
+            />
+            <Text style={[styles.tagline, { color: "rgba(255,255,255,0.6)" }]}>
+              {t.common.tagline}
+            </Text>
+          </View>
+        </LinearGradient>
+
+        {/* ── Form card ── */}
+        <View style={[styles.card, { backgroundColor: colors.card, ...colors.shadow.lg }]}>
+
+          {/* Card handle indicator */}
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+
+          <Text style={[styles.cardTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
             {t.auth.login.title}
           </Text>
-          <Text style={[styles.cardSub, { color: colors.outline }]}>{t.auth.login.subtitle}</Text>
+          <Text style={[styles.cardSub, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
+            {t.auth.login.subtitle}
+          </Text>
+
           <View style={styles.form}>
             <Input
               label={t.auth.login.email}
@@ -161,18 +186,31 @@ export default function LoginScreen() {
               placeholder={t.auth.login.emailPlaceholder}
               isRTL={isRTL}
             />
-            <Input
-              label={t.auth.login.password}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPass}
-              leftIcon="lock"
-              rightIcon={showPass ? "eye-off" : "eye"}
-              onRightIconPress={() => setShowPass(!showPass)}
-              error={errors.password}
-              placeholder={t.auth.login.passwordPlaceholder}
-              isRTL={isRTL}
-            />
+            <View>
+              <Input
+                label={t.auth.login.password}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPass}
+                leftIcon="lock"
+                rightIcon={showPass ? "eye-off" : "eye"}
+                onRightIconPress={() => setShowPass(!showPass)}
+                error={errors.password}
+                placeholder={t.auth.login.passwordPlaceholder}
+                isRTL={isRTL}
+              />
+              {/* Forgot password */}
+              <TouchableOpacity
+                style={[styles.forgotBtn, { alignSelf: isRTL ? "flex-start" : "flex-end" }]}
+                onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoon)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.forgotText, { color: colors.cta }]}>
+                  {t.auth.login.forgotPassword}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <Button
               title={t.auth.login.signIn}
               onPress={handleLogin}
@@ -182,156 +220,192 @@ export default function LoginScreen() {
               style={colors.shadow.primary as any}
             />
 
-            <View style={[styles.separator, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.separatorText, { color: colors.outline, backgroundColor: colors.card }]}>
+            {/* Separator */}
+            <View style={styles.separatorRow}>
+              <View style={[styles.separatorLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.separatorLabel, { color: colors.outline }]}>
                 {t.auth.login.continueWith}
               </Text>
+              <View style={[styles.separatorLine, { backgroundColor: colors.border }]} />
             </View>
 
-            <TouchableOpacity
-              style={[styles.socialBtn, { borderColor: colors.border }]}
-              onPress={handleGoogleSignIn}
-              disabled={googleLoading}
-              activeOpacity={0.7}
-            >
-              {googleLoading ? (
-                <ActivityIndicator size="small" color={colors.foreground} />
-              ) : (
-                <>
-                  <View style={styles.googleIconContainer}>
+            {/* Social buttons row */}
+            <View style={styles.socialRow}>
+              {/* Google */}
+              <TouchableOpacity
+                style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                onPress={handleGoogleSignIn}
+                disabled={googleLoading}
+                activeOpacity={0.75}
+              >
+                {googleLoading ? (
+                  <ActivityIndicator size="small" color={colors.foreground} />
+                ) : (
+                  <>
                     <Text style={styles.googleG}>G</Text>
-                  </View>
-                  <Text style={[styles.socialText, { color: colors.foreground }]}>
-                    {t.auth.login.continueWithGoogle}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+                    <Text style={[styles.socialLabel, { color: colors.foreground }]}>Google</Text>
+                  </>
+                )}
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.socialBtn, { borderColor: colors.border }]}
-              activeOpacity={0.7}
-              onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoonApple)}
-            >
-              <View style={styles.appleIconContainer}>
-                <Text style={styles.appleIcon}></Text>
-              </View>
-              <Text style={[styles.socialText, { color: colors.foreground }]}>
-                {t.auth.login.continueWithApple}
-              </Text>
-            </TouchableOpacity>
+              {/* Apple */}
+              <TouchableOpacity
+                style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                activeOpacity={0.75}
+                onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoonApple)}
+              >
+                <Text style={styles.appleIcon}></Text>
+                <Text style={[styles.socialLabel, { color: colors.foreground }]}>Apple</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-        <TouchableOpacity style={[styles.link, { paddingBottom: insets.bottom + 40 }]} onPress={() => router.push("/auth/register")}>
-          <Text style={[styles.linkText, { color: colors.outline }]}>
+
+        {/* ── Sign up link ── */}
+        <TouchableOpacity
+          style={[styles.signupRow, { paddingBottom: Math.max(insets.bottom + 16, 24) }]}
+          onPress={() => router.push("/auth/register")}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.signupText, { color: colors.outline }]}>
             {t.auth.login.noAccount}{" "}
-            <Text style={{ color: colors.primary, fontWeight: "700" }}>{t.auth.login.signUp}</Text>
+            <Text style={{ color: colors.cta, fontFamily: "Inter_700Bold" }}>
+              {t.auth.login.signUp}
+            </Text>
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  heroGradient: {
-    paddingBottom: 48,
-    paddingHorizontal: 24,
+  hero: {
     overflow: "hidden",
     position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
   },
   heroBg: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.07,
   },
   heroContent: {
     alignItems: "center",
-    gap: 10,
+    gap: 6,
+    paddingBottom: 28,
   },
-  logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoImage: {
-    width: 44,
-    height: 44,
+  logo: {
+    width: isSmall ? 160 : 190,
+    height: isSmall ? 52 : 62,
   },
   appName: {
     fontFamily: "HankenGrotesk_700Bold",
-    fontSize: 24,
+    fontSize: isSmall ? 20 : 22,
     color: "#FFFFFF",
+    letterSpacing: -0.3,
   },
   tagline: {
     fontFamily: "Inter_400Regular",
-    fontSize: 13,
-    color: "rgba(255,255,255,0.6)",
+    fontSize: 12,
     textAlign: "center",
+    paddingHorizontal: 32,
   },
-  scroll: { paddingHorizontal: 20, paddingTop: 4 },
+
   card: {
-    padding: 24,
-    borderWidth: 1,
-    gap: 4,
-    borderRadius: 24,
+    marginTop: -24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 28,
+    flex: 1,
   },
-  cardTitle: { fontSize: 24 },
-  cardSub: { fontFamily: "Inter_400Regular", fontSize: 14, marginBottom: 12 },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 20,
+    opacity: 0.4,
+  },
+  cardTitle: {
+    fontFamily: "HankenGrotesk_700Bold",
+    fontSize: 24,
+    letterSpacing: -0.3,
+  },
+  cardSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 20,
+  },
+
   form: { gap: 14 },
-  separator: {
-    borderBottomWidth: 1,
-    alignItems: "center",
-    marginVertical: 4,
+
+  forgotBtn: {
+    marginTop: 6,
+    paddingVertical: 2,
   },
-  separatorText: {
+  forgotText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12.5,
+  },
+
+  separatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginVertical: 2,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+  },
+  separatorLabel: {
     fontFamily: "Inter_500Medium",
     fontSize: 12,
-    letterSpacing: 0.6,
-    paddingHorizontal: 12,
-    position: "relative",
-    top: 8,
+    letterSpacing: 0.3,
+  },
+
+  socialRow: {
+    flexDirection: "row",
+    gap: 12,
   },
   socialBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
     borderWidth: 1.5,
-    paddingVertical: 14,
+    paddingVertical: 12,
     minHeight: 48,
-    borderRadius: 24,
-  },
-  googleIconContainer: {
-    width: 20,
-    height: 20,
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 14,
   },
   googleG: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 17,
+    fontWeight: "800",
     color: "#4285F4",
-  },
-  appleIconContainer: {
-    width: 20,
-    height: 20,
-    alignItems: "center",
-    justifyContent: "center",
+    lineHeight: 20,
   },
   appleIcon: {
-    fontSize: 20,
+    fontSize: 19,
     color: "#000",
+    lineHeight: 21,
   },
-  socialText: {
+  socialLabel: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 15,
+    fontSize: 14,
   },
-  link: { alignItems: "center", paddingVertical: 20 },
-  linkText: { fontFamily: "Inter_400Regular", fontSize: 14 },
+
+  signupRow: {
+    alignItems: "center",
+    paddingTop: 16,
+    backgroundColor: "transparent",
+  },
+  signupText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13.5,
+  },
 });

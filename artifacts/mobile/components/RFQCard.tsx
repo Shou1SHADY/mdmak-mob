@@ -35,20 +35,25 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
-  const statusInfo = RFQ_STATUSES.find((s) => s.id === rfq.status) ?? {
-    label: rfq.status,
-    color: "#747688",
-  };
+  const statusData = RFQ_STATUSES.find((s) => s.id === rfq.status);
+  const statusInfo = statusData
+    ? { label: isRTL ? statusData.labelAr : statusData.label, color: statusData.color }
+    : { label: rfq.status, color: "#747688" };
 
   const formatDate = (ts: any) => {
-    if (!ts) return "\u2014";
+    if (!ts) return null;
     try {
       const d = ts.toDate ? ts.toDate() : new Date(ts);
       return d.toLocaleDateString(isRTL ? "ar-SA" : "en-SA", { month: "short", day: "numeric", year: "numeric" });
     } catch {
-      return "\u2014";
+      return null;
     }
   };
+
+  const createdDate = formatDate(rfq.createdAt);
+  const deadlineDate = formatDate(rfq.deadline);
+  const offersCount = rfq.offersCount ?? 0;
+  const hasOffers = showOffers && offersCount > 0;
 
   return (
     <Pressable
@@ -59,86 +64,98 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
           backgroundColor: colors.card,
           borderColor: colors.border,
           borderRadius: colors.radiusXl,
-          marginBottom: colors.spacing.md,
+          marginBottom: 10,
           ...colors.shadow.sm,
-          opacity: pressed ? 0.85 : 1,
-          transform: [{ scale: pressed ? 0.985 : 1 }],
+          opacity: pressed ? 0.88 : 1,
+          transform: [{ scale: pressed ? 0.987 : 1 }],
         },
       ]}
+      accessibilityLabel={`${rfq.title}, ${statusInfo.label}, ${rfq.city}`}
+      accessibilityRole="button"
     >
-      {!isRTL && (
-        <View style={[styles.stripe, { backgroundColor: colors.primary }]} />
-      )}
+      {/* Status color stripe */}
+      {!isRTL && <View style={[styles.stripe, { backgroundColor: statusInfo.color + "CC" }]} />}
 
-      <View style={[styles.inner, { padding: colors.spacing.base, gap: colors.spacing.xs }]}>
-        <View style={styles.topRow}>
-          <Text
-            style={[
-              styles.category,
-              {
-                color: colors.outline,
-                ...colors.typography.label,
-                marginRight: colors.spacing.sm,
-              },
-            ]}
-            numberOfLines={1}
-          >
-            {rfq.category}
-          </Text>
-          <StatusBadge label={statusInfo.label} color={statusInfo.color} size="sm" />
+      <View style={styles.inner}>
+        {/* Top row: category + status badge + offers badge */}
+        <View style={[styles.topRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+          <View style={[styles.categoryRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            <View style={[styles.categoryDot, { backgroundColor: statusInfo.color }]} />
+            <Text style={[styles.category, { color: colors.outline }]} numberOfLines={1}>
+              {rfq.category}
+            </Text>
+          </View>
+          <View style={[styles.topRight, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            {hasOffers && (
+              <View style={[styles.offersBadge, { backgroundColor: colors.cta + "15", borderColor: colors.cta + "40" }]}>
+                <Feather name="tag" size={10} color={colors.cta} />
+                <Text style={[styles.offersBadgeText, { color: colors.cta }]}>
+                  {offersCount} {t.rfq.offersSuffix}
+                </Text>
+              </View>
+            )}
+            <StatusBadge label={statusInfo.label} color={statusInfo.color} size="sm" />
+          </View>
         </View>
 
+        {/* Title */}
         <Text
           style={[
             styles.title,
-            { color: colors.foreground, fontSize: 18, fontWeight: "700" as const, lineHeight: 26 },
+            { color: colors.foreground, lineHeight: isRTL ? 30 : 26, textAlign: isRTL ? "right" : "left" },
           ]}
           numberOfLines={2}
         >
           {rfq.title}
         </Text>
 
-        {rfq.description && (
+        {/* Description (optional) */}
+        {rfq.description ? (
           <Text
-            style={[styles.desc, { color: colors.outline, ...colors.typography.bodySm }]}
-            numberOfLines={2}
+            style={[styles.desc, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}
+            numberOfLines={1}
           >
             {rfq.description}
           </Text>
-        )}
+        ) : null}
 
-        <View style={[styles.metaRow, { gap: colors.spacing.md }]}>
-          <View style={styles.metaItem}>
-            <Feather name="map-pin" size={13} color={colors.outline} />
-            <Text
-              style={[styles.metaText, { color: colors.outline, ...colors.typography.caption }]}
-            >
-              {rfq.city}
-            </Text>
+        {/* Meta row */}
+        <View style={[styles.metaRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+          <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            <Feather name="map-pin" size={12} color={colors.outline} />
+            <Text style={[styles.metaText, { color: colors.outline }]}>{rfq.city}</Text>
           </View>
-          {rfq.deadline && (
-            <View style={styles.metaItem}>
-              <Feather name="calendar" size={13} color={colors.outline} />
-              <Text
-                style={[styles.metaText, { color: colors.outline, ...colors.typography.caption }]}
-              >
-                {formatDate(rfq.deadline)}
-              </Text>
+          {deadlineDate && (
+            <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+              <Feather name="clock" size={12} color={colors.warning} />
+              <Text style={[styles.metaText, { color: colors.warning }]}>{deadlineDate}</Text>
             </View>
           )}
-          {showOffers && (
-            <View style={styles.metaItem}>
-              <Feather name="tag" size={13} color={colors.secondary} />
-              <Text style={[styles.metaText, { color: colors.secondary, ...colors.typography.caption, fontWeight: "600" }]}>
-                {rfq.offersCount ?? 0} {t.rfq.offersSuffix}
-              </Text>
+          {createdDate && !deadlineDate && (
+            <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+              <Feather name="calendar" size={12} color={colors.outline} />
+              <Text style={[styles.metaText, { color: colors.outline }]}>{createdDate}</Text>
             </View>
           )}
         </View>
+
+        {/* Bottom row: no-offers hint + chevron */}
+        <View style={[styles.bottomRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+          {showOffers && !hasOffers && (
+            <Text style={[styles.noOffersHint, { color: colors.outline }]}>{t.rfq.noOffers}</Text>
+          )}
+          <View style={{ flex: 1 }} />
+          <View style={[styles.chevronWrap, { backgroundColor: colors.accentBlueSoft }]}>
+            <Feather
+              name={isRTL ? "chevron-left" : "chevron-right"}
+              size={14}
+              color={colors.primary}
+            />
+          </View>
+        </View>
       </View>
-      {isRTL && (
-        <View style={[styles.stripe, styles.stripeRTL, { backgroundColor: colors.primary }]} />
-      )}
+
+      {isRTL && <View style={[styles.stripe, styles.stripeRTL, { backgroundColor: statusInfo.color + "CC" }]} />}
     </Pressable>
   );
 }
@@ -150,9 +167,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   stripe: {
-    width: 5,
-    borderTopRightRadius: 3,
-    borderBottomRightRadius: 3,
+    width: 4,
   },
   stripeRTL: {
     borderTopRightRadius: 0,
@@ -162,26 +177,84 @@ const styles = StyleSheet.create({
   },
   inner: {
     flex: 1,
+    padding: 14,
+    gap: 8,
   },
   topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
+  },
+  categoryRow: {
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
+    marginEnd: 8,
+  },
+  categoryDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
   },
   category: {
+    fontSize: 11,
+    fontFamily: "Inter_500Medium",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
     flex: 1,
   },
-  title: {},
-  desc: {},
-  metaRow: {
-    flexDirection: "row",
-    marginTop: 2,
-    flexWrap: "wrap",
+  topRight: {
+    alignItems: "center",
+    gap: 6,
   },
-  metaItem: {
+  offersBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
-  metaText: {},
+  offersBadgeText: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+  },
+  title: {
+    fontSize: 16,
+    fontFamily: "HankenGrotesk_600SemiBold",
+  },
+  desc: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 18,
+  },
+  metaRow: {
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  metaItem: {
+    alignItems: "center",
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 12,
+    fontFamily: "Inter_400Regular",
+  },
+  bottomRow: {
+    alignItems: "center",
+    marginTop: 2,
+  },
+  noOffersHint: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    fontStyle: "italic",
+  },
+  chevronWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

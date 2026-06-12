@@ -3,24 +3,26 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc, collection, query, where, getDocs, updateDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { RFQItem } from "@/components/RFQCard";
 import { OfferItem, OfferCard } from "@/components/OfferCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { RFQ_STATUSES } from "@/constants/data";
+import { RFQ_STATUSES, OFFER_STATUS } from "@/constants/data";
 
 export default function RFQDetailScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const t = useT();
   const { isRTL } = useLanguage();
+  const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [rfq, setRfq] = useState<RFQItem | null>(null);
   const [offers, setOffers] = useState<OfferItem[]>([]);
@@ -51,7 +53,7 @@ export default function RFQDetailScreen() {
         }
         return offer;
       });
-      setOffers(offerItems.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)));
+      setOffers(offerItems.sort((a, b) => (parseFloat(a.price || "0") || 0) - (parseFloat(b.price || "0") || 0)));
     } finally {
       setLoading(false);
     }
@@ -60,16 +62,39 @@ export default function RFQDetailScreen() {
   useEffect(() => { fetchData(); }, [id]);
 
   const handleOfferAction = async (offer: OfferItem, action: "accept" | "reject" | "reduce") => {
-    const actionLabels: Record<string, string> = { accept: t.rfq.accept, reject: t.rfq.reject, reduce: t.rfq.reduce };
     const confirmMessages: Record<string, string> = { accept: t.rfq.acceptOffer, reject: t.rfq.rejectOffer, reduce: t.rfq.reduceOffer };
-    const statusMap: Record<string, string> = { accept: "مقبول", reject: "مرفوض", reduce: "مطلوب تخفيض" };
+    const statusMap: Record<string, string> = { accept: OFFER_STATUS.ACCEPTED, reject: OFFER_STATUS.REJECTED, reduce: OFFER_STATUS.PRICE_REDUCTION };
     Alert.alert(t.common.confirm, confirmMessages[action], [
       { text: t.common.cancel, style: "cancel" },
-      { text: t.common.confirm, onPress: async () => { await updateDoc(doc(db, "offers", offer.id), { status: statusMap[action] }); fetchData(); } },
+      {
+        text: t.common.confirm,
+        onPress: async () => {
+          await updateDoc(doc(db, "offers", offer.id), {
+            status: statusMap[action],
+            updatedAt: serverTimestamp(),
+          });
+          if (action === "accept") {
+            await setDoc(doc(db, "chats", offer.id), {
+              offerId: offer.id,
+              rfqId: id,
+              rfqTitle: rfq?.title || "",
+              contractorId: user?.uid,
+              contractorOrgId: user?.organizationId || user?.uid,
+              supplierId: offer.supplierId || offer.organizationId,
+              supplierOrgId: offer.organizationId,
+              createdAt: serverTimestamp(),
+            });
+          }
+          fetchData();
+        },
+      },
     ]);
   };
 
-  const statusInfo = rfq ? (RFQ_STATUSES.find((s) => s.id === rfq.status) ?? { label: rfq.status, color: colors.outline }) : null;
+  const statusData = rfq ? RFQ_STATUSES.find((s) => s.id === rfq.status) : null;
+  const statusInfo = statusData
+    ? { label: isRTL ? statusData.labelAr : statusData.label, color: statusData.color }
+    : rfq ? { label: rfq.status, color: colors.outline } : null;
 
   if (loading) {
     return (
@@ -89,9 +114,9 @@ export default function RFQDetailScreen() {
               <Text style={[styles.category, { color: colors.secondary }]}>{rfq.category}</Text>
               {statusInfo && <StatusBadge label={statusInfo.label} color={statusInfo.color} />}
             </View>
-            <Text style={[styles.rfqTitle, { color: colors.foreground }]}>{rfq.title}</Text>
+            <Text style={[styles.rfqTitle, { color: colors.foreground, lineHeight: isRTL ? 30 : 25 }]} numberOfLines={3} ellipsizeMode="tail">{rfq.title}</Text>
             {rfq.description && (
-              <Text style={[styles.desc, { color: colors.mutedForeground }]}>{rfq.description}</Text>
+              <Text style={[styles.desc, { color: colors.mutedForeground }]} numberOfLines={4} ellipsizeMode="tail">{rfq.description}</Text>
             )}
             <View style={styles.metaGrid}>
               <View style={styles.metaItem}>
@@ -121,7 +146,7 @@ export default function RFQDetailScreen() {
               key={offer.id}
               offer={offer}
               actions={
-                offer.status === "pending" ? (
+                offer.status === OFFER_STATUS.UNDER_REVIEW ? (
                   <View style={styles.offerActions}>
                     {idx === 0 && (
                       <View style={[styles.bestBadge, { backgroundColor: colors.success + "18", borderRadius: colors.radiusSm }]}>
@@ -133,6 +158,14 @@ export default function RFQDetailScreen() {
                     <Button title={t.rfq.reduce} onPress={() => handleOfferAction(offer, "reduce")} size="sm" variant="outline" style={{ flex: 1 }} />
                     <Button title={t.rfq.reject} onPress={() => handleOfferAction(offer, "reject")} size="sm" variant="destructive" style={{ flex: 1 }} />
                   </View>
+                ) : offer.status === OFFER_STATUS.ACCEPTED ? (
+                  <Button
+                    title={t.chat.title}
+                    onPress={() => router.push(`/chat/${offer.id}`)}
+                    size="sm"
+                    variant="outline"
+                    style={{ alignSelf: "flex-start" }}
+                  />
                 ) : undefined
               }
             />

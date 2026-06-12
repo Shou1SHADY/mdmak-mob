@@ -7,6 +7,7 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { router } from "expo-router";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -70,7 +71,10 @@ export default function CreateRFQScreen() {
   const totalSteps = 2;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <View
         style={[
           styles.header,
@@ -141,7 +145,7 @@ export default function CreateRFQScreen() {
                     ]}
                     numberOfLines={2}
                   >
-                    {cat.label}
+                    {isRTL ? cat.labelAr : cat.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -169,7 +173,7 @@ export default function CreateRFQScreen() {
                   ]}
                   onPress={() => setCity(c)}
                 >
-                  <Text style={[styles.cityText, { color: city === c ? "#fff" : colors.foreground }]}>{c}</Text>
+                  <Text style={[styles.cityText, { color: city === c ? "#fff" : colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{c}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -201,13 +205,13 @@ export default function CreateRFQScreen() {
           </View>
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 14 },
-  backBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center", borderRadius: 10 },
+  backBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 10 },
   headerTitle: { fontSize: 18, fontWeight: "700" as const },
   stepLabel: { fontSize: 14 },
   progressBar: { height: 3 },
@@ -217,10 +221,10 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 20, fontWeight: "700" as const, marginBottom: 4 },
   label: { fontSize: 14, fontWeight: "500" as const, textTransform: "uppercase" as const, letterSpacing: 0.5 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  categoryChip: { borderRadius: 12, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8, width: "47%" },
+  categoryChip: { borderRadius: 12, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8, flexBasis: "47%", flexGrow: 1, minWidth: 120 },
   categoryText: { fontSize: 13, fontWeight: "500" as const, textAlign: "center" },
   cityGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  cityChip: { borderRadius: 24, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7 },
+  cityChip: { borderRadius: 24, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7, maxWidth: 140 },
   cityText: { fontSize: 13, fontWeight: "500" as const },
   btnRow: { flexDirection: "row", gap: 12, marginTop: 8 },
 });

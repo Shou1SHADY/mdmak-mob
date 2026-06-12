@@ -7,6 +7,7 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -74,7 +75,10 @@ export default function OnboardingScreen() {
   const roleLabel = user?.role ?? "";
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <LinearGradient
         colors={colors.gradientPrimary}
         start={{ x: 0, y: 0 }}
@@ -83,7 +87,7 @@ export default function OnboardingScreen() {
       >
         <View style={[styles.logoBox, colors.shadow.logo]}>
           <Image
-            source={require("@/assets/images/figma/mdmak-logo.png")}
+            source={require("@/assets/images/figma/logo2.png")}
             style={styles.logoImage}
             contentFit="contain"
           />
@@ -193,7 +197,7 @@ export default function OnboardingScreen() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -205,16 +209,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 12,
+    width: 120,
+    height: 120,
+    borderRadius: 18,
     backgroundColor: "rgba(255,255,255,0.95)",
     alignItems: "center",
     justifyContent: "center",
   },
   logoImage: {
-    width: 44,
-    height: 44,
+    width: 80,
+    height: 80,
   },
   appName: { fontSize: 24, color: "#FFFFFF" },
   tagline: { fontFamily: "Inter_400Regular", fontSize: 13, color: "rgba(248,250,252,0.6)", textAlign: "center" },

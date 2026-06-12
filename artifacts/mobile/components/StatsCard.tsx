@@ -13,7 +13,7 @@ interface StatsCardProps {
 
 export function StatsCard({ title, value, icon, color, subtitle }: StatsCardProps) {
   const colors = useColors();
-  const accentColor = color ?? colors.cta;
+  const accent = color ?? colors.cta;
 
   return (
     <View
@@ -24,43 +24,77 @@ export function StatsCard({ title, value, icon, color, subtitle }: StatsCardProp
           backgroundColor: colors.card,
           borderColor: colors.border,
           borderRadius: colors.radiusXl,
-          padding: colors.spacing.base,
-          gap: colors.spacing.xs,
         },
       ]}
     >
-      <View
-        style={[
-          styles.iconBox,
-          {
-            backgroundColor: accentColor + "14",
-            borderRadius: colors.radiusMd,
-            marginBottom: colors.spacing.xs,
-          },
-        ]}
-      >
-        <Feather name={icon} size={20} color={accentColor} />
+      {/* colored top accent strip */}
+      <View style={[styles.strip, { backgroundColor: accent }]} />
+
+      <View style={styles.body}>
+        <View style={[styles.iconBox, { backgroundColor: accent + "14", borderRadius: colors.radiusMd }]}>
+          <Feather name={icon} size={18} color={accent} />
+        </View>
+
+        <Text
+          style={[styles.value, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}
+          numberOfLines={1}
+        >
+          {value}
+        </Text>
+
+        <Text
+          style={[
+            styles.title,
+            { color: colors.outline, fontFamily: "Inter_500Medium" },
+          ]}
+          numberOfLines={1}
+        >
+          {title}
+        </Text>
+
+        {subtitle ? (
+          <Text style={[styles.subtitle, { color: accent, fontFamily: "Inter_600SemiBold" }]}>
+            {subtitle}
+          </Text>
+        ) : null}
       </View>
-      <Text style={[styles.value, { color: colors.foreground }]}>{value}</Text>
-      <Text style={[styles.title, colors.typography.caption, { color: colors.outline, textTransform: "uppercase" as const }]}>{title}</Text>
-      {subtitle && (
-        <Text style={[styles.subtitle, colors.typography.caption, { color: accentColor, fontWeight: "600" }]}>{subtitle}</Text>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
+    flex: 1,
     borderWidth: 1,
+    overflow: "hidden",
+  },
+  strip: {
+    height: 3,
+    width: "100%",
+  },
+  body: {
+    padding: 14,
+    gap: 4,
   },
   iconBox: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 6,
   },
-  value: { fontSize: 26, fontWeight: "700" as const, lineHeight: 32 },
-  title: {},
-  subtitle: {},
+  value: {
+    fontSize: 28,
+    lineHeight: 34,
+  },
+  title: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    lineHeight: 15,
+  },
+  subtitle: {
+    fontSize: 11,
+    marginTop: 2,
+  },
 });
