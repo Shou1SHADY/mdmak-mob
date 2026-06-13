@@ -13,7 +13,8 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { CATEGORIES, SAUDI_CITIES } from "@/constants/data";
+import { CATEGORIES, SAUDI_CITIES, displayCity } from "@/constants/data";
+import { ProfileIncompleteGate, useProfileGate } from "@/components/ProfileIncompleteGate";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const CARD_W = SCREEN_W > 400 ? 140 : 120;
@@ -42,9 +43,10 @@ const ICON_MAP: Record<string, keyof typeof Feather.glyphMap> = {
 export default function CreateRFQScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const t = useT();
   const { isRTL } = useLanguage();
+  const { isComplete, missingFields } = useProfileGate("contractor", organization ?? null);
 
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState("");
@@ -88,8 +90,18 @@ export default function CreateRFQScreen() {
 
   const totalSteps = 2;
 
-  const selectedCat = CATEGORIES.find((c) => c.label === category);
+  const selectedCat = CATEGORIES.find((c) => c.label === category || c.labelAr === category);
   const isSmall = SCREEN_W < 375;
+
+  if (!isComplete) {
+    return (
+      <ProfileIncompleteGate
+        role="contractor"
+        organization={organization ?? null}
+        missingFields={missingFields}
+      />
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -119,7 +131,7 @@ export default function CreateRFQScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -174,7 +186,7 @@ export default function CreateRFQScreen() {
               directionalLockEnabled
             >
               {CATEGORIES.map((cat) => {
-                const isActive = category === cat.label;
+                const isActive = category === cat.labelAr;
                 const icon = ICON_MAP[cat.id] || "tag";
                 return (
                   <TouchableOpacity
@@ -188,7 +200,7 @@ export default function CreateRFQScreen() {
                         borderColor: isActive ? colors.primary : colors.border,
                       },
                     ]}
-                    onPress={() => setCategory(isActive ? "" : cat.label)}
+                    onPress={() => setCategory(isActive ? "" : cat.labelAr)}
                     activeOpacity={0.75}
                   >
                     <View style={[styles.catIconBox, {
@@ -245,7 +257,7 @@ export default function CreateRFQScreen() {
               {city && (
                 <View style={[styles.selectedChip, { backgroundColor: colors.cta + "12", borderColor: colors.cta }]}>
                   <Feather name="map-pin" size={14} color={colors.cta} />
-                  <Text style={[styles.selectedChipText, { color: colors.cta }]}>{city}</Text>
+                  <Text style={[styles.selectedChipText, { color: colors.cta }]}>{displayCity(city, isRTL)}</Text>
                   <TouchableOpacity onPress={() => setCity("")} style={{ padding: 2 }}>
                     <Feather name="x" size={14} color={colors.cta} />
                   </TouchableOpacity>
@@ -283,7 +295,7 @@ export default function CreateRFQScreen() {
                       ]}
                       numberOfLines={1}
                     >
-                      {c}
+                      {displayCity(c, isRTL)}
                     </Text>
                     {isActive && (
                       <View style={[styles.checkMark, { backgroundColor: colors.cta }]}>

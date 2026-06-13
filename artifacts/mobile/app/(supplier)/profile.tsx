@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform,
   Animated,
@@ -9,12 +9,16 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
+import type { LegalDoc } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
+import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DocumentUploadRow } from "@/components/DocumentUploadRow";
 import { router } from "expo-router";
-import { CATEGORIES, SAUDI_CITIES } from "@/constants/data";
+import { CATEGORIES, SAUDI_CITIES, displayCity } from "@/constants/data";
+import { ProfileTourGuide, useProfileTour } from "@/components/ProfileTourGuide";
 
 /* ─── Quick Action Pill ─── */
 function QuickActionPill({
@@ -78,13 +82,45 @@ export default function SupplierProfileScreen() {
   const t = useT();
   const { setLanguage, isRTL } = useLanguage();
   const { user, organization, logout, refreshUser } = useAuth();
+
   const [editingSpecs, setEditingSpecs] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
   const [selectedSpecs, setSelectedSpecs] = useState<string[]>(organization?.specializations ?? []);
   const [selectedAreas, setSelectedAreas] = useState<string[]>(organization?.serviceAreas ?? []);
+
+  const [orgName, setOrgName] = useState(organization?.name ?? "");
+  const [crNumber, setCrNumber] = useState(organization?.crNumber ?? "");
+  const [taxNumber, setTaxNumber] = useState(organization?.taxNumber ?? "");
+  const [phone, setPhone] = useState(organization?.phone ?? user?.phone ?? "");
+  const [city, setCity] = useState(organization?.city ?? "");
+  const [location, setLocation] = useState(organization?.location ?? "");
+  const [website, setWebsite] = useState(organization?.website ?? "");
+  const [description, setDescription] = useState(organization?.description ?? "");
+  const [documents, setDocuments] = useState<Record<string, LegalDoc>>(organization?.documents ?? {});
+
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ totalOffers: 0, acceptedOffers: 0, activeRfqs: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const docsY = useRef(0);
+  const { showTour, markTourSeen } = useProfileTour();
+
+  // Sync documents when organization loads (auth may finish after mount)
+  useEffect(() => {
+    if (organization?.documents) setDocuments(organization.documents);
+  }, [organization?.documents]);
+
   const fadeAnim = useState(new Animated.Value(0))[0];
+  const infoFadeAnim = useState(new Animated.Value(0))[0];
+
+  useEffect(() => {
+    Animated.timing(infoFadeAnim, {
+      toValue: editingInfo ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [editingInfo]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -94,29 +130,57 @@ export default function SupplierProfileScreen() {
     }).start();
   }, [editingSpecs]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!user?.organizationId) { setLoadingStats(false); return; }
-      try {
-        const offQ = query(collection(db, "offers"), where("organizationId", "==", user.organizationId));
-        const offSnap = await getDocs(offQ);
-        const offers = offSnap.docs.map((d) => d.data());
-        const accepted = offers.filter((o) => o.status === "مقبول").length;
-        setStats({ totalOffers: offers.length, acceptedOffers: accepted, activeRfqs: 0 });
-      } catch (e) {
-        console.warn("[Profile] Stats fetch failed:", e);
-      } finally {
-        setLoadingStats(false);
-      }
-    };
-    fetchStats();
+  const fetchStats = useCallback(async () => {
+    if (!user?.organizationId) { setLoadingStats(false); return; }
+    try {
+      const offQ = query(collection(db, "offers"), where("organizationId", "==", user.organizationId));
+      const offSnap = await getDocs(offQ);
+      const offers = offSnap.docs.map((d) => d.data());
+      const accepted = offers.filter((o) => o.status === "مقبول").length;
+      setStats({ totalOffers: offers.length, acceptedOffers: accepted, activeRfqs: 0 });
+    } catch (e) {
+      console.warn("[Profile] Stats fetch failed:", e);
+    } finally {
+      setLoadingStats(false);
+    }
   }, [user?.organizationId]);
+
+  useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const toggleSpec = (spec: string) => {
     setSelectedSpecs((prev) => prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]);
   };
   const toggleArea = (area: string) => {
     setSelectedAreas((prev) => prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]);
+  };
+
+  const handleSaveInfo = async () => {
+    if (!user?.uid) return;
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        companyName: orgName, orgName, crNumber,
+        taxNumber, phone, city, location, website, description,
+      });
+      await refreshUser();
+      setEditingInfo(false);
+    } catch {
+      Alert.alert(t.common.error, t.profile.saveFailed);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelInfo = () => {
+    setOrgName(organization?.name ?? "");
+    setCrNumber(organization?.crNumber ?? "");
+    setTaxNumber(organization?.taxNumber ?? "");
+    setPhone(organization?.phone ?? user?.phone ?? "");
+    setCity(organization?.city ?? "");
+    setLocation(organization?.location ?? "");
+    setWebsite(organization?.website ?? "");
+    setDescription(organization?.description ?? "");
+    setEditingInfo(false);
   };
 
   const handleSave = async () => {
@@ -130,7 +194,7 @@ export default function SupplierProfileScreen() {
       await refreshUser();
       setEditingSpecs(false);
     } catch {
-      Alert.alert(t.common.error, t.supplierProfile.saveFailed);
+      Alert.alert(t.common.error, t.profile.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -140,6 +204,18 @@ export default function SupplierProfileScreen() {
     setSelectedSpecs(organization?.specializations ?? []);
     setSelectedAreas(organization?.serviceAreas ?? []);
     setEditingSpecs(false);
+  };
+
+  const handleDocUpdate = async (docType: string, data: LegalDoc) => {
+    const updated = { ...documents, [docType]: data };
+    setDocuments(updated);
+    if (user?.uid) {
+      try {
+        await updateDoc(doc(db, "users", user.uid), { documents: updated });
+      } catch {
+        Alert.alert(t.common.error, t.profile.saveFailed);
+      }
+    }
   };
 
   const handleSignOut = async () => {
@@ -158,18 +234,17 @@ export default function SupplierProfileScreen() {
     }
   };
 
-  // Profile completeness
-  const completenessFields = [
-    !!organization?.name,
-    (organization?.specializations?.length ?? 0) > 0,
-    (organization?.serviceAreas?.length ?? 0) > 0,
-    !!user?.displayName,
-    !!user?.email,
+  // Profile completeness — matches web (6 required fields)
+  const completenessChecks = [
+    { ok: !!organization?.name,                          label: t.profile.companyName },
+    { ok: !!(organization?.phone ?? user?.phone),        label: t.profile.phone },
+    { ok: !!organization?.crNumber,                      label: t.profile.crNumber },
+    { ok: !!organization?.taxNumber,                     label: t.profile.taxNumber },
+    { ok: !!organization?.city,                          label: t.profile.city },
+    { ok: !!organization?.location,                      label: t.profile.location },
   ];
-  const completeness = Math.round((completenessFields.filter(Boolean).length / completenessFields.length) * 100);
-  const missingFields = completenessFields
-    .map((v, i) => v ? null : [t.profile.companyName, t.supplierProfile.specializations, t.supplierProfile.serviceAreas, "Name", t.auth.login.email][i])
-    .filter(Boolean);
+  const completeness = Math.round((completenessChecks.filter((c) => c.ok).length / completenessChecks.length) * 100);
+  const missingFields = completenessChecks.filter((c) => !c.ok).map((c) => c.label);
 
   const initial = (organization?.name ?? user?.displayName ?? "S").trim().charAt(0).toUpperCase();
 
@@ -229,8 +304,9 @@ export default function SupplierProfileScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         style={{ flex: 1 }}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 82 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Profile Completeness ── */}
@@ -255,11 +331,18 @@ export default function SupplierProfileScreen() {
             <View style={[styles.compFill, { width: `${completeness}%`, backgroundColor: completeness === 100 ? colors.success : colors.cta }]} />
           </View>
           {completeness < 100 && (
-            <View style={[styles.compMissing, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <Feather name="alert-circle" size={12} color={colors.warning} />
-              <Text style={[styles.compMissingText, { color: colors.warning }]}>
-                {isRTL ? `ناقص: ${missingFields.join("، ")}` : `Missing: ${missingFields.join(", ")}`}
+            <View style={{ gap: 8, marginTop: 4 }}>
+              <Text style={[styles.compMissingText, { color: colors.warning, textAlign: isRTL ? "right" : "left" }]}>
+                {t.profile.gateMissing}
               </Text>
+              <View style={[styles.compChips, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                {completenessChecks.filter((c) => !c.ok).map((c) => (
+                  <View key={c.label} style={[styles.compChip, { backgroundColor: colors.destructive + "10", borderColor: colors.destructive + "30" }]}>
+                    <Feather name="alert-circle" size={10} color={colors.destructive} />
+                    <Text style={[styles.compChipText, { color: colors.destructive }]} numberOfLines={1}>{c.label}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           )}
         </Card>
@@ -281,6 +364,126 @@ export default function SupplierProfileScreen() {
               <Text style={[styles.statLabel, { color: colors.outline }]} numberOfLines={1} ellipsizeMode="tail">{s.label}</Text>
             </Card>
           ))}
+        </View>
+
+        {/* ── Organization Info ── */}
+        <Card style={{ borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+          <View style={[styles.cardHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 10 }}>
+              <View style={[styles.cardHeaderIcon, { backgroundColor: colors.primary + "12" }]}>
+                <Feather name="briefcase" size={16} color={colors.primary} />
+              </View>
+              <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.profile.organization}</Text>
+            </View>
+            {!editingInfo && (
+              <TouchableOpacity onPress={() => setEditingInfo(true)} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
+                <Feather name="edit-2" size={15} color={colors.cta} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {editingInfo ? (
+            <Animated.View style={{ opacity: infoFadeAnim, gap: 12 }}>
+              <Input label={t.profile.companyName} value={orgName} onChangeText={setOrgName} leftIcon="briefcase" isRTL={isRTL} />
+              <Input label={t.profile.crNumber} value={crNumber} onChangeText={setCrNumber} leftIcon="hash" placeholder="1234567890" isRTL={isRTL} />
+              <Input label={t.profile.taxNumber} value={taxNumber} onChangeText={setTaxNumber} leftIcon="file-text" placeholder="300XXXXXXXXX" isRTL={isRTL} keyboardType="numeric" />
+              <Input label={t.profile.phone} value={phone} onChangeText={setPhone} leftIcon="phone" keyboardType="phone-pad" isRTL={isRTL} />
+              <Input label={t.profile.city} value={city} onChangeText={setCity} leftIcon="map-pin" isRTL={isRTL} />
+              <Input label={t.profile.location} value={location} onChangeText={setLocation} leftIcon="navigation" placeholder={t.profile.locationPlaceholder} isRTL={isRTL} />
+              <Input label={`${t.profile.website} (${t.common.optional})`} value={website} onChangeText={setWebsite} leftIcon="globe" placeholder={t.profile.websitePlaceholder} autoCapitalize="none" isRTL={isRTL} />
+              <Input label={`${t.profile.description} (${t.common.optional})`} value={description} onChangeText={setDescription} leftIcon="align-left" placeholder={t.profile.descriptionPlaceholder} multiline isRTL={isRTL} />
+              <View style={[styles.editActions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                <Button title={t.common.cancel} variant="outline" onPress={handleCancelInfo} style={{ flex: 1 }} />
+                <Button title={t.common.save} onPress={handleSaveInfo} loading={saving} style={{ flex: 1 }} />
+              </View>
+            </Animated.View>
+          ) : (
+            <View style={{ gap: 8 }}>
+              {[
+                { icon: "briefcase" as const, label: t.profile.companyName,  value: organization?.name,                      required: true },
+                { icon: "hash" as const,      label: t.profile.crNumber,      value: organization?.crNumber,                  required: true },
+                { icon: "file-text" as const, label: t.profile.taxNumber,     value: organization?.taxNumber,                 required: true },
+                { icon: "phone" as const,     label: t.profile.phone,         value: organization?.phone ?? user?.phone,      required: true },
+                { icon: "map-pin" as const,   label: t.profile.city,          value: organization?.city ?? user?.city,        required: true },
+                { icon: "navigation" as const,label: t.profile.location,      value: organization?.location,                  required: true },
+                { icon: "globe" as const,     label: t.profile.website,       value: organization?.website,                   required: false },
+                { icon: "mail" as const,      label: t.auth.login.email,      value: user?.email,                             required: false },
+              ].filter((item) => item.value || item.required).map((item) => (
+                <TouchableOpacity
+                  key={item.label}
+                  style={[
+                    styles.infoRow,
+                    {
+                      flexDirection: isRTL ? "row-reverse" : "row",
+                      backgroundColor: (!item.value && item.required) ? colors.destructive + "06" : "transparent",
+                      borderRadius: 10,
+                      borderWidth: (!item.value && item.required) ? 1 : 0,
+                      borderColor: (!item.value && item.required) ? colors.destructive + "25" : "transparent",
+                    },
+                  ]}
+                  onPress={() => !item.value && item.required ? setEditingInfo(true) : undefined}
+                  activeOpacity={item.value ? 1 : 0.7}
+                >
+                  <View style={[styles.infoIcon, { backgroundColor: (!item.value && item.required) ? colors.destructive + "12" : colors.muted }]}>
+                    <Feather name={item.icon} size={14} color={(!item.value && item.required) ? colors.destructive : colors.secondary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.infoLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>{item.label}</Text>
+                    {item.value ? (
+                      <Text style={[styles.infoValue, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={1} ellipsizeMode="tail">{item.value}</Text>
+                    ) : (
+                      <Text style={[styles.infoValue, { color: colors.destructive, textAlign: isRTL ? "right" : "left" }]}>
+                        {t.profile.requiredTapToFill}
+                      </Text>
+                    )}
+                  </View>
+                  {!item.value && item.required && (
+                    <View style={[styles.requiredBadge, { backgroundColor: colors.destructive + "15" }]}>
+                      <Text style={[styles.requiredBadgeText, { color: colors.destructive }]}>{t.profile.required}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </Card>
+
+        {/* ── Legal Documents ── */}
+        <View onLayout={(e) => { docsY.current = e.nativeEvent.layout.y; }}>
+        <Card style={{ borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+          <View style={[styles.cardHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 10 }}>
+              <View style={[styles.cardHeaderIcon, { backgroundColor: colors.warning + "18" }]}>
+                <Feather name="folder" size={16} color={colors.warning} />
+              </View>
+              <View>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.profile.documents}</Text>
+                <Text style={[{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.outline, marginTop: 1 }]}>
+                  {t.profile.documentsDesc}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View style={{ gap: 8 }}>
+            {[
+              { type: "cr",      label: t.profile.docCR,      required: true },
+              { type: "vat",     label: t.profile.docVAT,     required: true },
+              { type: "zakat",   label: t.profile.docZakat,   required: false },
+              { type: "gosi",    label: t.profile.docGOSI,    required: false },
+              { type: "chamber", label: t.profile.docChamber, required: false },
+            ].map((d) => (
+              <DocumentUploadRow
+                key={d.type}
+                docType={d.type}
+                label={d.label}
+                required={d.required}
+                doc={documents[d.type]}
+                orgId={user?.organizationId ?? ""}
+                onUpdate={handleDocUpdate}
+              />
+            ))}
+          </View>
+        </Card>
         </View>
 
         {/* ── Specializations ── */}
@@ -318,16 +521,16 @@ export default function SupplierProfileScreen() {
               </View>
               <Text style={[styles.label, { color: colors.mutedForeground }]}>{t.supplierProfile.serviceAreas}:</Text>
               <View style={styles.chipsGrid}>
-                {SAUDI_CITIES.map((city) => (
+                {SAUDI_CITIES.map((cityAr) => (
                   <TouchableOpacity
-                    key={city}
+                    key={cityAr}
                     style={[styles.chip, {
-                      borderColor: selectedAreas.includes(city) ? colors.primary : colors.border,
-                      backgroundColor: selectedAreas.includes(city) ? colors.primary + "15" : "transparent",
+                      borderColor: selectedAreas.includes(cityAr) ? colors.primary : colors.border,
+                      backgroundColor: selectedAreas.includes(cityAr) ? colors.primary + "15" : "transparent",
                     }]}
-                    onPress={() => toggleArea(city)}
+                    onPress={() => toggleArea(cityAr)}
                   >
-                    <Text style={[styles.chipText, { color: selectedAreas.includes(city) ? colors.primary : colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{city}</Text>
+                    <Text style={[styles.chipText, { color: selectedAreas.includes(cityAr) ? colors.primary : colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{displayCity(cityAr, isRTL)}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -362,7 +565,7 @@ export default function SupplierProfileScreen() {
                     {organization?.serviceAreas?.map((area, i) => (
                       <View key={i} style={[styles.areaChip, { backgroundColor: colors.accentBlueSoft }]}>
                         <Feather name="map-pin" size={10} color={colors.cta} />
-                        <Text style={[styles.areaChipText, { color: colors.cta }]} numberOfLines={1} ellipsizeMode="tail">{area}</Text>
+                        <Text style={[styles.areaChipText, { color: colors.cta }]} numberOfLines={1} ellipsizeMode="tail">{displayCity(area, isRTL)}</Text>
                       </View>
                     ))}
                   </View>
@@ -413,6 +616,18 @@ export default function SupplierProfileScreen() {
           Mdmak Tech v1.0
         </Text>
       </ScrollView>
+
+      <ProfileTourGuide
+        visible={showTour}
+        onDismiss={markTourSeen}
+        onScrollTo={(sectionIndex) => {
+          if (sectionIndex === 1) {
+            scrollRef.current?.scrollTo({ y: docsY.current, animated: true });
+          } else {
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+          }
+        }}
+      />
     </View>
   );
 }
@@ -452,7 +667,12 @@ const styles = StyleSheet.create({
   compBar: { height: 5, borderRadius: 3, overflow: "hidden", marginTop: 4 },
   compFill: { height: "100%", borderRadius: 3 },
   compMissing: { alignItems: "center", gap: 6, marginTop: 8 },
-  compMissingText: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  compMissingText: { fontSize: 11, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  compChips: { flexWrap: "wrap", gap: 6 },
+  compChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
+  compChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  requiredBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  requiredBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold" },
 
   // Stats grid
   statsGrid: { flexDirection: "row", gap: 8 },
@@ -461,12 +681,20 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 22, fontFamily: "HankenGrotesk_700Bold" },
   statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" as const, letterSpacing: 0.3 },
 
-  // Specializations
+  // Cards
   cardHeader: { alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   cardHeaderIcon: { width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   cardTitle: { fontSize: 15, fontFamily: "HankenGrotesk_600SemiBold" },
   editBtn: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   editActions: { flexDirection: "row", gap: 10, marginTop: 4 },
+
+  // Info rows (view mode)
+  infoRow: { alignItems: "center", gap: 12, paddingVertical: 8 },
+  infoIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, letterSpacing: 0.5, marginBottom: 2 },
+  infoValue: { fontSize: 15, fontFamily: "Inter_500Medium" },
+
+  // Specializations
   label: { fontSize: 13, fontFamily: "Inter_500Medium" },
   subLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, letterSpacing: 0.5 },
   chipsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

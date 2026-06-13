@@ -14,6 +14,7 @@ import { OFFER_STATUS } from "@/constants/data";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { ProfileIncompleteGate, useProfileGate } from "@/components/ProfileIncompleteGate";
 
 export default function SubmitOfferScreen() {
   const colors = useColors();
@@ -21,7 +22,8 @@ export default function SubmitOfferScreen() {
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const { rfqId } = useLocalSearchParams<{ rfqId: string }>();
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
+  const { isComplete, missingFields } = useProfileGate("supplier", organization ?? null);
   const [price, setPrice] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
@@ -73,6 +75,16 @@ export default function SubmitOfferScreen() {
       setLoading(false);
     }
   };
+
+  if (!isComplete) {
+    return (
+      <ProfileIncompleteGate
+        role="supplier"
+        organization={organization ?? null}
+        missingFields={missingFields}
+      />
+    );
+  }
 
   return (
     <KeyboardAvoidingView

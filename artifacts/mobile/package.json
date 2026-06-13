@@ -66,6 +66,8 @@
     "zod-validation-error": "^3.4.0"
   },
   "dependencies": {
+    "expo-auth-session": "^56.0.14",
+    "expo-document-picker": "^56.0.4",
     "firebase": "^12.13.0"
   }
 }

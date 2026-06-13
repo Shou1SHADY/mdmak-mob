@@ -74,7 +74,6 @@ export default function ChatScreen() {
         setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)));
       },
       (err) => {
-        console.error("[Chat] Messages listener error:", err);
         setChatError(err.message || "Failed to load messages");
       }
     );
@@ -119,7 +118,6 @@ export default function ChatScreen() {
         { merge: true }
       );
     } catch (err: any) {
-      console.error("[Chat] Send failed:", err);
       Alert.alert(t.common.error, err.message || "Failed to send message");
       setText(msg); // restore text so user can retry
     } finally {

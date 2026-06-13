@@ -145,7 +145,7 @@ export default function MyOffersScreen() {
           )}
           contentContainerStyle={[
             styles.list,
-            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 100) },
+            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 82) },
           ]}
           refreshControl={
             <RefreshControl

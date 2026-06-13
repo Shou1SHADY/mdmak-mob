@@ -65,7 +65,7 @@ export default function SupplierChatsScreen() {
       <FlatList
         data={chats}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 90 }]}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const unread = item.unreadSupplier ?? 0;

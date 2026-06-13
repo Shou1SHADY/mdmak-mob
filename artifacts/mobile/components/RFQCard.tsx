@@ -4,7 +4,7 @@ import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { RFQ_STATUSES } from "@/constants/data";
+import { RFQ_STATUSES, CATEGORIES, CITIES_EN, displayCity } from "@/constants/data";
 
 export interface RFQItem {
   id: string;
@@ -40,6 +40,11 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
     ? { label: isRTL ? statusData.labelAr : statusData.label, color: statusData.color }
     : { label: rfq.status, color: "#747688" };
 
+  const displayCategory = isRTL
+    ? rfq.category
+    : (CATEGORIES.find((c) => c.labelAr === rfq.category)?.label ?? rfq.category);
+  const displayCityLabel = displayCity(rfq.city, isRTL);
+
   const formatDate = (ts: any) => {
     if (!ts) return null;
     try {
@@ -70,7 +75,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
           transform: [{ scale: pressed ? 0.987 : 1 }],
         },
       ]}
-      accessibilityLabel={`${rfq.title}, ${statusInfo.label}, ${rfq.city}`}
+      accessibilityLabel={`${rfq.title}, ${statusInfo.label}, ${displayCityLabel}`}
       accessibilityRole="button"
     >
       {/* Status color stripe */}
@@ -82,7 +87,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
           <View style={[styles.categoryRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <View style={[styles.categoryDot, { backgroundColor: statusInfo.color }]} />
             <Text style={[styles.category, { color: colors.outline }]} numberOfLines={1}>
-              {rfq.category}
+              {displayCategory}
             </Text>
           </View>
           <View style={[styles.topRight, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
@@ -123,7 +128,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
         <View style={[styles.metaRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <Feather name="map-pin" size={12} color={colors.outline} />
-            <Text style={[styles.metaText, { color: colors.outline }]}>{rfq.city}</Text>
+            <Text style={[styles.metaText, { color: colors.outline }]}>{displayCityLabel}</Text>
           </View>
           {deadlineDate && (
             <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>

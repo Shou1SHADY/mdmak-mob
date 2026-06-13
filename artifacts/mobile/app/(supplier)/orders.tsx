@@ -70,7 +70,7 @@ export default function OrdersScreen() {
           data={orders}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <OfferCard offer={item} />}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 100) }]}
+          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 82) }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<EmptyState icon="package" title={t.orders.noOrders} subtitle={t.orders.noOrdersDesc} />}
         />

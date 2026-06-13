@@ -108,6 +108,7 @@ export default function SupplierLayout() {
         name="rfqs"
         options={{
           title: t.tabs.browseRfqs,
+          tabBarLabel: t.tabs.browseRfqsShort,
           tabBarIcon: ({ focused }) => (
             <TabIcon name="search" focused={focused} colors={colors} />
           ),

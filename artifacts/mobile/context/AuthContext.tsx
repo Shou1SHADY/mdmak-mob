@@ -54,15 +54,27 @@ export interface AppUser {
   profileCompleted: boolean;
 }
 
+export interface LegalDoc {
+  url?: string;
+  expiryDate?: string;
+  uploadedAt?: string;
+}
+
 export interface Organization {
   id: string;
   type: "contractor" | "supplier";
   name: string;
   crNumber?: string;
+  taxNumber?: string;
+  phone?: string;
   city?: string;
+  location?: string;
+  website?: string;
+  description?: string;
   specializations?: string[];
   serviceAreas?: string[];
   verified?: boolean;
+  documents?: Record<string, LegalDoc>;
 }
 
 interface AuthContextType {
@@ -138,10 +150,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       type: data.role === "Supplier" ? "supplier" : "contractor",
       name: data.companyName ?? data.orgName ?? "",
       crNumber: data.crNumber,
+      taxNumber: data.taxNumber,
+      phone: data.phone,
       city: data.city,
+      location: data.location,
+      website: data.website,
+      description: data.description,
       specializations: data.specializations ?? [],
       serviceAreas: data.serviceAreas ?? [],
       verified: data.verified ?? false,
+      documents: data.documents ?? {},
     });
     return appUser;
   }

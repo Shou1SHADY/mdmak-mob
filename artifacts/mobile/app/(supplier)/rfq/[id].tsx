@@ -169,10 +169,10 @@ export default function SupplierRFQDetailScreen() {
           <View style={styles.detailsGrid}>
             {[
               { icon: "map-pin", label: t.rfq.city, value: rfq.city, color: colors.cta },
-              rfq.district ? { icon: "navigation", label: t.rfq.district ?? "District", value: rfq.district, color: colors.purpleAccent } : null,
+              rfq.district ? { icon: "navigation", label: t.rfq.district, value: rfq.district, color: colors.purpleAccent } : null,
               deadline ? { icon: "clock", label: t.rfq.deadline, value: deadline, color: colors.warning } : null,
-              createdAt ? { icon: "calendar", label: t.rfq.createdAt ?? "Posted", value: createdAt, color: colors.outline } : null,
-              rfq.subCategory ? { icon: "tag", label: t.rfq.subCategory ?? "Sub-category", value: rfq.subCategory, color: colors.tealAccent } : null,
+              createdAt ? { icon: "calendar", label: t.rfq.createdAt, value: createdAt, color: colors.outline } : null,
+              rfq.subCategory ? { icon: "tag", label: t.rfq.subCategory, value: rfq.subCategory, color: colors.tealAccent } : null,
             ]
               .filter(Boolean)
               .map((item: any) => (

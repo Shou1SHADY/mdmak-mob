@@ -227,7 +227,7 @@ export default function MyRFQsScreen() {
           )}
           contentContainerStyle={[
             styles.list,
-            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 54 : 110) },
+            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 54 : 82) },
           ]}
           refreshControl={
             <RefreshControl

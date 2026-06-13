@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform,
   Animated,
@@ -10,11 +10,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import type { LegalDoc } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DocumentUploadRow } from "@/components/DocumentUploadRow";
 import { router } from "expo-router";
+import { ProfileTourGuide, useProfileTour } from "@/components/ProfileTourGuide";
 
 /* ─── Quick Action Pill ─── */
 function QuickActionPill({
@@ -83,9 +86,24 @@ export default function ContractorProfileScreen() {
   const [orgName, setOrgName] = useState(organization?.name ?? "");
   const [city, setCity] = useState(organization?.city ?? "");
   const [crNumber, setCrNumber] = useState(organization?.crNumber ?? "");
+  const [taxNumber, setTaxNumber] = useState(organization?.taxNumber ?? "");
+  const [phone, setPhone] = useState(organization?.phone ?? user?.phone ?? "");
+  const [location, setLocation] = useState(organization?.location ?? "");
+  const [website, setWebsite] = useState(organization?.website ?? "");
+  const [description, setDescription] = useState(organization?.description ?? "");
+  const [documents, setDocuments] = useState<Record<string, LegalDoc>>(organization?.documents ?? {});
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ totalRfqs: 0, activeRfqs: 0, totalOffers: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const docsY = useRef(0);
+  const { showTour, markTourSeen } = useProfileTour();
+
+  // Sync documents when organization loads (auth may finish after mount)
+  useEffect(() => {
+    if (organization?.documents) setDocuments(organization.documents);
+  }, [organization?.documents]);
 
   // Fade animation for edit mode
   const fadeAnim = useState(new Animated.Value(0))[0];
@@ -123,7 +141,10 @@ export default function ContractorProfileScreen() {
     if (!user?.organizationId) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, "users", user.uid), { companyName: orgName, orgName, city, crNumber });
+      await updateDoc(doc(db, "users", user.uid), {
+        companyName: orgName, orgName, city, crNumber,
+        taxNumber, phone, location, website, description,
+      });
       await refreshUser();
       setEditing(false);
     } catch {
@@ -133,10 +154,27 @@ export default function ContractorProfileScreen() {
     }
   };
 
+  const handleDocUpdate = async (docType: string, data: LegalDoc) => {
+    const updated = { ...documents, [docType]: data };
+    setDocuments(updated);
+    if (user?.uid) {
+      try {
+        await updateDoc(doc(db, "users", user.uid), { documents: updated });
+      } catch {
+        Alert.alert(t.common.error, t.profile.saveFailed);
+      }
+    }
+  };
+
   const handleCancelEdit = () => {
     setOrgName(organization?.name ?? "");
     setCity(organization?.city ?? "");
     setCrNumber(organization?.crNumber ?? "");
+    setTaxNumber(organization?.taxNumber ?? "");
+    setPhone(organization?.phone ?? user?.phone ?? "");
+    setLocation(organization?.location ?? "");
+    setWebsite(organization?.website ?? "");
+    setDescription(organization?.description ?? "");
     setEditing(false);
   };
 
@@ -156,18 +194,17 @@ export default function ContractorProfileScreen() {
     }
   };
 
-  // Profile completeness
-  const completenessFields = [
-    !!organization?.name,
-    !!organization?.city,
-    !!organization?.crNumber,
-    !!user?.displayName,
-    !!user?.email,
+  // Profile completeness — matches web (6 required fields)
+  const completenessChecks = [
+    { ok: !!organization?.name,       label: t.profile.companyName },
+    { ok: !!(organization?.phone ?? user?.phone), label: t.profile.phone },
+    { ok: !!organization?.crNumber,   label: t.profile.crNumber },
+    { ok: !!organization?.taxNumber,  label: t.profile.taxNumber },
+    { ok: !!organization?.city,       label: t.profile.city },
+    { ok: !!organization?.location,   label: t.profile.location },
   ];
-  const completeness = Math.round((completenessFields.filter(Boolean).length / completenessFields.length) * 100);
-  const missingFields = completenessFields
-    .map((v, i) => v ? null : [t.profile.companyName, t.profile.city, t.profile.crNumber, "Name", t.auth.login.email][i])
-    .filter(Boolean);
+  const completeness = Math.round((completenessChecks.filter((c) => c.ok).length / completenessChecks.length) * 100);
+  const missingFields = completenessChecks.filter((c) => !c.ok).map((c) => c.label);
 
   const initial = (organization?.name ?? user?.displayName ?? "C").trim().charAt(0).toUpperCase();
 
@@ -219,8 +256,9 @@ export default function ContractorProfileScreen() {
       </View>
 
       <ScrollView
+        ref={scrollRef}
         style={{ flex: 1 }}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 82 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Profile Completeness ── */}
@@ -245,11 +283,18 @@ export default function ContractorProfileScreen() {
             <View style={[styles.compFill, { width: `${completeness}%`, backgroundColor: completeness === 100 ? colors.success : colors.cta }]} />
           </View>
           {completeness < 100 && (
-            <View style={[styles.compMissing, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <Feather name="alert-circle" size={12} color={colors.warning} />
-              <Text style={[styles.compMissingText, { color: colors.warning }]}>
-                {isRTL ? `ناقص: ${missingFields.join("، ")}` : `Missing: ${missingFields.join(", ")}`}
+            <View style={{ gap: 8, marginTop: 4 }}>
+              <Text style={[styles.compMissingText, { color: colors.warning, textAlign: isRTL ? "right" : "left" }]}>
+                {t.profile.gateMissing}
               </Text>
+              <View style={[styles.compChips, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                {completenessChecks.filter((c) => !c.ok).map((c) => (
+                  <View key={c.label} style={[styles.compChip, { backgroundColor: colors.destructive + "10", borderColor: colors.destructive + "30" }]}>
+                    <Feather name="alert-circle" size={10} color={colors.destructive} />
+                    <Text style={[styles.compChipText, { color: colors.destructive }]} numberOfLines={1}>{c.label}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           )}
         </Card>
@@ -291,9 +336,14 @@ export default function ContractorProfileScreen() {
 
           {editing ? (
             <Animated.View style={{ opacity: fadeAnim, gap: 12 }}>
-              <Input label={t.profile.companyName} value={orgName} onChangeText={setOrgName} leftIcon="briefcase" />
-              <Input label={t.profile.crNumber} value={crNumber} onChangeText={setCrNumber} leftIcon="hash" placeholder="1234567890" />
-              <Input label={t.profile.city} value={city} onChangeText={setCity} leftIcon="map-pin" />
+              <Input label={t.profile.companyName} value={orgName} onChangeText={setOrgName} leftIcon="briefcase" isRTL={isRTL} />
+              <Input label={t.profile.crNumber} value={crNumber} onChangeText={setCrNumber} leftIcon="hash" placeholder="1234567890" isRTL={isRTL} />
+              <Input label={t.profile.taxNumber} value={taxNumber} onChangeText={setTaxNumber} leftIcon="file-text" placeholder="300XXXXXXXXX" isRTL={isRTL} keyboardType="numeric" />
+              <Input label={t.profile.phone} value={phone} onChangeText={setPhone} leftIcon="phone" keyboardType="phone-pad" isRTL={isRTL} />
+              <Input label={t.profile.city} value={city} onChangeText={setCity} leftIcon="map-pin" isRTL={isRTL} />
+              <Input label={t.profile.location} value={location} onChangeText={setLocation} leftIcon="navigation" placeholder={t.profile.locationPlaceholder} isRTL={isRTL} />
+              <Input label={`${t.profile.website} (${t.common.optional})`} value={website} onChangeText={setWebsite} leftIcon="globe" placeholder={t.profile.websitePlaceholder} autoCapitalize="none" isRTL={isRTL} />
+              <Input label={`${t.profile.description} (${t.common.optional})`} value={description} onChangeText={setDescription} leftIcon="align-left" placeholder={t.profile.descriptionPlaceholder} multiline isRTL={isRTL} />
               <View style={[styles.editActions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
                 <Button title={t.common.cancel} variant="outline" onPress={handleCancelEdit} style={{ flex: 1 }} />
                 <Button title={t.common.save} onPress={handleSave} loading={saving} style={{ flex: 1 }} />
@@ -302,30 +352,97 @@ export default function ContractorProfileScreen() {
           ) : (
             <View style={{ gap: 8 }}>
               {[
-                { icon: "briefcase" as const, label: t.profile.companyName, value: organization?.name },
-                { icon: "hash" as const, label: t.profile.crNumber, value: organization?.crNumber ?? t.profile.notSet },
-                { icon: "map-pin" as const, label: t.profile.city, value: organization?.city ?? user?.city ?? t.profile.notSet },
-                { icon: "mail" as const, label: t.auth.login.email, value: user?.email },
-              ].map((item) => (
-                <View key={item.label} style={[styles.infoRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <View style={[styles.infoIcon, { backgroundColor: colors.muted }]}>
-                    <Feather name={item.icon} size={14} color={colors.secondary} />
+                { icon: "briefcase" as const, label: t.profile.companyName,  value: organization?.name,                      required: true },
+                { icon: "hash" as const,      label: t.profile.crNumber,      value: organization?.crNumber,                  required: true },
+                { icon: "file-text" as const, label: t.profile.taxNumber,     value: organization?.taxNumber,                 required: true },
+                { icon: "phone" as const,     label: t.profile.phone,         value: organization?.phone ?? user?.phone,      required: true },
+                { icon: "map-pin" as const,   label: t.profile.city,          value: organization?.city ?? user?.city,        required: true },
+                { icon: "navigation" as const,label: t.profile.location,      value: organization?.location,                  required: true },
+                { icon: "globe" as const,     label: t.profile.website,       value: organization?.website,                   required: false },
+                { icon: "mail" as const,      label: t.auth.login.email,      value: user?.email,                             required: false },
+              ].filter((item) => item.value || item.required).map((item) => (
+                <TouchableOpacity
+                  key={item.label}
+                  style={[
+                    styles.infoRow,
+                    {
+                      flexDirection: isRTL ? "row-reverse" : "row",
+                      backgroundColor: (!item.value && item.required) ? colors.destructive + "06" : "transparent",
+                      borderRadius: 10,
+                      borderWidth: (!item.value && item.required) ? 1 : 0,
+                      borderColor: (!item.value && item.required) ? colors.destructive + "25" : "transparent",
+                    },
+                  ]}
+                  onPress={() => !item.value && item.required ? setEditing(true) : undefined}
+                  activeOpacity={item.value ? 1 : 0.7}
+                >
+                  <View style={[styles.infoIcon, { backgroundColor: (!item.value && item.required) ? colors.destructive + "12" : colors.muted }]}>
+                    <Feather name={item.icon} size={14} color={(!item.value && item.required) ? colors.destructive : colors.secondary} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.infoLabel, { color: colors.outline }]}>{item.label}</Text>
-                    <Text style={[styles.infoValue, { color: colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{item.value ?? "\u2014"}</Text>
+                    <Text style={[styles.infoLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>{item.label}</Text>
+                    {item.value ? (
+                      <Text style={[styles.infoValue, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={1} ellipsizeMode="tail">{item.value}</Text>
+                    ) : (
+                      <Text style={[styles.infoValue, { color: colors.destructive, textAlign: isRTL ? "right" : "left" }]}>
+                        {t.profile.requiredTapToFill}
+                      </Text>
+                    )}
                   </View>
-                </View>
+                  {!item.value && item.required && (
+                    <View style={[styles.requiredBadge, { backgroundColor: colors.destructive + "15" }]}>
+                      <Text style={[styles.requiredBadgeText, { color: colors.destructive }]}>{t.profile.required}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
               ))}
             </View>
           )}
         </Card>
 
+        {/* ── Legal Documents ── */}
+        <View onLayout={(e) => { docsY.current = e.nativeEvent.layout.y; }}>
+        <Card style={{ borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+          <View style={[styles.cardHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 10 }}>
+              <View style={[styles.cardHeaderIcon, { backgroundColor: colors.warning + "18" }]}>
+                <Feather name="folder" size={16} color={colors.warning} />
+              </View>
+              <View>
+                <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.profile.documents}</Text>
+                <Text style={[{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.outline, marginTop: 1 }]}>
+                  {t.profile.documentsDesc}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View style={{ gap: 8 }}>
+            {[
+              { type: "cr",      label: t.profile.docCR,      required: true },
+              { type: "vat",     label: t.profile.docVAT,     required: true },
+              { type: "zakat",   label: t.profile.docZakat,   required: false },
+              { type: "gosi",    label: t.profile.docGOSI,    required: false },
+              { type: "chamber", label: t.profile.docChamber, required: false },
+            ].map((d) => (
+              <DocumentUploadRow
+                key={d.type}
+                docType={d.type}
+                label={d.label}
+                required={d.required}
+                doc={documents[d.type]}
+                orgId={user?.organizationId ?? ""}
+                onUpdate={handleDocUpdate}
+              />
+            ))}
+          </View>
+        </Card>
+        </View>
+
         {/* ── Menu ── */}
         <Card style={{ borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 6 }}>
           <MenuRow
             icon="users" label={t.profile.teamMembers} color="#0369A1"
-            subtitle="Manage team members"
+            subtitle={t.profile.manageTeam}
             onPress={() => router.push("/(contractor)/team")}
             isRTL={isRTL}
           />
@@ -355,6 +472,18 @@ export default function ContractorProfileScreen() {
           Mdmak Tech v1.0
         </Text>
       </ScrollView>
+
+      <ProfileTourGuide
+        visible={showTour}
+        onDismiss={markTourSeen}
+        onScrollTo={(sectionIndex) => {
+          if (sectionIndex === 1) {
+            scrollRef.current?.scrollTo({ y: docsY.current, animated: true });
+          } else {
+            scrollRef.current?.scrollTo({ y: 0, animated: true });
+          }
+        }}
+      />
     </View>
   );
 }
@@ -391,7 +520,12 @@ const styles = StyleSheet.create({
   compBar: { height: 5, borderRadius: 3, overflow: "hidden", marginTop: 4 },
   compFill: { height: "100%", borderRadius: 3 },
   compMissing: { alignItems: "center", gap: 6, marginTop: 8 },
-  compMissingText: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  compMissingText: { fontSize: 11, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  compChips: { flexWrap: "wrap", gap: 6 },
+  compChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
+  compChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  requiredBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  requiredBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold" },
 
   // Stats grid
   statsGrid: { flexDirection: "row", gap: 8 },

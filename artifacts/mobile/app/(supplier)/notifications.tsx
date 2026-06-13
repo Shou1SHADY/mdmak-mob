@@ -61,7 +61,7 @@ export default function SupplierNotificationsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.list,
-          { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 100) },
+          { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 24) },
         ]}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {

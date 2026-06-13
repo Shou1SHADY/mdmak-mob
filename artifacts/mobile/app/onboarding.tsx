@@ -19,7 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { SAUDI_CITIES } from "@/constants/data";
+import { SAUDI_CITIES, displayCity } from "@/constants/data";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -158,7 +158,7 @@ export default function OnboardingScreen() {
                           { color: city === c ? "#fff" : colors.secondary },
                         ]}
                       >
-                        {c}
+                        {displayCity(c, isRTL)}
                       </Text>
                     </TouchableOpacity>
                   ))}

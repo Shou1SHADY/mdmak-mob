@@ -18,7 +18,7 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { UserRole } from "@/context/AuthContext";
-import { SAUDI_CITIES } from "@/constants/data";
+import { SAUDI_CITIES, displayCity } from "@/constants/data";
 
 export default function RegisterScreen() {
   const colors = useColors();
@@ -65,7 +65,6 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       const appUser = await register(email.trim(), password, displayName.trim(), role, orgName.trim(), city);
-      console.log("[Register] Success, user role:", appUser.role);
       if (appUser.role === "Admin") {
         await logout();
         Alert.alert(t.common.error, t.auth.errors.adminNotSupported);
@@ -73,7 +72,6 @@ export default function RegisterScreen() {
       }
       pendingRef.current = true;
     } catch (err: any) {
-      console.log("[Register] Error:", err.code, err.message);
       const msg =
         err.code === "auth/email-already-in-use"
           ? t.auth.errors.emailInUse
@@ -93,7 +91,6 @@ export default function RegisterScreen() {
       pendingRef.current = false;
       const dashboard =
         user.role === "Supplier" ? "/(supplier)/dashboard" : "/(contractor)/dashboard";
-      console.log("[Register] Navigating to:", dashboard);
       router.replace(dashboard);
     }
   }, [user]);
@@ -191,7 +188,7 @@ export default function RegisterScreen() {
                         ]}
                         onPress={() => setCity(c)}
                       >
-                        <Text style={[styles.cityText, { color: city === c ? "#fff" : colors.secondary }]}>{c}</Text>
+                        <Text style={[styles.cityText, { color: city === c ? "#fff" : colors.secondary }]}>{displayCity(c, isRTL)}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>

@@ -46,8 +46,8 @@ const SLIDES = [
     descKey:  "slide3Desc"  as const,
     image:    require("@/assets/images/figma/cloud-transformation.png"),
     chips: [
-      { icon: "lock" as const, labelKey: "secured"         as const },
-      { icon: "zap"  as const, labelKey: "highPerformance" as const },
+      { icon: "cpu"      as const, labelKey: "smart"    as const },
+      { icon: "activity" as const, labelKey: "realTime" as const },
     ],
   },
 ];
@@ -111,10 +111,10 @@ export default function WelcomeScreen() {
                 contentPosition="top"
                 transition={200}
               />
-              {/* Gradient fade — hides the bottom edge strip of the illustration */}
+              {/* Gradient fade — hides the bottom edge of the illustration */}
               <LinearGradient
                 colors={["transparent", colors.background]}
-                start={{ x: 0, y: 0 }}
+                start={{ x: 0, y: 0.3 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.imageFade}
                 pointerEvents="none"
@@ -141,7 +141,7 @@ export default function WelcomeScreen() {
             </View>
 
             {/* Slide copy */}
-            <View style={styles.copy}>
+            <View style={[styles.copy, { backgroundColor: colors.background, marginTop: -4 }]}>
               <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={2}>
                 {t.welcome[s.titleKey]}
               </Text>
@@ -246,8 +246,6 @@ const styles = StyleSheet.create({
   /* ── Illustration ── */
   imageWrap: {
     width: "100%",
-    overflow: "hidden",
-    // No border radius — prevents the black line rendering artifact
   },
   illustration: {
     width: "100%",
@@ -258,7 +256,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 120,
+    height: 160,
   },
   chipsRow: {
     position: "absolute",

@@ -134,6 +134,7 @@ export interface Translations {
     dashboard: string;
     rfqs: string;
     browseRfqs: string;
+    browseRfqsShort: string;
     suppliers: string;
     offers: string;
     messages: string;
@@ -169,6 +170,14 @@ export interface Translations {
     companyName: string;
     city: string;
     crNumber: string;
+    taxNumber: string;
+    phone: string;
+    location: string;
+    locationPlaceholder: string;
+    website: string;
+    websitePlaceholder: string;
+    description: string;
+    descriptionPlaceholder: string;
     notifications: string;
     teamMembers: string;
     orders: string;
@@ -183,6 +192,28 @@ export interface Translations {
     completenessTitle: string;
     profileComplete: string;
     fieldsRemaining: string;
+    documents: string;
+    documentsDesc: string;
+    docCR: string;
+    docVAT: string;
+    docZakat: string;
+    docGOSI: string;
+    docChamber: string;
+    docUploaded: string;
+    docPending: string;
+    uploadDoc: string;
+    uploading: string;
+    uploadFailed: string;
+    expiryDate: string;
+    expires: string;
+    tapToUpload: string;
+    required: string;
+    gateTitle: string;
+    gateContractorDesc: string;
+    gateSupplierDesc: string;
+    gateAction: string;
+    gateMissing: string;
+    requiredTapToFill: string;
   };
   supplierProfile: {
     title: string;
@@ -276,6 +307,8 @@ export interface Translations {
     uploadFailed: string;
     cityLabel: string;
     selectCity: string;
+    district: string;
+    createdAt: string;
     districtLabel: string;
     selectDistrict: string;
     supplyInfo: string;
@@ -304,6 +337,10 @@ export interface Translations {
     toastPublished: string;
     toastPublishedDesc: string;
     publishNow: string;
+    filter: string;
+    filterTitle: string;
+    resetFilters: string;
+    applyFilters: string;
   };
   chat: {
     title: string;
@@ -366,6 +403,8 @@ export interface Translations {
     secure: string;
     fast: string;
     optimizedCode: string;
+    smart: string;
+    realTime: string;
   };
   errors: {
     generic: string;
@@ -376,5 +415,24 @@ export interface Translations {
     tryAgain: string;
     errorDetails: string;
     closeErrorDetails: string;
+  };
+  profileTour: {
+    stepOf: string;
+    skip: string;
+    next: string;
+    prev: string;
+    finish: string;
+    step1Title: string;
+    step1Desc: string;
+    step2Title: string;
+    step2Desc: string;
+    step3Title: string;
+    step3Desc: string;
+    step4Title: string;
+    step4Desc: string;
+    step5Title: string;
+    step5Desc: string;
+    step6Title: string;
+    step6Desc: string;
   };
 }
