@@ -29,9 +29,10 @@ interface OfferCardProps {
   offer: OfferItem;
   onPress?: () => void;
   actions?: React.ReactNode;
+  rank?: number;
 }
 
-export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
+export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
@@ -42,6 +43,14 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
     : { label: offer.status, color: "#747688" };
 
   const accentColor = statusInfo.color;
+  const rankColor = rank === 1 ? "#12A063" : rank === 2 ? "#f59e0b" : rank === 3 ? "#06b6d4" : undefined;
+  const rankLabel = rank === 1
+    ? (isRTL ? "الأدنى سعراً" : "Lowest")
+    : rank === 2
+    ? (isRTL ? "الثاني" : "2nd")
+    : rank === 3
+    ? (isRTL ? "الثالث" : "3rd")
+    : undefined;
 
   const formatCurrency = (amount: string) =>
     new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", {
@@ -68,27 +77,15 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
       accessibilityLabel={`${t.rfq.quotedPrice}: ${formatCurrency(offer.price)}, ${statusInfo.label}`}
       accessibilityRole={onPress ? "button" : "none"}
     >
-      {/* Price + status row */}
-      <View style={styles.topRow}>
-        <View style={{ flex: 1 }}>
-          <Text
-            style={[
-              styles.priceLabel,
-              { color: colors.outline, textAlign: isRTL ? "right" : "left" },
-            ]}
-          >
-            {t.rfq.quotedPrice}
-          </Text>
-          <Text
-            style={[
-              styles.price,
-              { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold", textAlign: isRTL ? "right" : "left" },
-            ]}
-          >
-            {formatCurrency(offer.price)}
-          </Text>
-        </View>
-        <View style={styles.badgeRow}>
+      {/* Rank + status row */}
+      <View style={[styles.topRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+        {rankLabel && rankColor ? (
+          <View style={[styles.rankBadge, { backgroundColor: rankColor + "18", borderColor: rankColor + "40" }]}>
+            {rank === 1 && <Feather name="trending-down" size={11} color={rankColor} />}
+            <Text style={[styles.rankText, { color: rankColor }]}>{rankLabel}</Text>
+          </View>
+        ) : <View />}
+        <View style={[styles.badgeRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <StatusBadge label={statusInfo.label} color={accentColor} />
           {onPress && (
             <Feather
@@ -98,6 +95,16 @@ export function OfferCard({ offer, onPress, actions }: OfferCardProps) {
             />
           )}
         </View>
+      </View>
+
+      {/* Price */}
+      <View>
+        <Text style={[styles.priceLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
+          {t.rfq.quotedPrice}
+        </Text>
+        <Text style={[styles.price, { color: rankColor ?? colors.foreground, fontFamily: "HankenGrotesk_700Bold", textAlign: isRTL ? "right" : "left" }]}>
+          {formatCurrency(offer.price)}
+        </Text>
       </View>
 
       {/* Supplier name */}
@@ -167,6 +174,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     paddingTop: 2,
+  },
+  rankBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: "flex-start",
+  },
+  rankText: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
   },
   priceLabel: {
     fontSize: 10,

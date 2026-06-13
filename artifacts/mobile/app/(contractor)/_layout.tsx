@@ -5,6 +5,7 @@ import { Platform, View, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
+import { AIChatWidget } from "@/components/AIChatWidget";
 
 function TabIcon({
   name,
@@ -77,6 +78,7 @@ export default function ContractorLayout() {
       };
 
   return (
+    <View style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -146,6 +148,8 @@ export default function ContractorLayout() {
       <Tabs.Screen name="team" options={{ href: null }} />
       <Tabs.Screen name="suppliers" options={{ href: null }} />
     </Tabs>
+    <AIChatWidget userRole="Contractor" />
+    </View>
   );
 }
 

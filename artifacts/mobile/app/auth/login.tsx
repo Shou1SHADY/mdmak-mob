@@ -347,8 +347,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   forgot: {
-    paddingVertical: 4,
-    marginBottom: 12,
+    paddingVertical: 12,
+    marginBottom: 4,
+    minHeight: 44,
+    justifyContent: "center",
   },
   forgotText: {
     fontFamily: "Inter_500Medium",
@@ -402,8 +404,10 @@ const styles = StyleSheet.create({
   // Sign up
   signupRow: {
     alignItems: "center",
-    marginTop: 14,
-    paddingBottom: 20,
+    marginTop: 8,
+    paddingVertical: 14,
+    minHeight: 44,
+    justifyContent: "center",
   },
   signupText: {
     fontFamily: "Inter_400Regular",

@@ -284,7 +284,11 @@ export default function BrowseRFQsScreen() {
               <Feather name="x" size={11} color={colors.success} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={() => { setFilterCategory("All"); setFilterCity("All"); setFilterStatus("All"); }}>
+          <TouchableOpacity
+            onPress={() => { setFilterCategory("All"); setFilterCity("All"); setFilterStatus("All"); }}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+            style={{ paddingVertical: 6 }}
+          >
             <Text style={[styles.clearAllText, { color: colors.destructive }]}>{t.rfq.resetFilters}</Text>
           </TouchableOpacity>
         </View>
@@ -662,9 +666,9 @@ const styles = StyleSheet.create({
   },
   modalTitle: { fontSize: 17, fontFamily: "HankenGrotesk_700Bold" },
   closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },

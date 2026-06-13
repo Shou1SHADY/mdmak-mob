@@ -125,6 +125,7 @@ const en: Translations = {
     offersReceived: "Offers Received",
     thisMonth: "This Month",
     browseSuppliers: "Browse Suppliers",
+    myMessages: "Messages",
     browseOpenRfqs: "Browse Open RFQs",
     greeting: "Hello,",
     heroYouHave: "You have",
@@ -342,6 +343,9 @@ const en: Translations = {
     filterTitle: "Filter RFQs",
     resetFilters: "Reset",
     applyFilters: "Apply Filters",
+    republish: "Republish RFQ",
+    republishConfirm: "Republish this RFQ? It will become active and visible to suppliers again.",
+    republished: "RFQ has been republished successfully.",
   },
   chat: {
     title: "Chat",

@@ -140,10 +140,12 @@ export default function ContractorProfileScreen() {
   const handleSave = async () => {
     if (!user?.organizationId) return;
     setSaving(true);
+    const isProfileComplete = !!(orgName?.trim() && (phone?.trim()) && crNumber?.trim() && taxNumber?.trim() && city?.trim() && location?.trim());
     try {
       await updateDoc(doc(db, "users", user.uid), {
         companyName: orgName, orgName, city, crNumber,
         taxNumber, phone, location, website, description,
+        profileCompleted: isProfileComplete,
       });
       await refreshUser();
       setEditing(false);
@@ -194,14 +196,16 @@ export default function ContractorProfileScreen() {
     }
   };
 
-  // Profile completeness — matches web (6 required fields)
+  // Profile completeness — matches web 8-field formula
   const completenessChecks = [
-    { ok: !!organization?.name,       label: t.profile.companyName },
-    { ok: !!(organization?.phone ?? user?.phone), label: t.profile.phone },
-    { ok: !!organization?.crNumber,   label: t.profile.crNumber },
-    { ok: !!organization?.taxNumber,  label: t.profile.taxNumber },
-    { ok: !!organization?.city,       label: t.profile.city },
-    { ok: !!organization?.location,   label: t.profile.location },
+    { ok: !!organization?.name,                        label: t.profile.companyName },
+    { ok: !!(organization?.phone ?? user?.phone),      label: t.profile.phone },
+    { ok: !!organization?.crNumber,                    label: t.profile.crNumber },
+    { ok: !!organization?.taxNumber,                   label: t.profile.taxNumber },
+    { ok: !!organization?.city,                        label: t.profile.city },
+    { ok: !!organization?.location,                    label: t.profile.location },
+    { ok: !!organization?.documents?.cr?.url,          label: t.profile.docCR },
+    { ok: !!organization?.documents?.vat?.url,         label: t.profile.docVAT },
   ];
   const completeness = Math.round((completenessChecks.filter((c) => c.ok).length / completenessChecks.length) * 100);
   const missingFields = completenessChecks.filter((c) => !c.ok).map((c) => c.label);
@@ -269,7 +273,7 @@ export default function ContractorProfileScreen() {
             </View>
             <View style={{ flex: 1, marginHorizontal: 10 }}>
               <Text style={[styles.compTitle, { color: colors.foreground }]}>
-                {completeness === 100 ? t.common.success : "Profile Completeness"}
+                {completeness === 100 ? t.common.success : t.profile.completenessTitle}
               </Text>
               <Text style={[styles.compSubtitle, { color: colors.outline }]}>
                 {completeness === 100 ? "Your profile is complete" : `${missingFields.length} fields remaining`}

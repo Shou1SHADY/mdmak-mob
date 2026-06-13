@@ -123,6 +123,7 @@ export interface Translations {
     offersReceived: string;
     thisMonth: string;
     browseSuppliers: string;
+    myMessages: string;
     browseOpenRfqs: string;
     greeting: string;
     heroYouHave: string;
@@ -341,6 +342,9 @@ export interface Translations {
     filterTitle: string;
     resetFilters: string;
     applyFilters: string;
+    republish: string;
+    republishConfirm: string;
+    republished: string;
   };
   chat: {
     title: string;

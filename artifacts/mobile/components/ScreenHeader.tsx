@@ -89,10 +89,10 @@ export function DashboardHeader({
       >
         <View style={[styles.dashInner, { paddingHorizontal: 16, paddingBottom: 10, marginTop: 4 }]}>
           <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, marginRight: isRTL ? 0 : 10, marginLeft: isRTL ? 10 : 0 }}>
-            <View style={[styles.avatarRing, { borderColor: colors.accent, width: 38, height: 38, borderRadius: 19 }]}>
+            <View style={[styles.avatarRing, { borderColor: colors.accent }]}>
               <Image
                 source={require("@/assets/images/figma/user-profile.png")}
-                style={{ width: 34, height: 34, borderRadius: 17 }}
+                style={{ width: 38, height: 38, borderRadius: 19 }}
                 contentFit="cover"
               />
             </View>
@@ -113,15 +113,18 @@ export function DashboardHeader({
           </View>
 
           <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 8, alignItems: "center" }}>
-            {/* Language flag button — shows current language flag, opens picker */}
+            {/* Language switcher — 44×44 touch target with flag + code label */}
             <TouchableOpacity
-              style={styles.langBtn}
+              style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => setShowSheet(true)}
-              accessibilityLabel="Change language"
+              accessibilityLabel={language === "ar" ? "تغيير اللغة" : "Change language"}
               accessibilityRole="button"
-              activeOpacity={0.8}
+              activeOpacity={0.75}
             >
-              <CurrentFlag width={50} height={32} />
+              <CurrentFlag width={26} height={17} />
+              <Text style={[styles.langCode, { color: colors.foreground }]}>
+                {language === "ar" ? "AR" : "EN"}
+              </Text>
             </TouchableOpacity>
             {right}
           </View>
@@ -247,8 +250,9 @@ export function WelcomeHeroCard({
           style={[styles.heroBtn, { alignSelf: isRTL ? "flex-end" : "flex-start" }]}
           onPress={onAction}
           activeOpacity={0.8}
+          accessibilityRole="button"
         >
-          <Text style={styles.heroBtnText}>{actionLabel ?? t.dashboard.viewAll}</Text>
+          <Text style={[styles.heroBtnText, { color: colors.cta }]}>{actionLabel ?? t.dashboard.viewAll}</Text>
           <Feather name={isRTL ? "arrow-left" : "arrow-right"} size={14} color={colors.cta} />
         </TouchableOpacity>
       )}
@@ -339,12 +343,18 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   langBtn: {
-    width: 50,
-    height: 32,
-    borderRadius: 7,
-    overflow: "hidden",
+    height: 44,
+    paddingHorizontal: 10,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.12)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  langCode: {
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.4,
   },
   // ── Bottom sheet ──────────────────────────────────────
   modalOuter: {
@@ -399,7 +409,7 @@ const styles = StyleSheet.create({
   // ── Hero card ─────────────────────────────────────────
   heroCard: {
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 20,
     gap: 8,
     overflow: "hidden",
   },
@@ -420,16 +430,16 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     gap: 6,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginTop: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 6,
+    minHeight: 44,
   },
   heroBtnText: {
     fontFamily: "Inter_700Bold",
-    fontSize: 12,
-    letterSpacing: 0.6,
-    color: "#0369A1",
+    fontSize: 13,
+    letterSpacing: 0.4,
   },
   // ── Quick action ──────────────────────────────────────
   quickActionCard: {

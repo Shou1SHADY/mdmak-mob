@@ -125,6 +125,7 @@ const ar: Translations = {
     offersReceived: "العروض المستلمة",
     thisMonth: "هذا الشهر",
     browseSuppliers: "تصفح الموردين",
+    myMessages: "رسائلي",
     browseOpenRfqs: "تصفح الطلبات المفتوحة",
     greeting: "أهلاً،",
     heroYouHave: "لديك",
@@ -342,6 +343,9 @@ const ar: Translations = {
     filterTitle: "تصفية الطلبات",
     resetFilters: "إعادة ضبط",
     applyFilters: "تطبيق الفلاتر",
+    republish: "إعادة نشر الطلب",
+    republishConfirm: "هل تريد إعادة نشر هذا الطلب؟ سيصبح نشطاً ومرئياً للموردين مجدداً.",
+    republished: "تمت إعادة نشر الطلب بنجاح.",
   },
   chat: {
     title: "المحادثة",

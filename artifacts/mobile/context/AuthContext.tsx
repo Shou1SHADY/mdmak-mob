@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       specializations: data.specializations ?? [],
       serviceAreas: data.serviceAreas ?? [],
       verified: data.verified ?? false,
-      documents: data.documents ?? {},
+      documents: data.documents ?? data.legalDocuments ?? {},
     });
     return appUser;
   }

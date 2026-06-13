@@ -61,6 +61,23 @@ export default function RFQDetailScreen() {
 
   useEffect(() => { fetchData(); }, [id]);
 
+  const handleRepublish = () => {
+    Alert.alert(t.rfq.republish, t.rfq.republishConfirm, [
+      { text: t.common.cancel, style: "cancel" },
+      {
+        text: t.rfq.republish,
+        onPress: async () => {
+          await updateDoc(doc(db, "rfqs", id), {
+            status: "New",
+            updatedAt: serverTimestamp(),
+          });
+          Alert.alert(t.common.success ?? "Success", t.rfq.republished);
+          fetchData();
+        },
+      },
+    ]);
+  };
+
   const handleOfferAction = async (offer: OfferItem, action: "accept" | "reject" | "reduce") => {
     const confirmMessages: Record<string, string> = { accept: t.rfq.acceptOffer, reject: t.rfq.rejectOffer, reduce: t.rfq.reduceOffer };
     const statusMap: Record<string, string> = { accept: OFFER_STATUS.ACCEPTED, reject: OFFER_STATUS.REJECTED, reduce: OFFER_STATUS.PRICE_REDUCTION };
@@ -128,6 +145,15 @@ export default function RFQDetailScreen() {
                 <Text style={[styles.metaText, { color: colors.accent }]}>{offers.length} {t.rfq.offersSuffix}</Text>
               </View>
             </View>
+            {rfq.status === "Closed" && (
+              <Button
+                title={t.rfq.republish}
+                onPress={handleRepublish}
+                size="sm"
+                variant="outline"
+                style={{ alignSelf: isRTL ? "flex-end" : "flex-start", marginTop: 4 }}
+              />
+            )}
           </View>
         )}
 
@@ -135,8 +161,35 @@ export default function RFQDetailScreen() {
           {t.rfq.submittedOffers} ({offers.length})
         </Text>
 
+        {/* Price summary bar — shown when 2+ offers */}
+        {offers.length >= 2 && (() => {
+          const prices = offers.map(o => parseFloat(o.price) || 0).filter(p => p > 0);
+          const lowest = Math.min(...prices);
+          const highest = Math.max(...prices);
+          const avg = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
+          const fmt = (n: number) => new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(n);
+          return (
+            <View style={[styles.priceSummary, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl, flexDirection: isRTL ? "row-reverse" : "row" }]}>
+              <View style={styles.priceSumItem}>
+                <Text style={[styles.priceSumLabel, { color: colors.outline }]}>{isRTL ? "الأدنى" : "Lowest"}</Text>
+                <Text style={[styles.priceSumValue, { color: "#12A063", fontFamily: "HankenGrotesk_700Bold" }]}>{fmt(lowest)}</Text>
+              </View>
+              <View style={[styles.priceSumDivider, { backgroundColor: colors.border }]} />
+              <View style={styles.priceSumItem}>
+                <Text style={[styles.priceSumLabel, { color: colors.outline }]}>{isRTL ? "المتوسط" : "Avg"}</Text>
+                <Text style={[styles.priceSumValue, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>{fmt(avg)}</Text>
+              </View>
+              <View style={[styles.priceSumDivider, { backgroundColor: colors.border }]} />
+              <View style={styles.priceSumItem}>
+                <Text style={[styles.priceSumLabel, { color: colors.outline }]}>{isRTL ? "الأعلى" : "Highest"}</Text>
+                <Text style={[styles.priceSumValue, { color: colors.mutedForeground, fontFamily: "HankenGrotesk_700Bold" }]}>{fmt(highest)}</Text>
+              </View>
+            </View>
+          );
+        })()}
+
         {offers.length === 0 ? (
-          <View style={[styles.emptyOffers, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl }]}>          
+          <View style={[styles.emptyOffers, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl }]}>
             <Feather name="inbox" size={28} color={colors.mutedForeground} />
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.rfq.noOffers}</Text>
           </View>
@@ -145,15 +198,10 @@ export default function RFQDetailScreen() {
             <OfferCard
               key={offer.id}
               offer={offer}
+              rank={idx + 1}
               actions={
                 offer.status === OFFER_STATUS.UNDER_REVIEW ? (
                   <View style={styles.offerActions}>
-                    {idx === 0 && (
-                      <View style={[styles.bestBadge, { backgroundColor: colors.success + "18", borderRadius: colors.radiusSm }]}>
-                        <Feather name="trending-down" size={12} color={colors.success} />
-                        <Text style={[styles.bestText, { color: colors.success }]}>{t.rfq.lowest}</Text>
-                      </View>
-                    )}
                     <Button title={t.rfq.accept} onPress={() => handleOfferAction(offer, "accept")} size="sm" style={{ flex: 1 }} />
                     <Button title={t.rfq.reduce} onPress={() => handleOfferAction(offer, "reduce")} size="sm" variant="outline" style={{ flex: 1 }} />
                     <Button title={t.rfq.reject} onPress={() => handleOfferAction(offer, "reject")} size="sm" variant="destructive" style={{ flex: 1 }} />
@@ -190,6 +238,9 @@ const styles = StyleSheet.create({
   emptyOffers: { borderWidth: 1, padding: 32, alignItems: "center", gap: 8 },
   emptyText: { fontSize: 14 },
   offerActions: { flexDirection: "row", gap: 7, marginTop: 4, flexWrap: "wrap", alignItems: "center" },
-  bestBadge: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4 },
-  bestText: { fontSize: 11, fontWeight: "600" as const },
+  priceSummary: { flexDirection: "row", borderWidth: 1, paddingVertical: 14, paddingHorizontal: 8 },
+  priceSumItem: { flex: 1, alignItems: "center", gap: 3 },
+  priceSumLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase", letterSpacing: 0.4 },
+  priceSumValue: { fontSize: 15 },
+  priceSumDivider: { width: 1, alignSelf: "stretch", marginVertical: 4 },
 });

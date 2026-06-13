@@ -157,10 +157,12 @@ export default function SupplierProfileScreen() {
   const handleSaveInfo = async () => {
     if (!user?.uid) return;
     setSaving(true);
+    const isProfileComplete = !!(orgName?.trim() && phone?.trim() && crNumber?.trim() && taxNumber?.trim() && city?.trim() && location?.trim());
     try {
       await updateDoc(doc(db, "users", user.uid), {
         companyName: orgName, orgName, crNumber,
         taxNumber, phone, city, location, website, description,
+        profileCompleted: isProfileComplete,
       });
       await refreshUser();
       setEditingInfo(false);
@@ -234,14 +236,17 @@ export default function SupplierProfileScreen() {
     }
   };
 
-  // Profile completeness — matches web (6 required fields)
+  // Profile completeness — matches web 9-field formula
   const completenessChecks = [
-    { ok: !!organization?.name,                          label: t.profile.companyName },
-    { ok: !!(organization?.phone ?? user?.phone),        label: t.profile.phone },
-    { ok: !!organization?.crNumber,                      label: t.profile.crNumber },
-    { ok: !!organization?.taxNumber,                     label: t.profile.taxNumber },
-    { ok: !!organization?.city,                          label: t.profile.city },
-    { ok: !!organization?.location,                      label: t.profile.location },
+    { ok: !!organization?.name,                                  label: t.profile.companyName },
+    { ok: !!(organization?.phone ?? user?.phone),                label: t.profile.phone },
+    { ok: !!organization?.crNumber,                              label: t.profile.crNumber },
+    { ok: !!organization?.taxNumber,                             label: t.profile.taxNumber },
+    { ok: !!organization?.city,                                  label: t.profile.city },
+    { ok: !!organization?.location,                              label: t.profile.location },
+    { ok: (organization?.specializations?.length ?? 0) > 0,     label: t.supplierProfile.specializations },
+    { ok: !!organization?.documents?.cr?.url,                    label: t.profile.docCR },
+    { ok: !!organization?.documents?.vat?.url,                   label: t.profile.docVAT },
   ];
   const completeness = Math.round((completenessChecks.filter((c) => c.ok).length / completenessChecks.length) * 100);
   const missingFields = completenessChecks.filter((c) => !c.ok).map((c) => c.label);

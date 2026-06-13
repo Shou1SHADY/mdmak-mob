@@ -55,7 +55,24 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
     }
   };
 
+  const getDeadlineUrgency = (ts: any): { label: string; color: string; urgent: boolean } | null => {
+    if (!ts) return null;
+    try {
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      const diff = Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      if (diff < 0) return { label: isRTL ? "انتهى الموعد" : "Expired", color: "#ef4444", urgent: true };
+      if (diff === 0) return { label: isRTL ? "اليوم" : "Today", color: "#ef4444", urgent: true };
+      if (diff === 1) return { label: isRTL ? "غداً" : "Tomorrow", color: "#ef4444", urgent: true };
+      if (diff <= 3) return { label: isRTL ? `${diff} أيام` : `${diff}d left`, color: "#ef4444", urgent: true };
+      if (diff <= 7) return { label: isRTL ? `${diff} أيام` : `${diff}d left`, color: "#f59e0b", urgent: false };
+      return { label: formatDate(ts) ?? "", color: "#f59e0b", urgent: false };
+    } catch {
+      return null;
+    }
+  };
+
   const createdDate = formatDate(rfq.createdAt);
+  const deadlineUrgency = getDeadlineUrgency(rfq.deadline);
   const deadlineDate = formatDate(rfq.deadline);
   const offersCount = rfq.offersCount ?? 0;
   const hasOffers = showOffers && offersCount > 0;
@@ -91,14 +108,6 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
             </Text>
           </View>
           <View style={[styles.topRight, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-            {hasOffers && (
-              <View style={[styles.offersBadge, { backgroundColor: colors.cta + "15", borderColor: colors.cta + "40" }]}>
-                <Feather name="tag" size={10} color={colors.cta} />
-                <Text style={[styles.offersBadgeText, { color: colors.cta }]}>
-                  {offersCount} {t.rfq.offersSuffix}
-                </Text>
-              </View>
-            )}
             <StatusBadge label={statusInfo.label} color={statusInfo.color} size="sm" />
           </View>
         </View>
@@ -130,24 +139,39 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
             <Feather name="map-pin" size={12} color={colors.outline} />
             <Text style={[styles.metaText, { color: colors.outline }]}>{displayCityLabel}</Text>
           </View>
-          {deadlineDate && (
-            <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <Feather name="clock" size={12} color={colors.warning} />
-              <Text style={[styles.metaText, { color: colors.warning }]}>{deadlineDate}</Text>
+          {deadlineUrgency ? (
+            <View style={[
+              styles.metaItem,
+              deadlineUrgency.urgent && styles.urgentPill,
+              deadlineUrgency.urgent && { backgroundColor: "#ef444418", borderColor: "#ef444430" },
+              { flexDirection: isRTL ? "row-reverse" : "row" },
+            ]}>
+              <Feather name={deadlineUrgency.urgent ? "alert-circle" : "clock"} size={12} color={deadlineUrgency.color} />
+              <Text style={[styles.metaText, { color: deadlineUrgency.color, fontFamily: deadlineUrgency.urgent ? "Inter_700Bold" : "Inter_400Regular" }]}>
+                {deadlineUrgency.label}
+              </Text>
             </View>
-          )}
-          {createdDate && !deadlineDate && (
+          ) : createdDate ? (
             <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <Feather name="calendar" size={12} color={colors.outline} />
               <Text style={[styles.metaText, { color: colors.outline }]}>{createdDate}</Text>
             </View>
-          )}
+          ) : null}
         </View>
 
-        {/* Bottom row: no-offers hint + chevron */}
+        {/* Bottom row: offer count chip + chevron */}
         <View style={[styles.bottomRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-          {showOffers && !hasOffers && (
-            <Text style={[styles.noOffersHint, { color: colors.outline }]}>{t.rfq.noOffers}</Text>
+          {showOffers && (
+            <View style={[styles.offerCountPill, {
+              backgroundColor: offersCount > 0 ? colors.cta + "12" : colors.muted,
+              borderColor: offersCount > 0 ? colors.cta + "35" : colors.border,
+              flexDirection: isRTL ? "row-reverse" : "row",
+            }]}>
+              <Feather name="tag" size={11} color={offersCount > 0 ? colors.cta : colors.outline} />
+              <Text style={[styles.offerCountText, { color: offersCount > 0 ? colors.cta : colors.outline }]}>
+                {offersCount > 0 ? `${offersCount} ${t.rfq.offersSuffix}` : t.rfq.noOffers}
+              </Text>
+            </View>
           )}
           <View style={{ flex: 1 }} />
           <View style={[styles.chevronWrap, { backgroundColor: colors.accentBlueSoft }]}>
@@ -172,7 +196,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   stripe: {
-    width: 4,
+    width: 5,
   },
   stripeRTL: {
     borderTopRightRadius: 0,
@@ -254,6 +278,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Inter_400Regular",
     fontStyle: "italic",
+  },
+  offerCountPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  offerCountText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+  },
+  urgentPill: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
   },
   chevronWrap: {
     width: 26,

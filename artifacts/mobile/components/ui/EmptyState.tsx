@@ -33,9 +33,9 @@ export function EmptyState({ icon, title, subtitle, actionLabel, onAction }: Emp
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 10 },
-  iconOuter: { width: 76, height: 76, borderRadius: 24, borderWidth: 1, alignItems: "center", justifyContent: "center", marginBottom: 4 },
-  iconInner: { width: 60, height: 60, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: 12 },
+  iconOuter: { width: 80, height: 80, borderRadius: 26, borderWidth: 1.5, alignItems: "center", justifyContent: "center", marginBottom: 6 },
+  iconInner: { width: 62, height: 62, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   title: { fontSize: 17, textAlign: "center" },
-  subtitle: { fontSize: 14, textAlign: "center", lineHeight: 21 },
+  subtitle: { fontSize: 14, textAlign: "center", lineHeight: 22, maxWidth: 260 },
 });

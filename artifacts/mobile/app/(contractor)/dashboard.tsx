@@ -220,11 +220,11 @@ export default function ContractorDashboard() {
             onPress={() => router.push("/(contractor)/rfqs/create")}
           />
           <QuickActionCard
-            title={t.dashboard.browseSuppliers}
-            icon="users"
+            title={t.dashboard.myMessages}
+            icon="message-circle"
             bgColor={colors.accentPurpleSoft}
             iconColor={colors.purpleAccent}
-            onPress={() => router.push("/(contractor)/suppliers")}
+            onPress={() => router.push("/(contractor)/chats")}
           />
         </View>
 
@@ -352,7 +352,7 @@ export default function ContractorDashboard() {
 
 const styles = StyleSheet.create({
   scroll: { padding: 16, gap: 14 },
-  bellBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  bellBtn: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   badge: {
     position: "absolute", top: -3, right: -3,
     minWidth: 16, height: 16, borderRadius: 8, borderWidth: 1.5,

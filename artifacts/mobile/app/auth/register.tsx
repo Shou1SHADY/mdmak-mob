@@ -118,7 +118,7 @@ export default function RegisterScreen() {
                 key={s}
                 style={[
                   styles.stepDot,
-                  { backgroundColor: step >= s ? colors.primary : "rgba(255,255,255,0.3)" },
+                  { backgroundColor: step >= s ? "#FFFFFF" : "rgba(255,255,255,0.3)" },
                 ]}
               />
             ))}
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   roleLabel: { fontSize: 15, fontWeight: "700" as const },
   roleAr: { fontSize: 14, fontWeight: "600" as const },
   roleDesc: { fontSize: 12, lineHeight: 17, marginTop: 2 },
-  cityChip: { borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 8 },
+  cityChip: { borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 11, minHeight: 44, justifyContent: "center" },
   cityText: { fontSize: 13, fontWeight: "500" as const },
   link: { alignItems: "center", paddingVertical: 20 },
   linkText: { fontSize: 14 },
