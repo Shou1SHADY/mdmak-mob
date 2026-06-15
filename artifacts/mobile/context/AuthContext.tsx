@@ -9,7 +9,6 @@ import {
   signInWithPopup,
   signInWithCredential,
   User as FirebaseUser,
-  AuthErrorCodes,
 } from "firebase/auth";
 import { Platform } from "react-native";
 import * as WebBrowser from "expo-web-browser";
@@ -18,7 +17,12 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   serverTimestamp,
+  query,
+  where,
+  collection,
+  getDocs,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
@@ -187,8 +191,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, password: string): Promise<AppUser> {
     devLog("[Auth] login called for:", email);
-    const cred = await signInWithEmailAndPassword(auth, email, password);
+    let cred;
+    try {
+      cred = await signInWithEmailAndPassword(auth, email, password);
+    } catch (e: any) {
+      throw e;
+    }
     devLog("[Auth] Firebase sign-in succeeded, uid:", cred.user.uid);
+    // Update lastLoginAt
+    updateDoc(doc(db, "users", cred.user.uid), { lastLoginAt: serverTimestamp() }).catch(() => {});
     let appUser;
     try {
       appUser = await loadUserData(cred.user);
@@ -231,8 +242,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         organizationRole: "owner",
         companyName: orgName,
         city,
+        providers: ["password"] as string[],
         profileCompleted: true,
         createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp(),
       });
     } catch (e: any) {
       devLog("[Auth] Firestore write failed:", e.code, e.message);
@@ -262,6 +275,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function findUserByEmail(email: string) {
+    const emailLower = email.toLowerCase();
+    const snap = await getDocs(query(collection(db, "users"), where("email", "==", emailLower)));
+    if (!snap.empty) return snap;
+    if (email !== emailLower) {
+      const snapOrig = await getDocs(query(collection(db, "users"), where("email", "==", email)));
+      if (!snapOrig.empty) return snapOrig;
+    }
+    return snap; // empty
+  }
+
   async function signInWithGoogle(): Promise<AppUser> {
     devLog("[Auth] signInWithGoogle called");
 
@@ -270,31 +294,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       provider.addScope("profile");
       provider.addScope("email");
 
-      const result = await signInWithPopup(auth, provider);
+      let result;
+      try {
+        result = await signInWithPopup(auth, provider);
+      } catch (e: any) {
+        if (e.code === "auth/account-exists-with-different-credential") {
+          throw Object.assign(
+            new Error("An account already exists with this email. Please sign in with your password first to link Google Sign-In."),
+            { code: "auth/account-exists-with-different-credential" }
+          );
+        }
+        throw e;
+      }
+
       const fbUser = result.user;
       devLog("[Auth] Google sign-in succeeded, uid:", fbUser.uid);
 
       let appUser = await loadUserData(fbUser);
 
       if (!appUser) {
-        devLog("[Auth] New Google user, creating profile");
+        devLog("[Auth] New Google user, checking for existing account by email");
+
+        // Check for existing account with this email (password provider)
+        const emailSnapshot = await findUserByEmail(fbUser.email ?? "");
+
+        if (!emailSnapshot.empty) {
+          await signOut(auth);
+          throw Object.assign(
+            new Error("An account already exists with this email. Please sign in with your password first to link Google Sign-In."),
+            { code: "auth/account-exists-with-different-credential" }
+          );
+        }
+
+        devLog("[Auth] Truly new Google user, creating profile");
         const organizationId = generateId();
         const displayName = fbUser.displayName || fbUser.email?.split("@")[0] || "User";
-        const role: UserRole = "Contractor";
 
         await setDoc(doc(db, "users", fbUser.uid), {
-          email: fbUser.email,
+          email: fbUser.email?.toLowerCase(),
           name: displayName,
-          role,
+          role: "Contractor" as UserRole,
           organizationId,
           organizationRole: "owner",
           companyName: displayName,
           city: "",
+          providers: ["google.com"] as string[],
           profileCompleted: false,
           createdAt: serverTimestamp(),
+          lastLoginAt: serverTimestamp(),
         });
 
         appUser = await loadUserData(fbUser);
+      } else {
+        // Existing user — update lastLoginAt
+        updateDoc(doc(db, "users", fbUser.uid), { lastLoginAt: serverTimestamp() }).catch(() => {});
       }
 
       if (!appUser) {
@@ -330,7 +383,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const credential = GoogleAuthProvider.credential(idToken);
-    await signInWithCredential(auth, credential);
+    try {
+      await signInWithCredential(auth, credential);
+    } catch (e: any) {
+      if (e.code === "auth/account-exists-with-different-credential") {
+        throw Object.assign(
+          new Error("An account already exists with this email. Please sign in with your password first to link Google Sign-In."),
+          { code: "auth/account-exists-with-different-credential" }
+        );
+      }
+      throw e;
+    }
 
     await new Promise<void>((resolve) => {
       const check = setInterval(() => {
@@ -353,22 +416,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let appUser = await loadUserData(fbUser);
 
     if (!appUser) {
+      // Check for existing account with this email (password provider)
+      const emailSnapshot = await findUserByEmail(fbUser.email ?? "");
+
+      if (!emailSnapshot.empty) {
+        await signOut(auth);
+        throw Object.assign(
+          new Error("An account already exists with this email. Please sign in with your password first to link Google Sign-In."),
+          { code: "auth/account-exists-with-different-credential" }
+        );
+      }
+
       const organizationId = generateId();
       const displayName = fbUser.displayName || fbUser.email?.split("@")[0] || "User";
 
       await setDoc(doc(db, "users", fbUser.uid), {
-        email: fbUser.email,
+        email: fbUser.email?.toLowerCase(),
         name: displayName,
-        role: "Contractor",
+        role: "Contractor" as UserRole,
         organizationId,
         organizationRole: "owner",
         companyName: displayName,
         city: "",
+        providers: ["google.com"],
         profileCompleted: false,
         createdAt: serverTimestamp(),
+        lastLoginAt: serverTimestamp(),
       });
 
       appUser = await loadUserData(fbUser);
+    } else {
+      // Existing user — update lastLoginAt
+      updateDoc(doc(db, "users", fbUser.uid), { lastLoginAt: serverTimestamp() }).catch(() => {});
     }
 
     if (!appUser) {
