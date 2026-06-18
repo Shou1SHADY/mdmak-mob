@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform,
-  Animated,
+  Animated, Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
@@ -83,6 +83,8 @@ export default function ContractorProfileScreen() {
   const { setLanguage, isRTL, language } = useLanguage();
 
   const [editing, setEditing] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const orgCardY = useRef(0);
   const [orgName, setOrgName] = useState(organization?.name ?? "");
   const [city, setCity] = useState(organization?.city ?? "");
   const [crNumber, setCrNumber] = useState(organization?.crNumber ?? "");
@@ -168,6 +170,18 @@ export default function ContractorProfileScreen() {
     }
   };
 
+  const openEditMode = () => {
+    setShowActions(false);
+    // Wait for modal close animation (~300ms) before scrolling + opening form
+    setTimeout(() => {
+      setEditing(true);
+      // Then wait one frame for the form to render and expand the card
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: orgCardY.current - 24, animated: true });
+      }, 80);
+    }, 320);
+  };
+
   const handleCancelEdit = () => {
     setOrgName(organization?.name ?? "");
     setCity(organization?.city ?? "");
@@ -225,10 +239,10 @@ export default function ContractorProfileScreen() {
           <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>{t.profile.title}</Text>
           <TouchableOpacity
             style={[styles.settingsBtn, { backgroundColor: "rgba(255,255,255,0.12)" }]}
-            onPress={() => setEditing(!editing)}
+            onPress={() => setShowActions(true)}
             activeOpacity={0.7}
           >
-            <Feather name={editing ? "x" : "settings"} size={18} color="#FFFFFF" />
+            <Feather name="more-vertical" size={18} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -323,7 +337,8 @@ export default function ContractorProfileScreen() {
         </View>
 
         {/* ── Organization Info ── */}
-        <Card style={{ borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+        <View onLayout={(e) => { orgCardY.current = e.nativeEvent.layout.y; }}>
+        <Card style={{ borderRadius: 16, borderWidth: 1, borderColor: editing ? colors.cta + "60" : colors.border }}>
           <View style={[styles.cardHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 10 }}>
               <View style={[styles.cardHeaderIcon, { backgroundColor: colors.primary + "12" }]}>
@@ -332,7 +347,7 @@ export default function ContractorProfileScreen() {
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.profile.organization}</Text>
             </View>
             {!editing && (
-              <TouchableOpacity onPress={() => setEditing(true)} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
+              <TouchableOpacity onPress={openEditMode} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
                 <Feather name="edit-2" size={15} color={colors.cta} />
               </TouchableOpacity>
             )}
@@ -354,7 +369,7 @@ export default function ContractorProfileScreen() {
               </View>
             </Animated.View>
           ) : (
-            <View style={{ gap: 8 }}>
+            <View style={{ gap: 4 }}>
               {[
                 { icon: "briefcase" as const, label: t.profile.companyName,  value: organization?.name,                      required: true },
                 { icon: "hash" as const,      label: t.profile.crNumber,      value: organization?.crNumber,                  required: true },
@@ -364,45 +379,51 @@ export default function ContractorProfileScreen() {
                 { icon: "navigation" as const,label: t.profile.location,      value: organization?.location,                  required: true },
                 { icon: "globe" as const,     label: t.profile.website,       value: organization?.website,                   required: false },
                 { icon: "mail" as const,      label: t.auth.login.email,      value: user?.email,                             required: false },
-              ].filter((item) => item.value || item.required).map((item) => (
-                <TouchableOpacity
-                  key={item.label}
-                  style={[
-                    styles.infoRow,
-                    {
-                      flexDirection: isRTL ? "row-reverse" : "row",
-                      backgroundColor: (!item.value && item.required) ? colors.destructive + "06" : "transparent",
-                      borderRadius: 10,
-                      borderWidth: (!item.value && item.required) ? 1 : 0,
-                      borderColor: (!item.value && item.required) ? colors.destructive + "25" : "transparent",
-                    },
-                  ]}
-                  onPress={() => !item.value && item.required ? setEditing(true) : undefined}
-                  activeOpacity={item.value ? 1 : 0.7}
-                >
-                  <View style={[styles.infoIcon, { backgroundColor: (!item.value && item.required) ? colors.destructive + "12" : colors.muted }]}>
-                    <Feather name={item.icon} size={14} color={(!item.value && item.required) ? colors.destructive : colors.secondary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.infoLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>{item.label}</Text>
-                    {item.value ? (
-                      <Text style={[styles.infoValue, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={1} ellipsizeMode="tail">{item.value}</Text>
-                    ) : (
-                      <Text style={[styles.infoValue, { color: colors.destructive, textAlign: isRTL ? "right" : "left" }]}>
-                        {t.profile.requiredTapToFill}
-                      </Text>
-                    )}
-                  </View>
-                  {!item.value && item.required && (
-                    <View style={[styles.requiredBadge, { backgroundColor: colors.destructive + "15" }]}>
-                      <Text style={[styles.requiredBadgeText, { color: colors.destructive }]}>{t.profile.required}</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
+              ].filter((item) => item.value || item.required).map((item, idx, arr) => {
+                const isEmpty = !item.value && item.required;
+                const isLast = idx === arr.length - 1;
+                return (
+                  <React.Fragment key={item.label}>
+                    <TouchableOpacity
+                      style={[
+                        styles.infoRow,
+                        { flexDirection: isRTL ? "row-reverse" : "row" },
+                        isEmpty && [styles.infoRowEmpty, { borderColor: colors.warning + "40", backgroundColor: colors.warning + "08" }],
+                      ]}
+                      onPress={() => isEmpty ? setEditing(true) : undefined}
+                      activeOpacity={isEmpty ? 0.7 : 1}
+                    >
+                      <View style={[styles.infoIcon, { backgroundColor: isEmpty ? colors.warning + "18" : colors.muted }]}>
+                        <Feather name={item.icon} size={15} color={isEmpty ? colors.warning : colors.secondary} />
+                      </View>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={[styles.infoLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
+                          {item.label}
+                        </Text>
+                        {item.value ? (
+                          <Text style={[styles.infoValue, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={1} ellipsizeMode="tail">
+                            {item.value}
+                          </Text>
+                        ) : (
+                          <Text style={[styles.infoEmpty, { color: colors.warning, textAlign: isRTL ? "right" : "left" }]}>
+                            {isRTL ? "اضغط للإضافة" : "Tap to add"}
+                          </Text>
+                        )}
+                      </View>
+                      {isEmpty ? (
+                        <Feather name="edit-2" size={14} color={colors.warning} style={{ opacity: 0.7 }} />
+                      ) : (
+                        item.value && <Feather name="check" size={14} color={colors.success} style={{ opacity: 0.6 }} />
+                      )}
+                    </TouchableOpacity>
+                    {!isLast && <View style={[styles.infoSep, { backgroundColor: colors.border }]} />}
+                  </React.Fragment>
+                );
+              })}
             </View>
           )}
         </Card>
+        </View>
 
         {/* ── Legal Documents ── */}
         <View onLayout={(e) => { docsY.current = e.nativeEvent.layout.y; }}>
@@ -422,11 +443,8 @@ export default function ContractorProfileScreen() {
           </View>
           <View style={{ gap: 8 }}>
             {[
-              { type: "cr",      label: t.profile.docCR,      required: true },
-              { type: "vat",     label: t.profile.docVAT,     required: true },
-              { type: "zakat",   label: t.profile.docZakat,   required: false },
-              { type: "gosi",    label: t.profile.docGOSI,    required: false },
-              { type: "chamber", label: t.profile.docChamber, required: false },
+              { type: "cr",  label: t.profile.docCR,  required: true },
+              { type: "vat", label: t.profile.docVAT, required: true },
             ].map((d) => (
               <DocumentUploadRow
                 key={d.type}
@@ -476,6 +494,73 @@ export default function ContractorProfileScreen() {
           Mdmak Tech v1.0
         </Text>
       </ScrollView>
+
+      {/* ── Settings Action Sheet ── */}
+      <Modal visible={showActions} transparent animationType="slide" onRequestClose={() => setShowActions(false)}>
+        <View style={styles.actionRoot}>
+          <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowActions(false)} />
+          <View style={[styles.actionSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.actionHandle, { backgroundColor: colors.border }]} />
+            <Text style={[styles.actionTitle, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+              {isRTL ? "الإعدادات" : "Settings"}
+            </Text>
+
+            {/* Edit Profile */}
+            <TouchableOpacity style={[styles.actionRow, { borderBottomColor: colors.border }]} onPress={openEditMode} activeOpacity={0.7}>
+              <View style={[styles.actionIcon, { backgroundColor: colors.cta + "15" }]}>
+                <Feather name="edit-2" size={18} color={colors.cta} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.actionLabel, { color: colors.foreground }]}>
+                  {isRTL ? "تعديل الملف الشخصي" : "Edit Profile"}
+                </Text>
+                <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>
+                  {isRTL ? "تحديث بيانات شركتك" : "Update your company info"}
+                </Text>
+              </View>
+              <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={16} color={colors.outline} />
+            </TouchableOpacity>
+
+            {/* Language */}
+            <TouchableOpacity
+              style={[styles.actionRow, { borderBottomColor: colors.border }]}
+              onPress={() => { setLanguage(isRTL ? "en" : "ar"); setShowActions(false); }}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: colors.success + "15" }]}>
+                <Feather name="globe" size={18} color={colors.success} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.actionLabel, { color: colors.foreground }]}>
+                  {isRTL ? "English" : "العربية"}
+                </Text>
+                <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>
+                  {isRTL ? "Switch to English" : "التبديل إلى العربية"}
+                </Text>
+              </View>
+              <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={16} color={colors.outline} />
+            </TouchableOpacity>
+
+            {/* Sign Out */}
+            <TouchableOpacity
+              style={[styles.actionRow, { borderBottomWidth: 0 }]}
+              onPress={() => { setShowActions(false); setTimeout(handleLogout, 300); }}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: colors.destructive + "12" }]}>
+                <Feather name="log-out" size={18} color={colors.destructive} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.actionLabel, { color: colors.destructive }]}>
+                  {t.common.signOut}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <View style={{ height: insets.bottom + 8 }} />
+          </View>
+        </View>
+      </Modal>
 
       <ProfileTourGuide
         visible={showTour}
@@ -528,8 +613,6 @@ const styles = StyleSheet.create({
   compChips: { flexWrap: "wrap", gap: 6 },
   compChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
   compChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  requiredBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
-  requiredBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold" },
 
   // Stats grid
   statsGrid: { flexDirection: "row", gap: 8 },
@@ -544,16 +627,29 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontFamily: "HankenGrotesk_600SemiBold" },
   editBtn: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   editActions: { flexDirection: "row", gap: 10, marginTop: 4 },
-  infoRow: { alignItems: "center", gap: 12, paddingVertical: 8 },
-  infoIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, letterSpacing: 0.5, marginBottom: 2 },
+  infoRow: { alignItems: "center", gap: 12, paddingVertical: 10, paddingHorizontal: 4, borderRadius: 10, borderWidth: 0 },
+  infoRowEmpty: { borderWidth: 1, borderStyle: "dashed" as const, paddingHorizontal: 10, borderRadius: 10 },
+  infoIcon: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, letterSpacing: 0.5 },
   infoValue: { fontSize: 15, fontFamily: "Inter_500Medium" },
+  infoEmpty: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  infoSep: { height: StyleSheet.hairlineWidth, marginLeft: 54 },
 
   // Menu
   menuRow: { alignItems: "center", gap: 14, paddingVertical: 14, paddingHorizontal: 10 },
   menuIconBox: { width: 40, height: 40, borderRadius: 11, alignItems: "center", justifyContent: "center" },
   menuLabel: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   menuSubtitle: { fontSize: 12, fontFamily: "Inter_400Regular" },
+
+  // Action sheet
+  actionRoot: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+  actionSheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderWidth: 1, borderBottomWidth: 0, paddingHorizontal: 16, paddingTop: 8 },
+  actionHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
+  actionTitle: { fontSize: 16, marginBottom: 12, paddingHorizontal: 4 },
+  actionRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 16, borderBottomWidth: StyleSheet.hairlineWidth },
+  actionIcon: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  actionLabel: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  actionSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
 
   // Sign out
   signOutBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5 },

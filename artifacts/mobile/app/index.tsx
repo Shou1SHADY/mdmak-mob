@@ -152,10 +152,12 @@ export default function Index() {
         end={{ x: 1, y: 1 }}
         style={styles.root}
       >
-        {/* ── Decorative rings (concentric, centered on logo) ── */}
-        <DecorativeRing size={280}  opacity={0.10} delay={0}    />
-        <DecorativeRing size={480}  opacity={0.065} delay={600} />
-        <DecorativeRing size={700}  opacity={0.04}  delay={1200} />
+        {/* ── Decorative rings — clipped so they never cause horizontal scroll ── */}
+        <View style={styles.ringsClip} pointerEvents="none">
+          <DecorativeRing size={280}  opacity={0.10} delay={0}    />
+          <DecorativeRing size={480}  opacity={0.065} delay={600} />
+          <DecorativeRing size={700}  opacity={0.04}  delay={1200} />
+        </View>
 
         {/* ── Center: logo + copy ── */}
         <View style={[styles.center, { paddingTop: topPad }]}>
@@ -263,6 +265,13 @@ export default function Index() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    width: "100%",
+    overflow: "hidden",
+  },
+
+  /* Absolute layer that clips the decorative rings */
+  ringsClip: {
+    ...StyleSheet.absoluteFillObject,
     overflow: "hidden",
   },
 

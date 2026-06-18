@@ -105,11 +105,13 @@ export default function ContractorDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const { unreadCount } = useNotifications();
 
   const fetchData = async () => {
     const orgId = user?.organizationId;
     if (!orgId) { setLoading(false); return; }
+    setFetchError(false);
     try {
       // ⚠️ No orderBy here — avoids Firestore composite index requirement.
       // We sort client-side below.
@@ -126,11 +128,13 @@ export default function ContractorDashboard() {
           return tb - ta; // newest first
         });
 
+      // Use offersCount field already stored on each RFQ document (incremented on submit)
+      // No per-RFQ query needed — eliminates N+1
       let totalOffers = 0;
       for (const rfq of items) {
-        const offSnap = await getDocs(query(collection(db, "offers"), where("rfqId", "==", rfq.id)));
-        rfq.offersCount = offSnap.size;
-        totalOffers += offSnap.size;
+        const count = typeof rfq.offersCount === "number" ? rfq.offersCount : 0;
+        rfq.offersCount = count;
+        totalOffers += count;
       }
       setRfqs(items);
 
@@ -152,8 +156,9 @@ export default function ContractorDashboard() {
         inProgress: newRfqs + active + underReview + awarded,
         offers: totalOffers,
       });
-    } catch (e) {
-      console.warn("[Dashboard] fetchData error:", e);
+    } catch (e: any) {
+      console.warn("[Dashboard] fetchData error:", e.message);
+      setFetchError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -176,6 +181,28 @@ export default function ContractorDashboard() {
     .map((s) => ({ value: s.count, color: s.color }));
 
   const pct = (n: number) => stats.total > 0 ? Math.round((n / stats.total) * 100) : 0;
+
+  if (fetchError && !loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", gap: 16, padding: 32 }}>
+        <Feather name="wifi-off" size={40} color={colors.outline} />
+        <Text style={{ fontSize: 16, fontFamily: "HankenGrotesk_700Bold", color: colors.foreground, textAlign: "center" }}>
+          {isRTL ? "تعذر تحميل البيانات" : "Failed to load data"}
+        </Text>
+        <Text style={{ fontSize: 13, color: colors.outline, textAlign: "center" }}>
+          {isRTL ? "تحقق من اتصالك بالإنترنت وحاول مجدداً" : "Check your connection and try again"}
+        </Text>
+        <TouchableOpacity
+          onPress={() => { setLoading(true); fetchData(); }}
+          style={{ backgroundColor: colors.cta, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 14 }}
+        >
+          <Text style={{ color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 14 }}>
+            {isRTL ? "إعادة المحاولة" : "Retry"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

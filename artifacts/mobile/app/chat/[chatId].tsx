@@ -1,32 +1,84 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
-  View, Text, FlatList, TextInput, TouchableOpacity, Platform, KeyboardAvoidingView, Alert,
+  View, Text, FlatList, TextInput, TouchableOpacity, Platform,
+  KeyboardAvoidingView, Alert, StyleSheet,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import {
-  collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc, setDoc, getDoc,
+  collection, query, where, onSnapshot, orderBy, addDoc, getDocs,
+  serverTimestamp, doc, getDoc, updateDoc, arrayRemove, arrayUnion, increment, writeBatch,
 } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/context/AuthContext";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 
 interface Message {
   id: string;
-  chatId: string;
   senderId: string;
   text: string;
-  timestamp?: any;
+  createdAt?: any;
+}
+
+interface ListItem {
+  type: "message" | "date";
+  id: string;
+  data?: Message;
+  label?: string;
+}
+
+function toDateLabel(ts: any, isRTL: boolean): string {
+  if (!ts) return "";
+  try {
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    const isYesterday = new Date(now.getTime() - 86400000).toDateString() === d.toDateString();
+    if (isToday) return isRTL ? "اليوم" : "Today";
+    if (isYesterday) return isRTL ? "أمس" : "Yesterday";
+    return d.toLocaleDateString(isRTL ? "ar-SA" : "en-SA", { weekday: "long", month: "short", day: "numeric" });
+  } catch { return ""; }
+}
+
+function toTimeLabel(ts: any, isRTL: boolean): string {
+  if (!ts) return "";
+  try {
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleTimeString(isRTL ? "ar-SA" : "en-SA", { hour: "2-digit", minute: "2-digit" });
+  } catch { return ""; }
+}
+
+function buildListItems(messages: Message[], isRTL: boolean): ListItem[] {
+  // messages come inverted (newest first), we need newest-first for inverted FlatList
+  const result: ListItem[] = [];
+  let lastDateKey = "";
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    const ts = msg.createdAt;
+    const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : null;
+    const dateKey = d ? d.toDateString() : "";
+
+    result.push({ type: "message", id: msg.id, data: msg });
+
+    // Insert date separator below this message (inverted list = older messages at bottom)
+    if (dateKey && dateKey !== lastDateKey) {
+      lastDateKey = dateKey;
+      result.push({ type: "date", id: `date-${dateKey}`, label: toDateLabel(ts, isRTL) });
+    }
+  }
+  return result;
 }
 
 export default function ChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { chatId } = useLocalSearchParams<{ chatId: string }>();
-  const { user } = useAuth();
+  const { user } = useAuthGuard();
   const t = useT();
   const { isRTL } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -34,38 +86,43 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [chatTitle, setChatTitle] = useState<string>("");
+  const [chatPartnerId, setChatPartnerId] = useState<string | null>(null);
 
-  // Validate chatId
   const validChatId = chatId && typeof chatId === "string" && chatId.length > 0;
 
-  // Load chat metadata
   useEffect(() => {
-    if (!validChatId) return;
-    const fetchChat = async () => {
-      try {
-        const chatDoc = await getDoc(doc(db, "chats", chatId));
-        if (chatDoc.exists()) {
-          setChatTitle(chatDoc.data().rfqTitle || `Chat #${chatId.slice(0, 8)}`);
-        } else {
-          setChatError("Chat not found");
-        }
-      } catch (e: any) {
-        console.warn("[Chat] Fetch chat error:", e);
-      }
-    };
-    fetchChat();
-  }, [validChatId, chatId]);
+    if (!validChatId || !user?.uid) return;
+    const uid = user.uid;
+    getDoc(doc(db, "chats", chatId)).then((snap) => {
+      if (!snap.exists()) { setChatError("Chat not found"); return; }
+      const data = snap.data();
+      setChatTitle(data.rfqTitle || `Chat #${chatId.slice(0, 8)}`);
+      const partnerId = data.contractorId === uid ? data.supplierId : data.contractorId;
+      if (partnerId) setChatPartnerId(partnerId);
+      // Mark chat as read (syncs unread badge on web)
+      updateDoc(doc(db, "chats", chatId), {
+        unreadFor: arrayRemove(uid),
+        [`unreadCounts.${uid}`]: 0,
+      }).catch(() => {});
+      // Mark any unread chat notifications as read (syncs notification count on mobile)
+      getDocs(query(
+        collection(db, "users", uid, "notifications"),
+        where("chatId", "==", chatId),
+        where("read", "==", false)
+      )).then((snap) => {
+        if (snap.empty) return;
+        const batch = writeBatch(db);
+        snap.docs.forEach((d) => batch.update(d.ref, { read: true }));
+        return batch.commit();
+      }).catch(() => {});
+    }).catch((e) => console.warn("[Chat] fetch error:", e));
+  }, [validChatId, chatId, user?.uid]);
 
-  // Messages listener with error handling
   useEffect(() => {
-    if (!validChatId) {
-      setChatError(t.common.error);
-      return;
-    }
+    if (!validChatId) { setChatError(t.common.error); return; }
     const q = query(
-      collection(db, "messages"),
-      where("chatId", "==", chatId),
-      orderBy("timestamp", "desc")
+      collection(db, "chats", chatId, "messages"),
+      orderBy("createdAt", "desc")
     );
     const unsub = onSnapshot(
       q,
@@ -73,65 +130,43 @@ export default function ChatScreen() {
         setChatError(null);
         setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)));
       },
-      (err) => {
-        setChatError(err.message || "Failed to load messages");
-      }
+      (err) => setChatError(err.message || "Failed to load messages")
     );
     return unsub;
   }, [validChatId, chatId, t.common.error]);
 
   const sendMessage = async () => {
-    if (!text.trim() || sending) return;
-    if (!user?.uid) {
-      Alert.alert(t.common.error, "You must be signed in to send messages");
-      return;
-    }
-    if (!validChatId) {
-      Alert.alert(t.common.error, "Invalid chat ID");
-      return;
-    }
-
+    if (!text.trim() || sending || !user?.uid || !validChatId) return;
     const msg = text.trim();
     setText("");
     setSending(true);
-
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-      // 1. Create message
-      await addDoc(collection(db, "messages"), {
-        chatId,
-        senderId: user.uid,
-        text: msg,
-        timestamp: serverTimestamp(),
-        read: false,
+      // Critical: write the message itself — failure surfaces to the user
+      await addDoc(collection(db, "chats", chatId, "messages"), {
+        senderId: user.uid, text: msg,
+        createdAt: new Date().toISOString(),
       });
-
-      // 2. Update chat metadata (setDoc with merge creates if missing)
-      await setDoc(
-        doc(db, "chats", chatId),
-        {
-          lastMessage: msg,
-          updatedAt: serverTimestamp(),
-          lastMessageSenderId: user.uid,
-        },
-        { merge: true }
-      );
+      // Non-critical: update chat metadata — errors swallowed so the send
+      // still feels successful even if rules deny this secondary write
+      updateDoc(doc(db, "chats", chatId), {
+        lastMessage: msg,
+        updatedAt: serverTimestamp(),
+        lastMessageSenderId: user.uid,
+        ...(chatPartnerId ? {
+          unreadFor: arrayUnion(chatPartnerId),
+          [`unreadCounts.${chatPartnerId}`]: increment(1),
+        } : {}),
+      }).catch(() => {});
     } catch (err: any) {
       Alert.alert(t.common.error, err.message || "Failed to send message");
-      setText(msg); // restore text so user can retry
+      setText(msg);
     } finally {
       setSending(false);
     }
   };
 
-  const formatTime = (ts: any) => {
-    if (!ts) return "";
-    try {
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleTimeString(isRTL ? "ar-SA" : "en-SA", { hour: "2-digit", minute: "2-digit" });
-    } catch { return ""; }
-  };
+  const listItems = buildListItems(messages, isRTL);
 
   return (
     <KeyboardAvoidingView
@@ -139,147 +174,295 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       {/* Header */}
-      <View
-        style={[
-          { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 14, paddingTop: insets.top + (Platform.OS === "web" ? 48 : 10), backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
-        ]}
+      <LinearGradient
+        colors={colors.gradientPrimary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 48 : 10) }]}
       >
-        <TouchableOpacity onPress={() => router.back()} style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }} accessibilityLabel={t.common.back} accessibilityRole="button">
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerBackBtn}
+          accessibilityLabel={t.common.back}
+          accessibilityRole="button"
+        >
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color="#FFFFFF" />
         </TouchableOpacity>
-        <View style={{ flex: 1, marginLeft: isRTL ? 0 : 10, marginRight: isRTL ? 10 : 0 }}>
-          <Text style={{ fontSize: 15, fontWeight: "700" as const, color: colors.foreground, textAlign: isRTL ? "right" : "left" }} numberOfLines={1} ellipsizeMode="tail">
+        <View style={[styles.headerInfo, { alignItems: isRTL ? "flex-end" : "flex-start" }]}>
+          <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
             {chatTitle || t.chat.title}
           </Text>
-          <Text style={{ fontSize: 11, color: colors.outline, marginTop: 1, textAlign: isRTL ? "right" : "left" }} numberOfLines={1}>
-            #{chatId?.slice(0, 8)}
-          </Text>
+          <Text style={styles.headerSub}>#{chatId?.slice(0, 8)}</Text>
         </View>
-      </View>
+        <View style={[styles.headerStatusDot, { backgroundColor: colors.success }]} />
+      </LinearGradient>
 
       {/* Error banner */}
       {chatError && (
-        <View style={{ backgroundColor: colors.destructive + "15", padding: 12, borderBottomWidth: 1, borderBottomColor: colors.destructive + "30" }}>
-          <Text style={{ color: colors.destructive, fontSize: 13, fontFamily: "Inter_500Medium", textAlign: "center" }}>
-            {chatError}
-          </Text>
+        <View style={[styles.errorBanner, { backgroundColor: colors.destructive + "15", borderBottomColor: colors.destructive + "30" }]}>
+          <Feather name="alert-circle" size={14} color={colors.destructive} />
+          <Text style={[styles.errorText, { color: colors.destructive }]}>{chatError}</Text>
         </View>
       )}
 
-      <FlatList
-        data={messages}
-        keyExtractor={(item) => item.id}
-        inverted
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16, gap: 6 }}
-        renderItem={({ item }) => {
-          const isMe = item.senderId === user?.uid;
-          const align =
-            isMe
-              ? isRTL ? "flex-start" : "flex-end"
-              : isRTL ? "flex-end" : "flex-start";
-          return (
-            <View style={{ flexDirection: "row", justifyContent: align as any, marginBottom: 4 }}>
+      {/* Messages */}
+      <View style={[styles.messagesArea, { backgroundColor: colors.background }]}>
+        {/* Subtle dot pattern overlay for chat area */}
+        <View style={[StyleSheet.absoluteFillObject, styles.chatBg, { backgroundColor: colors.muted + "30" }]} pointerEvents="none" />
+
+        <FlatList
+          data={listItems}
+          keyExtractor={(item) => item.id}
+          inverted
+          contentContainerStyle={styles.messagesList}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item, index }) => {
+            if (item.type === "date") {
+              return (
+                <View style={styles.dateSeparator}>
+                  <View style={[styles.dateLine, { backgroundColor: colors.border }]} />
+                  <View style={[styles.datePill, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.dateText, { color: colors.outline }]}>{item.label}</Text>
+                  </View>
+                  <View style={[styles.dateLine, { backgroundColor: colors.border }]} />
+                </View>
+              );
+            }
+
+            const msg = item.data!;
+            const isMe = msg.senderId === user?.uid;
+            const isRTLAlign = isMe ? isRTL : !isRTL;
+
+            // Look ahead to check if next message is from same sender (for tail logic)
+            const nextItem = listItems[index + 1];
+            const nextMsg = nextItem?.type === "message" ? nextItem.data : null;
+            const isLastInGroup = !nextMsg || nextMsg.senderId !== msg.senderId;
+
+            // Directional bubble corners
+            const myRadius = isRTL
+              ? { borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomRightRadius: 18, borderBottomLeftRadius: isLastInGroup ? 4 : 18 }
+              : { borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomLeftRadius: 18, borderBottomRightRadius: isLastInGroup ? 4 : 18 };
+            const theirRadius = isRTL
+              ? { borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomLeftRadius: 18, borderBottomRightRadius: isLastInGroup ? 4 : 18 }
+              : { borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomRightRadius: 18, borderBottomLeftRadius: isLastInGroup ? 4 : 18 };
+
+            return (
               <View
-                style={{
-                  backgroundColor: isMe ? colors.primary : colors.surface,
-                  borderColor: isMe ? "transparent" : colors.border,
-                  borderWidth: isMe ? 0 : 1,
-                  borderRadius: 18,
-                  maxWidth: "74%",
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                  gap: 3,
-                  ...colors.shadow.sm,
-                }}
-                accessibilityLabel={isMe ? `${t.chat.sentByYou}: ${item.text}` : item.text}
-                accessibilityRole="text"
+                style={[
+                  styles.msgRow,
+                  { justifyContent: isMe ? (isRTL ? "flex-start" : "flex-end") : (isRTL ? "flex-end" : "flex-start") },
+                  !isLastInGroup && { marginBottom: 2 },
+                ]}
               >
-                <Text style={{ fontSize: 15, lineHeight: 22, color: isMe ? "#FFFFFF" : colors.foreground }}>
-                  {item.text}
+                <View
+                  style={[
+                    styles.bubble,
+                    isMe ? myRadius : theirRadius,
+                    isMe
+                      ? { backgroundColor: colors.primary, ...colors.shadow.sm }
+                      : { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, ...colors.shadow.sm },
+                  ]}
+                  accessibilityRole="text"
+                >
+                  <Text style={[styles.bubbleText, { color: isMe ? "#FFFFFF" : colors.foreground }]}>
+                    {msg.text}
+                  </Text>
+                  <View style={[styles.bubbleMeta, { justifyContent: isRTL ? "flex-start" : "flex-end" }]}>
+                    <Text style={[styles.bubbleTime, { color: isMe ? "rgba(255,255,255,0.55)" : colors.outline }]}>
+                      {toTimeLabel(msg.createdAt, isRTL)}
+                    </Text>
+                    {isMe && (
+                      <Feather name="check" size={10} color="rgba(255,255,255,0.55)" />
+                    )}
+                  </View>
+                </View>
+              </View>
+            );
+          }}
+          ListEmptyComponent={
+            !chatError ? (
+              <View style={styles.emptyChat}>
+                <View style={[styles.emptyChatIcon, { backgroundColor: colors.muted }]}>
+                  <Feather name="message-circle" size={28} color={colors.outline} />
+                </View>
+                <Text style={[styles.emptyChatText, { color: colors.outline }]}>
+                  {t.chat.noMessages}
                 </Text>
-                <Text style={{
-                  fontSize: 10,
-                  textAlign: isRTL ? "left" : "right",
-                  color: isMe ? colors.textWhite60 : colors.outline,
-                }}>
-                  {formatTime(item.timestamp)}
+                <Text style={[styles.emptyChatSub, { color: colors.outline }]}>
+                  {t.chat.sendFirst}
                 </Text>
               </View>
-            </View>
-          );
-        }}
-        scrollEnabled={!!messages.length}
-        ListEmptyComponent={
-          !chatError ? (
-            <View style={{ alignItems: "center", paddingVertical: 40, gap: 8 }}>
-              <Feather name="message-circle" size={32} color={colors.outline} />
-              <Text style={{ color: colors.outline, fontSize: 14, fontFamily: "Inter_500Medium" }}>
-                {t.chat.noMessages}
-              </Text>
-            </View>
-          ) : null
-        }
-      />
+            ) : null
+          }
+        />
+      </View>
 
       {/* Input area */}
       <View
-        style={{
-          flexDirection: "row",
-          alignItems: "flex-end",
-          gap: 10,
-          paddingHorizontal: 14,
-          paddingTop: 10,
-          paddingBottom: insets.bottom + (Platform.OS === "web" ? 10 : 8),
-          backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          ...colors.shadow.nav,
-        }}
+        style={[
+          styles.inputArea,
+          {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            paddingBottom: insets.bottom + (Platform.OS === "web" ? 10 : 6),
+          },
+        ]}
       >
         <TextInput
-          style={{
-            flex: 1,
-            color: colors.foreground,
-            backgroundColor: colors.muted,
-            borderColor: colors.border,
-            borderRadius: 24,
-            borderWidth: 1.5,
-            paddingHorizontal: 16,
-            paddingVertical: 10,
-            fontSize: 15,
-            maxHeight: 100,
-            lineHeight: 22,
-          }}
+          style={[
+            styles.input,
+            {
+              color: colors.foreground,
+              backgroundColor: colors.muted,
+              borderColor: text.trim() ? colors.cta + "60" : colors.border,
+            },
+          ]}
           placeholder={t.chat.typeMessage}
           placeholderTextColor={colors.outline}
           value={text}
           onChangeText={setText}
           multiline
           maxLength={500}
+          textAlign={isRTL ? "right" : "left"}
           accessibilityLabel={t.chat.typeMessage}
         />
         <TouchableOpacity
-          style={{
-            width: 44,
-            height: 44,
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 14,
-            backgroundColor: text.trim() ? colors.cta : colors.muted,
-            ...(text.trim() ? colors.shadow.md : {}),
-          }}
+          style={[
+            styles.sendBtn,
+            { backgroundColor: text.trim() ? colors.cta : colors.muted },
+            text.trim() ? colors.shadow.md : {},
+          ]}
           onPress={sendMessage}
           disabled={!text.trim() || sending || !validChatId}
           accessibilityLabel={t.common.send || "Send"}
           accessibilityRole="button"
         >
           {sending ? (
-            <Text style={{ color: text.trim() ? "#FFFFFF" : colors.outline, fontSize: 12 }}>…</Text>
+            <Text style={{ color: "#FFFFFF", fontSize: 12 }}>…</Text>
           ) : (
-            <Feather name="send" size={17} color={text.trim() ? "#FFFFFF" : colors.outline} />
+            <Feather
+              name={isRTL ? "send" : "send"}
+              size={17}
+              color={text.trim() ? "#FFFFFF" : colors.outline}
+              style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
+            />
           )}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    gap: 12,
+  },
+  headerBackBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.12)",
+  },
+  headerInfo: { flex: 1, gap: 2 },
+  headerTitle: { fontSize: 15, fontFamily: "HankenGrotesk_700Bold", color: "#FFFFFF" },
+  headerSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)" },
+  headerStatusDot: { width: 8, height: 8, borderRadius: 4 },
+
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 12,
+    borderBottomWidth: 1,
+  },
+  errorText: { fontSize: 13, fontFamily: "Inter_500Medium", flex: 1 },
+
+  messagesArea: { flex: 1, overflow: "hidden" },
+  chatBg: { opacity: 1 },
+  messagesList: { paddingHorizontal: 14, paddingVertical: 16, gap: 8 },
+
+  msgRow: {
+    flexDirection: "row",
+    marginBottom: 6,
+  },
+  bubble: {
+    maxWidth: "75%",
+    paddingHorizontal: 13,
+    paddingTop: 9,
+    paddingBottom: 6,
+    gap: 2,
+  },
+  bubbleText: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: "Inter_400Regular",
+  },
+  bubbleMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  bubbleTime: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+  },
+
+  dateSeparator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginVertical: 8,
+  },
+  dateLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  datePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  dateText: { fontSize: 11, fontFamily: "Inter_500Medium" },
+
+  emptyChat: { alignItems: "center", gap: 10, paddingVertical: 60 },
+  emptyChatIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyChatText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  emptyChatSub: { fontSize: 13, fontFamily: "Inter_400Regular" },
+
+  inputArea: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    borderTopWidth: 1,
+  },
+  input: {
+    flex: 1,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 15,
+    maxHeight: 100,
+    lineHeight: 22,
+    fontFamily: "Inter_400Regular",
+  },
+  sendBtn: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 14,
+  },
+});

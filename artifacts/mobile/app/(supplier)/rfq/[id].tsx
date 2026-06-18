@@ -86,6 +86,7 @@ export default function SupplierRFQDetailScreen() {
 
   const deadline = formatDate(rfq.deadline);
   const createdAt = formatDate(rfq.createdAt);
+  const canSubmitOffer = ["New", "Active", "Under Review"].includes(rfq.status);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -206,12 +207,21 @@ export default function SupplierRFQDetailScreen() {
           },
         ]}
       >
-        <Button
-          title={t.rfq.submitOffer}
-          onPress={() => router.push(`/(supplier)/submit-offer/${rfq.id}`)}
-          fullWidth
-          size="lg"
-        />
+        {canSubmitOffer ? (
+          <Button
+            title={t.rfq.submitOffer}
+            onPress={() => router.push(`/(supplier)/submit-offer/${rfq.id}`)}
+            fullWidth
+            size="lg"
+          />
+        ) : (
+          <View style={[styles.closedBanner, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+            <Feather name="lock" size={14} color={colors.outline} />
+            <Text style={[styles.closedText, { color: colors.outline }]}>
+              {isRTL ? "هذه المناقصة مغلقة ولا تقبل عروضاً" : "This RFQ is closed and no longer accepting offers"}
+            </Text>
+          </View>
+        )}
         <TouchableOpacity
           style={[styles.msgBtn, { borderColor: colors.border }]}
           onPress={() => router.push("/(supplier)/chats")}
@@ -379,5 +389,21 @@ const styles = StyleSheet.create({
   msgBtnText: {
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
+  },
+  closedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  closedText: {
+    fontSize: 13,
+    fontFamily: "Inter_500Medium",
+    textAlign: "center",
+    flex: 1,
   },
 });

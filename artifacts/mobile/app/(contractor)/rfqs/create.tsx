@@ -13,7 +13,7 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { CATEGORIES, SAUDI_CITIES, displayCity } from "@/constants/data";
+import { CATEGORIES, SAUDI_CITIES, CITIES_DISTRICTS, displayCity } from "@/constants/data";
 import { ProfileIncompleteGate, useProfileGate } from "@/components/ProfileIncompleteGate";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -53,6 +53,7 @@ export default function CreateRFQScreen() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
   const [deadline, setDeadline] = useState("");
   const [isDraft, setIsDraft] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -73,6 +74,7 @@ export default function CreateRFQScreen() {
         description: description.trim(),
         category,
         city,
+        district: district.trim() || null,
         deadline: deadline || null,
         status: draft ? "Draft" : "New",
         createdAt: serverTimestamp(),
@@ -283,7 +285,11 @@ export default function CreateRFQScreen() {
                         borderColor: isActive ? colors.cta : colors.border,
                       },
                     ]}
-                    onPress={() => setCity(isActive ? "" : c)}
+                    onPress={() => {
+                      const next = isActive ? "" : c;
+                      setCity(next);
+                      setDistrict(""); // reset district on city change
+                    }}
                     activeOpacity={0.75}
                   >
                     <Feather name="map-pin" size={14} color={isActive ? colors.cta : colors.outline} />
@@ -306,6 +312,68 @@ export default function CreateRFQScreen() {
                 );
               })}
             </ScrollView>
+
+            {/* ── District Selection (city-dependent) ── */}
+            {city && CITIES_DISTRICTS[city] && (
+              <View style={styles.catSection}>
+                <View style={[styles.catHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                  <Text style={[styles.label, { color: colors.foreground }]}>{t.rfq.district}</Text>
+                  <Text style={[{ fontSize: 12, color: colors.outline, fontFamily: "Inter_400Regular" }]}>
+                    {" "}({isRTL ? "اختياري" : "optional"})
+                  </Text>
+                </View>
+                {district && (
+                  <View style={[styles.selectedChip, { backgroundColor: colors.purpleAccent + "15", borderColor: colors.purpleAccent }]}>
+                    <Feather name="navigation" size={14} color={colors.purpleAccent} />
+                    <Text style={[styles.selectedChipText, { color: colors.purpleAccent }]}>{district}</Text>
+                    <TouchableOpacity onPress={() => setDistrict("")} style={{ padding: 2 }}>
+                      <Feather name="x" size={14} color={colors.purpleAccent} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.cityScroll}
+                  directionalLockEnabled
+                >
+                  {(CITIES_DISTRICTS[city] ?? []).map((dist) => {
+                    const isDistActive = district === dist;
+                    return (
+                      <TouchableOpacity
+                        key={dist}
+                        style={[
+                          styles.cityCard,
+                          {
+                            backgroundColor: isDistActive ? (colors.purpleAccent + "14") : colors.card,
+                            borderColor: isDistActive ? colors.purpleAccent : colors.border,
+                          },
+                        ]}
+                        onPress={() => setDistrict(isDistActive ? "" : dist)}
+                        activeOpacity={0.75}
+                      >
+                        <Feather name="navigation" size={13} color={isDistActive ? colors.purpleAccent : colors.outline} />
+                        <Text
+                          style={[
+                            styles.cityCardText,
+                            { color: isDistActive ? colors.purpleAccent : colors.foreground },
+                            isDistActive && { fontFamily: "Inter_600SemiBold" },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {dist}
+                        </Text>
+                        {isDistActive && (
+                          <View style={[styles.checkMark, { backgroundColor: colors.purpleAccent }]}>
+                            <Feather name="check" size={10} color="#FFFFFF" />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
 
             <Input
               label={t.rfq.deadlineOptional}

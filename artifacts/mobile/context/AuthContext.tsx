@@ -40,7 +40,8 @@ const GOOGLE_DISCOVERY = {
 };
 
 function generateId(): string {
-  return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+  // Use Firebase's own ID generator — cryptographically random, collision-safe
+  return doc(collection(db, "_ids")).id;
 }
 
 export type UserRole = "Contractor" | "Supplier" | "Admin";

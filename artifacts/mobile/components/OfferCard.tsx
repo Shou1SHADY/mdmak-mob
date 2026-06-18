@@ -23,6 +23,11 @@ export interface OfferItem {
   contractorOrgId?: string;
   submittedByUserId?: string;
   submittedByUserName?: string;
+  targetPrice?: number;
+  reductionNote?: string;
+  executionDuration?: string;
+  executionDurationUnit?: string;
+  deliveryLocation?: string;
 }
 
 interface OfferCardProps {
@@ -150,6 +155,32 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
         </View>
       ) : null}
 
+      {/* Price reduction info — shown when contractor has set a target price */}
+      {offer.status === "مطلوب تخفيض" && (offer.targetPrice || offer.reductionNote) && (
+        <View style={[styles.reductionBox, { backgroundColor: colors.warning + "10", borderColor: colors.warning + "35" }]}>
+          {offer.targetPrice ? (
+            <View style={[styles.reductionRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+              <Feather name="trending-down" size={12} color={colors.warning} />
+              <Text style={[styles.reductionLabel, { color: colors.warning }]}>
+                {isRTL ? "السعر المطلوب:" : "Target price:"}
+                {"  "}
+                <Text style={[styles.reductionValue, { color: colors.warning }]}>
+                  {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(offer.targetPrice)}
+                </Text>
+              </Text>
+            </View>
+          ) : null}
+          {offer.reductionNote ? (
+            <View style={[styles.reductionRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+              <Feather name="message-circle" size={12} color={colors.warning} />
+              <Text style={[styles.reductionNote, { color: colors.warning, textAlign: isRTL ? "right" : "left", flex: 1 }]} numberOfLines={2}>
+                {offer.reductionNote}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      )}
+
       {/* Action buttons */}
       {actions && <View style={styles.actions}>{actions}</View>}
     </TouchableOpacity>
@@ -228,5 +259,28 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 4,
     flexWrap: "wrap",
+  },
+  reductionBox: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    gap: 6,
+  },
+  reductionRow: {
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  reductionLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+  },
+  reductionValue: {
+    fontFamily: "HankenGrotesk_700Bold",
+    fontSize: 14,
+  },
+  reductionNote: {
+    fontSize: 12,
+    lineHeight: 18,
+    fontFamily: "Inter_400Regular",
   },
 });

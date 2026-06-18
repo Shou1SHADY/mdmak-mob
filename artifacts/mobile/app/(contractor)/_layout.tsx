@@ -1,10 +1,11 @@
 import React from "react";
-import { Tabs } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { Platform, View, StyleSheet } from "react-native";
+import { Platform, View, StyleSheet, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { AIChatWidget } from "@/components/AIChatWidget";
 
 function TabIcon({
@@ -41,6 +42,18 @@ export default function ContractorLayout() {
   const t = useT();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
+  const { user, loading } = useAuth();
+
+  // Auth guard — protects every screen in this layout group
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color={colors.cta} />
+      </View>
+    );
+  }
+  if (!user) return <Redirect href="/auth/login" />;
+  if (user.role !== "Contractor") return <Redirect href="/" />;
   const bottomOffset = (insets.bottom || 0) + 10;
 
   const tabBarStyle = isWeb

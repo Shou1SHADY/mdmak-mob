@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
-  Platform, ActivityIndicator, ScrollView,
+  Platform, ActivityIndicator, ScrollView, Alert,
 } from "react-native";
-import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -11,6 +11,7 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { OFFER_STATUS } from "@/constants/data";
 
 interface RFQRow {
   id: string;
@@ -45,10 +46,12 @@ export default function CompareScreen() {
 
   const [rfqs, setRfqs] = useState<RFQRow[]>([]);
   const [rfqLoading, setRfqLoading] = useState(true);
+  const [rfqError, setRfqError] = useState<string | null>(null);
 
   const [selectedRfq, setSelectedRfq] = useState<RFQRow | null>(null);
   const [offers, setOffers] = useState<OfferRow[]>([]);
   const [offersLoading, setOffersLoading] = useState(false);
+  const [offersError, setOffersError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>("price");
   const [processing, setProcessing] = useState<string | null>(null);
 
@@ -57,22 +60,31 @@ export default function CompareScreen() {
     const load = async () => {
       const orgId = user?.organizationId;
       if (!orgId) { setRfqLoading(false); return; }
+      setRfqError(null);
       try {
         const snap = await getDocs(query(
           collection(db, "rfqs"),
           where("organizationId", "==", orgId),
           orderBy("createdAt", "desc"),
         ));
+        const results = await Promise.allSettled(
+          snap.docs.map((d) =>
+            getDocs(query(collection(db, "offers"), where("rfqId", "==", d.id)))
+              .then((offSnap) => ({ d, offSnap }))
+          )
+        );
         const rows: RFQRow[] = [];
-        for (const d of snap.docs) {
-          const offSnap = await getDocs(query(collection(db, "offers"), where("rfqId", "==", d.id)));
-          if (offSnap.size > 0) {
-            rows.push({ id: d.id, offersCount: offSnap.size, ...(d.data() as any) });
+        for (const r of results) {
+          if (r.status === "fulfilled" && r.value.offSnap.size > 0) {
+            rows.push({ id: r.value.d.id, offersCount: r.value.offSnap.size, ...(r.value.d.data() as any) });
           }
         }
         setRfqs(rows);
-      } catch (e) { console.warn(e); }
-      finally { setRfqLoading(false); }
+      } catch (e: any) {
+        setRfqError(e?.message || (isRTL ? "فشل تحميل المناقصات" : "Failed to load RFQs"));
+      } finally {
+        setRfqLoading(false);
+      }
     };
     load();
   }, [user?.organizationId]);
@@ -81,6 +93,7 @@ export default function CompareScreen() {
   const loadOffers = useCallback(async (rfq: RFQRow) => {
     setSelectedRfq(rfq);
     setOffersLoading(true);
+    setOffersError(null);
     try {
       const snap = await getDocs(query(
         collection(db, "offers"),
@@ -88,9 +101,12 @@ export default function CompareScreen() {
         orderBy("createdAt", "desc"),
       ));
       setOffers(snap.docs.map(d => ({ id: d.id, ...d.data() } as OfferRow)));
-    } catch (e) { console.warn(e); }
-    finally { setOffersLoading(false); }
-  }, []);
+    } catch (e: any) {
+      setOffersError(e?.message || (isRTL ? "فشل تحميل العروض" : "Failed to load offers"));
+    } finally {
+      setOffersLoading(false);
+    }
+  }, [isRTL]);
 
   /* ── Accept offer ── */
   const handleAccept = async (offer: OfferRow) => {
@@ -98,30 +114,35 @@ export default function CompareScreen() {
     setProcessing(offer.id);
     try {
       await updateDoc(doc(db, "offers", offer.id), {
-        status: "مقبول",
-        decidedAt: new Date().toISOString(),
+        status: OFFER_STATUS.ACCEPTED,
+        decidedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
       await updateDoc(doc(db, "rfqs", selectedRfq.id), {
         status: "Awarded",
-        awardedAt: new Date().toISOString(),
+        awardedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
       if (offer.supplierId) {
         await addDoc(collection(db, "users", offer.supplierId, "notifications"), {
           userId: offer.supplierId,
           type: "offer_accepted",
-          title: isRTL ? "تم قبول عرضك" : "Your offer was accepted",
+          title: isRTL ? "🎉 تم قبول عرضك" : "🎉 Your offer was accepted",
           message: isRTL
             ? `تم قبول عرضك لـ "${offer.rfqTitle ?? selectedRfq.title}"`
             : `Your offer for "${offer.rfqTitle ?? selectedRfq.title}" was accepted`,
           offerId: offer.id,
           rfqId: selectedRfq.id,
-          createdAt: new Date().toISOString(),
+          createdAt: serverTimestamp(),
           read: false,
         });
       }
-      setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, status: "مقبول" } : o));
-    } catch (e) { console.warn(e); }
-    finally { setProcessing(null); }
+      setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, status: OFFER_STATUS.ACCEPTED } : o));
+    } catch (e: any) {
+      Alert.alert(isRTL ? "خطأ" : "Error", e?.message || (isRTL ? "فشل قبول العرض" : "Failed to accept offer"));
+    } finally {
+      setProcessing(null);
+    }
   };
 
   /* ── Helpers ── */
@@ -191,6 +212,19 @@ export default function CompareScreen() {
         {rfqLoading ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : rfqError ? (
+          <View style={styles.centered}>
+            <Feather name="alert-triangle" size={32} color={colors.destructive} />
+            <Text style={[styles.errorText, { color: colors.destructive }]}>{rfqError}</Text>
+            <TouchableOpacity
+              style={[styles.retryBtn, { borderColor: colors.cta }]}
+              onPress={() => { setRfqLoading(true); setRfqError(null); }}
+            >
+              <Text style={[styles.retryBtnText, { color: colors.cta }]}>
+                {isRTL ? "إعادة المحاولة" : "Retry"}
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : rfqs.length === 0 ? (
           <EmptyState icon="bar-chart-2" title={t.compare.noRfqs} subtitle={t.compare.noRfqsDesc} />
@@ -278,6 +312,19 @@ export default function CompareScreen() {
       {offersLoading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : offersError ? (
+        <View style={styles.centered}>
+          <Feather name="alert-triangle" size={32} color={colors.destructive} />
+          <Text style={[styles.errorText, { color: colors.destructive }]}>{offersError}</Text>
+          <TouchableOpacity
+            style={[styles.retryBtn, { borderColor: colors.cta }]}
+            onPress={() => selectedRfq && loadOffers(selectedRfq)}
+          >
+            <Text style={[styles.retryBtnText, { color: colors.cta }]}>
+              {isRTL ? "إعادة المحاولة" : "Retry"}
+            </Text>
+          </TouchableOpacity>
         </View>
       ) : sortedOffers.length === 0 ? (
         <EmptyState icon="inbox" title={t.compare.noOffers} subtitle={t.compare.noOffersDesc} />
@@ -405,6 +452,24 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: 12,
+    padding: 32,
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
+    textAlign: "center",
+  },
+  retryBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    marginTop: 4,
+  },
+  retryBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
   },
 
   /* RFQ list */

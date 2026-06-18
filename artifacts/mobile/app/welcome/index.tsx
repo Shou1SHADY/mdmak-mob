@@ -222,16 +222,18 @@ export default function WelcomeScreen() {
           </View>
         )}
 
-        {/* Skip / secondary link */}
-        <TouchableOpacity
-          style={styles.skipBtn}
-          onPress={() => router.replace("/auth/login" as any)}
-          activeOpacity={0.6}
-        >
-          <Text style={[styles.skipText, { color: colors.outline }]}>
-            {isLast ? t.welcome.contactSales : t.welcome.skip}
-          </Text>
-        </TouchableOpacity>
+        {/* Skip link — only shown on non-last slides */}
+        {!isLast && (
+          <TouchableOpacity
+            style={styles.skipBtn}
+            onPress={() => router.replace("/auth/login" as any)}
+            activeOpacity={0.6}
+          >
+            <Text style={[styles.skipText, { color: colors.outline }]}>
+              {t.welcome.skip}
+            </Text>
+          </TouchableOpacity>
+        )}
 
       </View>
     </View>

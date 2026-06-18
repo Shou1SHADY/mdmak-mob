@@ -213,12 +213,12 @@ export default function MyRFQsScreen() {
                 <Text style={[styles.optionChipText, { color: draftCategory === "" ? colors.primary : colors.mutedForeground }]}>{t.common.all}</Text>
               </TouchableOpacity>
               {CATEGORIES.map((cat) => {
-                const active = draftCategory === cat.id;
+                const active = draftCategory === cat.labelAr;
                 return (
                   <TouchableOpacity
                     key={cat.id}
                     style={[styles.optionChip, { backgroundColor: active ? colors.primary + "18" : colors.muted, borderColor: active ? colors.primary + "60" : colors.border }]}
-                    onPress={() => setDraftCategory(active ? "" : cat.id)}
+                    onPress={() => setDraftCategory(active ? "" : cat.labelAr)}
                   >
                     <Text style={[styles.optionChipText, { color: active ? colors.primary : colors.mutedForeground }]}>{isRTL ? cat.labelAr : cat.label}</Text>
                   </TouchableOpacity>
@@ -325,11 +325,11 @@ export default function MyRFQsScreen() {
         {isFiltered && (
           <View style={[styles.resultsRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <Text style={[styles.resultsText, { color: colors.outline }]}>
-              {filtered.length} / {rfqs.length} {rfqs.length === 1 ? "RFQ" : "RFQs"}
+              {filtered.length} / {rfqs.length} {t.tabs.rfqs}
             </Text>
             <TouchableOpacity onPress={clearFilters} style={styles.clearBtn}>
               <Feather name="x-circle" size={13} color={colors.cta} />
-              <Text style={[styles.clearText, { color: colors.cta }]}>{t.common.cancel}</Text>
+              <Text style={[styles.clearText, { color: colors.cta }]}>{t.rfq.resetFilters}</Text>
             </TouchableOpacity>
           </View>
         )}

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import {
-  View, Text, ScrollView, Alert, TouchableOpacity, Platform, KeyboardAvoidingView,
+  View, Text, ScrollView, Alert, TouchableOpacity, Platform, KeyboardAvoidingView, Modal, Pressable,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, serverTimestamp, getDoc, doc, updateDoc, increment } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -16,6 +16,12 @@ import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { ProfileIncompleteGate, useProfileGate } from "@/components/ProfileIncompleteGate";
 
+const DURATION_UNITS = [
+  { id: "أيام", labelAr: "أيام", labelEn: "Days" },
+  { id: "أسابيع", labelAr: "أسابيع", labelEn: "Weeks" },
+  { id: "أشهر", labelAr: "أشهر", labelEn: "Months" },
+];
+
 export default function SubmitOfferScreen() {
   const colors = useColors();
   const t = useT();
@@ -24,23 +30,44 @@ export default function SubmitOfferScreen() {
   const { rfqId } = useLocalSearchParams<{ rfqId: string }>();
   const { user, organization } = useAuth();
   const { isComplete, missingFields } = useProfileGate("supplier", organization ?? null);
+
   const [price, setPrice] = useState("");
   const [notes, setNotes] = useState("");
+  const [deliveryLocation, setDeliveryLocation] = useState("");
+  const [executionDuration, setExecutionDuration] = useState("");
+  const [executionDurationUnit, setExecutionDurationUnit] = useState("أيام");
+  const [unitPickerVisible, setUnitPickerVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [rfqTitle, setRfqTitle] = useState("");
+  const [contractorId, setContractorId] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkDuplicate = async () => {
-      if (!user?.organizationId || !rfqId) return;
-      const q = query(
-        collection(db, "offers"),
-        where("rfqId", "==", rfqId),
-        where("organizationId", "==", user.organizationId)
-      );
-      const snap = await getDocs(q);
-      if (!snap.empty) setAlreadySubmitted(true);
+    const init = async () => {
+      if (!rfqId) return;
+      // Check duplicate
+      if (user?.organizationId) {
+        const q = query(
+          collection(db, "offers"),
+          where("rfqId", "==", rfqId),
+          where("organizationId", "==", user.organizationId)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) setAlreadySubmitted(true);
+      }
+      // Load RFQ info
+      try {
+        const rfqDoc = await getDoc(doc(db, "rfqs", rfqId));
+        if (rfqDoc.exists()) {
+          const data = rfqDoc.data();
+          setRfqTitle(data.title || "");
+          setContractorId(data.contractorId || null);
+        }
+      } catch (e: any) {
+        console.warn("[SubmitOffer] Failed to load RFQ:", e.message);
+      }
     };
-    checkDuplicate();
+    init();
   }, [rfqId, user?.organizationId]);
 
   const handleSubmit = async () => {
@@ -52,20 +79,53 @@ export default function SubmitOfferScreen() {
     }
     setLoading(true);
     try {
-      await addDoc(collection(db, "offers"), {
+      const offerData: Record<string, any> = {
         rfqId,
+        rfqTitle,
         supplierId: user?.uid,
         organizationId: user?.organizationId,
         supplierName: user?.displayName,
         companyName: user?.orgName,
         submittedByUserId: user?.uid,
         submittedByUserName: user?.displayName,
+        contractorId: contractorId || null,
         price,
         notes: notes.trim() || null,
+        deliveryLocation: deliveryLocation.trim() || null,
+        deliveryBatches: [{ deliveryDate: "", price, location: deliveryLocation.trim() || "" }],
         status: OFFER_STATUS.UNDER_REVIEW,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      };
+      if (executionDuration.trim()) {
+        offerData.executionDuration = executionDuration.trim();
+        offerData.executionDurationUnit = executionDurationUnit;
+      }
+
+      await addDoc(collection(db, "offers"), offerData);
+
+      // Notify contractor + increment offersCount (best-effort — don't fail the whole submit)
+      if (contractorId) {
+        try {
+          await addDoc(collection(db, "users", contractorId, "notifications"), {
+            userId: contractorId,
+            type: "new_offer",
+            title: "عرض سعر جديد",
+            message: `قدم المورد ${user?.orgName || user?.displayName || "مورد"} عرضاً بمبلغ ${Number(price).toLocaleString("ar-SA")} ر.س على مناقصة: ${rfqTitle}`,
+            rfqId,
+            createdAt: serverTimestamp(),
+            read: false,
+          });
+        } catch (e: any) {
+          console.warn("[SubmitOffer] Contractor notification failed:", e.message);
+        }
+        try {
+          await updateDoc(doc(db, "rfqs", rfqId), { offersCount: increment(1) });
+        } catch (e: any) {
+          console.warn("[SubmitOffer] offersCount increment failed:", e.message);
+        }
+      }
+
       Alert.alert(t.common.success, t.rfq.submitted, [
         { text: t.common.ok, onPress: () => router.back() },
       ]);
@@ -86,6 +146,9 @@ export default function SubmitOfferScreen() {
     );
   }
 
+  const selectedUnit = DURATION_UNITS.find((u) => u.id === executionDurationUnit);
+  const unitLabel = isRTL ? selectedUnit?.labelAr : selectedUnit?.labelEn;
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -93,24 +156,40 @@ export default function SubmitOfferScreen() {
     >
       <ScreenHeader title={t.rfq.submitOffer} showBack />
 
-      <ScrollView contentContainerStyle={[{ padding: 16, gap: 16, paddingBottom: insets.bottom + 60 }]} keyboardShouldPersistTaps="handled">
-        <View style={[{ borderRadius: 16, padding: 18, borderWidth: 1, gap: 6, backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[{ fontSize: 18, fontWeight: "700" as const, color: colors.foreground }]}>{t.rfq.offerDetails}</Text>
-          <Text style={[{ fontSize: 14, lineHeight: 21, color: colors.outline }]}>
-            {t.rfq.offerSubmitInfo}
-          </Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: insets.bottom + 60 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* RFQ context card */}
+        {rfqTitle ? (
+          <View style={{ borderRadius: 16, padding: 16, borderWidth: 1, gap: 4, backgroundColor: colors.card, borderColor: colors.border }}>
+            <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.outline, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              {isRTL ? "المناقصة" : "Tender"}
+            </Text>
+            <Text style={{ fontSize: 15, fontFamily: "HankenGrotesk_700Bold", color: colors.foreground }} numberOfLines={2}>
+              {rfqTitle}
+            </Text>
+          </View>
+        ) : (
+          <View style={{ borderRadius: 16, padding: 16, borderWidth: 1, gap: 6, backgroundColor: colors.card, borderColor: colors.border }}>
+            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>{t.rfq.offerDetails}</Text>
+            <Text style={{ fontSize: 14, lineHeight: 21, color: colors.outline }}>{t.rfq.offerSubmitInfo}</Text>
+          </View>
+        )}
 
+        {/* Already submitted warning */}
         {alreadySubmitted && (
-          <View style={[{ borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: "row", gap: 10, alignItems: "flex-start", backgroundColor: colors.warning + "18", borderColor: colors.warning + "50" }]}>
+          <View style={{ borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: isRTL ? "row-reverse" : "row", gap: 10, alignItems: "flex-start", backgroundColor: colors.warning + "18", borderColor: colors.warning + "50" }}>
             <Feather name="alert-circle" size={16} color={colors.warning} />
-            <Text style={[{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.warning }]}>
+            <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.warning }}>
               {t.rfq.alreadySubmitted}
             </Text>
           </View>
         )}
 
         <View style={{ gap: 14, opacity: alreadySubmitted ? 0.5 : 1 }}>
+          {/* Price — required */}
           <Input
             label={t.rfq.price}
             required
@@ -122,6 +201,59 @@ export default function SubmitOfferScreen() {
             isRTL={isRTL}
             editable={!alreadySubmitted}
           />
+
+          {/* Execution duration */}
+          <View style={{ gap: 6 }}>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              {isRTL ? "مدة التنفيذ (اختياري)" : "Execution Duration (optional)"}
+            </Text>
+            <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 10 }}>
+              <View style={{ flex: 1 }}>
+                <Input
+                  value={executionDuration}
+                  onChangeText={alreadySubmitted ? undefined : setExecutionDuration}
+                  keyboardType="numeric"
+                  placeholder={isRTL ? "مثال: ١٤" : "e.g. 14"}
+                  leftIcon="clock"
+                  isRTL={isRTL}
+                  editable={!alreadySubmitted}
+                />
+              </View>
+              <TouchableOpacity
+                onPress={() => !alreadySubmitted && setUnitPickerVisible(true)}
+                style={{
+                  height: 52,
+                  paddingHorizontal: 16,
+                  borderRadius: 14,
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  backgroundColor: colors.card,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                  gap: 6,
+                  minWidth: 110,
+                }}
+                activeOpacity={0.75}
+              >
+                <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.foreground }}>{unitLabel}</Text>
+                <Feather name="chevron-down" size={14} color={colors.outline} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Delivery location */}
+          <Input
+            label={isRTL ? "موقع التسليم (اختياري)" : "Delivery Location (optional)"}
+            value={deliveryLocation}
+            onChangeText={alreadySubmitted ? undefined : setDeliveryLocation}
+            placeholder={isRTL ? "مثال: حي النرجس، الرياض" : "e.g. Al Narjis, Riyadh"}
+            leftIcon="map-pin"
+            isRTL={isRTL}
+            editable={!alreadySubmitted}
+          />
+
+          {/* Notes */}
           <Input
             label={t.rfq.notes}
             value={notes}
@@ -134,16 +266,52 @@ export default function SubmitOfferScreen() {
             editable={!alreadySubmitted}
           />
 
-          <View style={[{ borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: "row", gap: 10, alignItems: "flex-start", backgroundColor: colors.accentBlueSoft, borderColor: colors.primary + "30" }]}>
+          {/* Info banner */}
+          <View style={{ borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: isRTL ? "row-reverse" : "row", gap: 10, alignItems: "flex-start", backgroundColor: colors.accentBlueSoft, borderColor: colors.primary + "30" }}>
             <Feather name="info" size={16} color={colors.primary} />
-            <Text style={[{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.primary }]}>
+            <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.primary }}>
               {t.rfq.offerPriceInfo}
             </Text>
           </View>
 
-          <Button title={t.rfq.submitOffer} onPress={handleSubmit} loading={loading} fullWidth disabled={alreadySubmitted} />
+          <Button
+            title={t.rfq.submitOffer}
+            onPress={handleSubmit}
+            loading={loading}
+            fullWidth
+            disabled={alreadySubmitted}
+          />
         </View>
       </ScrollView>
+
+      {/* Duration unit picker modal */}
+      <Modal visible={unitPickerVisible} transparent animationType="fade" onRequestClose={() => setUnitPickerVisible(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" }} onPress={() => setUnitPickerVisible(false)}>
+          <View style={{ backgroundColor: colors.card, borderRadius: 20, width: 220, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
+            {DURATION_UNITS.map((unit, i) => (
+              <TouchableOpacity
+                key={unit.id}
+                style={{
+                  paddingVertical: 16,
+                  paddingHorizontal: 20,
+                  borderBottomWidth: i < DURATION_UNITS.length - 1 ? 1 : 0,
+                  borderBottomColor: colors.border,
+                  backgroundColor: executionDurationUnit === unit.id ? colors.primary + "10" : "transparent",
+                  flexDirection: isRTL ? "row-reverse" : "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+                onPress={() => { setExecutionDurationUnit(unit.id); setUnitPickerVisible(false); }}
+              >
+                <Text style={{ fontSize: 15, fontFamily: executionDurationUnit === unit.id ? "Inter_600SemiBold" : "Inter_400Regular", color: executionDurationUnit === unit.id ? colors.primary : colors.foreground }}>
+                  {isRTL ? unit.labelAr : unit.labelEn}
+                </Text>
+                {executionDurationUnit === unit.id && <Feather name="check" size={16} color={colors.primary} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }

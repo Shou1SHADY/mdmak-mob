@@ -471,11 +471,8 @@ export default function SupplierProfileScreen() {
           </View>
           <View style={{ gap: 8 }}>
             {[
-              { type: "cr",      label: t.profile.docCR,      required: true },
-              { type: "vat",     label: t.profile.docVAT,     required: true },
-              { type: "zakat",   label: t.profile.docZakat,   required: false },
-              { type: "gosi",    label: t.profile.docGOSI,    required: false },
-              { type: "chamber", label: t.profile.docChamber, required: false },
+              { type: "cr",  label: t.profile.docCR,  required: true },
+              { type: "vat", label: t.profile.docVAT, required: true },
             ].map((d) => (
               <DocumentUploadRow
                 key={d.type}

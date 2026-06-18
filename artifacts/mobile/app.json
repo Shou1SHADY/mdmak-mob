@@ -34,8 +34,11 @@
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.ACCESS_FINE_LOCATION"
-      ]
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
     },
     "web": {
       "favicon": "./assets/images/icon.png",
@@ -46,6 +49,11 @@
       "expo-font",
       "expo-web-browser"
     ],
+    "notification": {
+      "icon": "./assets/images/icon.png",
+      "color": "#20CBD5",
+      "androidMode": "default"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

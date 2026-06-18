@@ -32,11 +32,13 @@ export default function SupplierDashboard() {
   const [stats, setStats] = useState({ totalOffers: 0, pending: 0, accepted: 0, openRfqs: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const { unreadCount } = useNotifications();
 
   const fetchData = async () => {
     const orgId = user?.organizationId;
     if (!orgId) { setLoading(false); return; }
+    setFetchError(false);
     try {
       const offSnap = await getDocs(query(
         collection(db, "offers"),
@@ -61,14 +63,41 @@ export default function SupplierDashboard() {
         accepted: offerItems.filter((o) => o.status === OFFER_STATUS.ACCEPTED).length,
         openRfqs: rfqSnap.size,
       });
-    } catch (e: any) { console.warn(e); }
-    finally { setLoading(false); setRefreshing(false); }
+    } catch (e: any) {
+      console.warn("[SupplierDashboard] fetchData:", e.message);
+      setFetchError(true);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, [user?.organizationId]);
 
   const pendingRatio = stats.totalOffers > 0 ? stats.pending / stats.totalOffers : 0;
   const acceptedRatio = stats.totalOffers > 0 ? stats.accepted / stats.totalOffers : 0;
+
+  if (fetchError && !loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", gap: 16, padding: 32 }}>
+        <Feather name="wifi-off" size={40} color={colors.outline} />
+        <Text style={{ fontSize: 16, fontFamily: "HankenGrotesk_700Bold", color: colors.foreground, textAlign: "center" }}>
+          {isRTL ? "تعذر تحميل البيانات" : "Failed to load data"}
+        </Text>
+        <Text style={{ fontSize: 13, color: colors.outline, textAlign: "center" }}>
+          {isRTL ? "تحقق من اتصالك بالإنترنت وحاول مجدداً" : "Check your connection and try again"}
+        </Text>
+        <TouchableOpacity
+          onPress={() => { setLoading(true); fetchData(); }}
+          style={{ backgroundColor: colors.cta, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 14 }}
+        >
+          <Text style={{ color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 14 }}>
+            {isRTL ? "إعادة المحاولة" : "Retry"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

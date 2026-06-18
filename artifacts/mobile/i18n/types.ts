@@ -197,9 +197,6 @@ export interface Translations {
     documentsDesc: string;
     docCR: string;
     docVAT: string;
-    docZakat: string;
-    docGOSI: string;
-    docChamber: string;
     docUploaded: string;
     docPending: string;
     uploadDoc: string;
@@ -350,6 +347,7 @@ export interface Translations {
     title: string;
     typeMessage: string;
     noMessages: string;
+    sendFirst: string;
     noConversations: string;
     noConversationsDesc: string;
     sentByYou: string;

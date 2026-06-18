@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   View, FlatList, StyleSheet, Platform,
 } from "react-native";
+import { router } from "expo-router";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
@@ -69,7 +70,12 @@ export default function OrdersScreen() {
         <FlatList
           data={orders}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <OfferCard offer={item} />}
+          renderItem={({ item }) => (
+            <OfferCard
+              offer={item}
+              onPress={() => router.push(`/chat/${item.id}`)}
+            />
+          )}
           contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 82) }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<EmptyState icon="package" title={t.orders.noOrders} subtitle={t.orders.noOrdersDesc} />}

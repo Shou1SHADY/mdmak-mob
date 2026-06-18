@@ -19,12 +19,15 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+// usePushToken disabled until expo-notifications is installed via: npx expo install expo-notifications expo-device
+// import { usePushToken } from "@/hooks/usePushToken";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  // usePushToken();
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />

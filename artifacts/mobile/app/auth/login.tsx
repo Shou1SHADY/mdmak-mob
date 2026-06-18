@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
@@ -36,6 +38,7 @@ export default function LoginScreen() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const validate = () => {
@@ -112,6 +115,43 @@ export default function LoginScreen() {
       Alert.alert(t.auth.login.title, msg);
     } finally {
       setGoogleLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      Alert.alert(
+        isRTL ? "استعادة كلمة المرور" : "Reset Password",
+        isRTL ? "أدخل بريدك الإلكتروني أولاً في حقل البريد" : "Enter your email address above first, then tap 'Forgot password?' again."
+      );
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(trimmedEmail)) {
+      Alert.alert(isRTL ? "بريد غير صالح" : "Invalid Email", t.auth.validation.emailInvalid);
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, trimmedEmail);
+      Alert.alert(
+        isRTL ? "تم إرسال الرابط ✓" : "Email Sent ✓",
+        isRTL
+          ? `تم إرسال رابط إعادة تعيين كلمة المرور إلى ${trimmedEmail}. تحقق من صندوق الوارد والبريد العشوائي.`
+          : `A password reset link was sent to ${trimmedEmail}. Check your inbox and spam folder.`
+      );
+    } catch (err: any) {
+      const msg =
+        err.code === "auth/user-not-found"
+          ? (isRTL ? "لا يوجد حساب بهذا البريد الإلكتروني" : "No account found with this email address.")
+          : err.code === "auth/too-many-requests"
+          ? (isRTL ? "طلبات كثيرة جداً. حاول لاحقاً." : "Too many requests. Please try again later.")
+          : err.code === "auth/network-request-failed"
+          ? t.auth.errors.networkError
+          : (isRTL ? "فشل إرسال الرابط. حاول مرة أخرى." : "Failed to send reset email. Please try again.");
+      Alert.alert(isRTL ? "خطأ" : "Error", msg);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -194,12 +234,17 @@ export default function LoginScreen() {
             {/* Forgot password */}
             <TouchableOpacity
               style={[styles.forgot, { alignSelf: isRTL ? "flex-start" : "flex-end" }]}
-              onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoon)}
+              onPress={handleForgotPassword}
+              disabled={resetLoading}
               activeOpacity={0.7}
             >
-              <Text style={[styles.forgotText, { color: colors.cta }]}>
-                {t.auth.login.forgotPassword}
-              </Text>
+              {resetLoading ? (
+                <ActivityIndicator size="small" color={colors.cta} />
+              ) : (
+                <Text style={[styles.forgotText, { color: colors.cta }]}>
+                  {t.auth.login.forgotPassword}
+                </Text>
+              )}
             </TouchableOpacity>
 
             {/* Sign in */}
@@ -238,14 +283,16 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
-                activeOpacity={0.75}
-                onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoonApple)}
-              >
-                <Ionicons name="logo-apple" size={18} color={colors.foreground} />
-                <Text style={[styles.socialLabel, { color: colors.foreground }]}>Apple</Text>
-              </TouchableOpacity>
+              {Platform.OS === "ios" && (
+                <TouchableOpacity
+                  style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  activeOpacity={0.75}
+                  onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoonApple)}
+                >
+                  <Ionicons name="logo-apple" size={18} color={colors.foreground} />
+                  <Text style={[styles.socialLabel, { color: colors.foreground }]}>Apple</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Spacer pushes signup to bottom */}
