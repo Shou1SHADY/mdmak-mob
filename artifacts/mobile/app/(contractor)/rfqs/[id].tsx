@@ -17,6 +17,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { RFQ_STATUSES, OFFER_STATUS } from "@/constants/data";
+import { BOQEditor } from "@/components/BOQEditor";
+import { exportRFQPDF, exportOfferComparisonPDF } from "@/lib/pdf-export";
 
 type SortMode = "price" | "date";
 
@@ -33,11 +35,33 @@ export default function RFQDetailScreen() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortMode>("price");
 
+  const [pdfLoading, setPdfLoading] = useState(false);
+
   // Reduce price modal
   const [reduceOffer, setReduceOffer] = useState<OfferItem | null>(null);
   const [targetPrice, setTargetPrice] = useState("");
   const [reductionNote, setReductionNote] = useState("");
   const [isReducing, setIsReducing] = useState(false);
+
+  const handleExportRFQ = async () => {
+    if (!rfq) return;
+    setPdfLoading(true);
+    try {
+      await exportRFQPDF(rfq as any, isRTL);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleExportComparison = async () => {
+    if (!rfq || offers.length === 0) return;
+    setPdfLoading(true);
+    try {
+      await exportOfferComparisonPDF(rfq as any, offers as any, isRTL);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -307,6 +331,37 @@ export default function RFQDetailScreen() {
           </View>
         )}
 
+        {/* PDF Export actions */}
+        <View style={[{ flexDirection: isRTL ? "row-reverse" : "row", gap: 8, flexWrap: "wrap" }]}>
+          <TouchableOpacity
+            style={[styles.exportBtn, { borderColor: colors.border, backgroundColor: colors.card, flexDirection: isRTL ? "row-reverse" : "row" }]}
+            onPress={handleExportRFQ}
+            disabled={pdfLoading}
+            activeOpacity={0.75}
+          >
+            <Feather name="file-text" size={13} color={colors.cta} />
+            <Text style={[styles.exportBtnText, { color: colors.cta }]}>{t.boq.exportPDF}</Text>
+          </TouchableOpacity>
+          {offers.length > 0 && (
+            <TouchableOpacity
+              style={[styles.exportBtn, { borderColor: colors.primary + "40", backgroundColor: colors.primary + "08", flexDirection: isRTL ? "row-reverse" : "row" }]}
+              onPress={handleExportComparison}
+              disabled={pdfLoading}
+              activeOpacity={0.75}
+            >
+              <Feather name="bar-chart-2" size={13} color={colors.primary} />
+              <Text style={[styles.exportBtnText, { color: colors.primary }]}>{isRTL ? "تصدير مقارنة العروض" : "Export Comparison"}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* BOQ section (if exists) */}
+        {rfq && rfq.boqItems && rfq.boqItems.length > 0 && (
+          <View style={[styles.boqSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <BOQEditor items={rfq.boqItems as any} onChange={() => {}} readonly />
+          </View>
+        )}
+
         {/* Offers header + sort */}
         <View style={[styles.offersHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
@@ -517,6 +572,10 @@ const styles = StyleSheet.create({
   priceSumLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase", letterSpacing: 0.4 },
   priceSumValue: { fontSize: 15 },
   priceSumDivider: { width: 1, alignSelf: "stretch", marginVertical: 4 },
+
+  exportBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
+  exportBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  boqSection: { borderRadius: 16, borderWidth: 1, padding: 16 },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },

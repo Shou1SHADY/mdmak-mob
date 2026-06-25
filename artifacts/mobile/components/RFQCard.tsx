@@ -23,6 +23,7 @@ export interface RFQItem {
   contractorId?: string;
   createdByUserId?: string;
   createdByUserName?: string;
+  boqItems?: import("@/components/BOQEditor").BOQItem[];
 }
 
 interface RFQCardProps {

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, TextInput, Modal,
+  View, Text, TouchableOpacity, ActivityIndicator, Alert, StyleSheet, TextInput, Modal, Linking,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -28,6 +28,20 @@ export function DocumentUploadRow({ docType, label, required, doc, orgId, onUpda
   const [expiryInput, setExpiryInput] = useState(doc?.expiryDate ?? "");
 
   const isUploaded = !!doc?.url;
+
+  const handleView = async () => {
+    if (!doc?.url) return;
+    try {
+      const supported = await Linking.canOpenURL(doc.url);
+      if (supported) {
+        await Linking.openURL(doc.url);
+      } else {
+        Alert.alert(t.common.error, isRTL ? "تعذر فتح الملف" : "Cannot open this file");
+      }
+    } catch {
+      Alert.alert(t.common.error, isRTL ? "تعذر فتح الملف" : "Cannot open this file");
+    }
+  };
 
   const handleUpload = async () => {
     try {
@@ -101,11 +115,22 @@ export function DocumentUploadRow({ docType, label, required, doc, orgId, onUpda
           </Text>
         </View>
 
-        <Feather
-          name={isUploaded ? "edit-2" : (isRTL ? "chevron-left" : "chevron-right")}
-          size={14}
-          color={isUploaded ? colors.outline : colors.cta}
-        />
+        <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 8 }}>
+          {isUploaded && (
+            <TouchableOpacity
+              onPress={handleView}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={[styles.viewBtn, { backgroundColor: colors.cta + "12", borderColor: colors.cta + "30" }]}
+            >
+              <Feather name="eye" size={13} color={colors.cta} />
+            </TouchableOpacity>
+          )}
+          <Feather
+            name={isUploaded ? "edit-2" : (isRTL ? "chevron-left" : "chevron-right")}
+            size={14}
+            color={isUploaded ? colors.outline : colors.cta}
+          />
+        </View>
       </TouchableOpacity>
 
       {/* Expiry date modal */}
@@ -164,6 +189,7 @@ const styles = StyleSheet.create({
   },
   docLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   docStatus: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  viewBtn: { width: 28, height: 28, borderRadius: 8, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   badge: { borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 },
   badgeText: { fontSize: 9, fontFamily: "Inter_600SemiBold", letterSpacing: 0.3 },
   modalOverlay: {

@@ -437,4 +437,31 @@ export interface Translations {
     step6Title: string;
     step6Desc: string;
   };
+  boq: {
+    title: string;
+    titleShort: string;
+    subtitle: string;
+    addItem: string;
+    removeItem: string;
+    description: string;
+    descriptionPlaceholder: string;
+    unit: string;
+    quantity: string;
+    specs: string;
+    specsPlaceholder: string;
+    noItems: string;
+    noItemsDesc: string;
+    skipBoq: string;
+    unitPrice: string;
+    totalPrice: string;
+    pricingTitle: string;
+    pricingDesc: string;
+    exportPDF: string;
+    generatingPDF: string;
+    pdfFailed: string;
+    viewDocument: string;
+    boqStep: string;
+    itemN: string;
+    summary: string;
+  };
 }

@@ -1,12 +1,29 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
-import { useNotifications } from "@/hooks/useNotifications";
+import { useNotifications, AppNotification } from "@/hooks/useNotifications";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
+
+function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
+  switch (type) {
+    case "offer_accepted":
+      return { icon: "check-circle" as const, color: colors.success, nav: (n: AppNotification) => n.rfqId ? `/(supplier)/rfq/${n.rfqId}` : null };
+    case "offer_rejected":
+      return { icon: "x-circle" as const, color: colors.destructive, nav: (n: AppNotification) => n.rfqId ? `/(supplier)/rfq/${n.rfqId}` : null };
+    case "price_reduction_requested":
+      return { icon: "trending-down" as const, color: colors.warning, nav: (n: AppNotification) => n.rfqId ? `/(supplier)/rfq/${n.rfqId}` : null };
+    case "new_chat_message":
+    case "new_message":
+      return { icon: "message-circle" as const, color: colors.primary, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };
+    default:
+      return { icon: "bell" as const, color: colors.accent, nav: () => null };
+  }
+}
 
 export default function SupplierNotificationsScreen() {
   const colors = useColors();
@@ -14,6 +31,13 @@ export default function SupplierNotificationsScreen() {
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const { notifications, loading, markRead, unreadCount } = useNotifications();
+
+  const handlePress = useCallback(async (item: AppNotification) => {
+    await markRead(item.id);
+    const { nav } = notifMeta(item.type, colors);
+    const path = nav(item);
+    if (path) router.push(path as any);
+  }, [markRead, colors]);
 
   const formatTime = (ts: any) => {
     if (!ts) return "";
@@ -23,23 +47,6 @@ export default function SupplierNotificationsScreen() {
         month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
       });
     } catch { return ""; }
-  };
-
-  const getIcon = (title: string): keyof typeof Feather.glyphMap => {
-    if (title.includes("عرض") || title.includes("offer")) return "tag";
-    if (title.includes("RFQ") || title.includes("طلب")) return "file-text";
-    if (title.includes("chat") || title.includes("رسالة")) return "message-circle";
-    if (title.includes("accept") || title.includes("قبول")) return "check-circle";
-    if (title.includes("reject") || title.includes("رفض")) return "x-circle";
-    return "bell";
-  };
-
-  const getIconColor = (title: string) => {
-    if (title.includes("accept") || title.includes("قبول")) return colors.success;
-    if (title.includes("reject") || title.includes("رفض")) return colors.destructive;
-    if (title.includes("عرض") || title.includes("offer")) return colors.cta;
-    if (title.includes("RFQ") || title.includes("طلب")) return colors.primary;
-    return colors.warning;
   };
 
   return (
@@ -65,8 +72,7 @@ export default function SupplierNotificationsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
-          const icon = getIcon(item.title);
-          const iconColor = getIconColor(item.title);
+          const { icon, color: iconColor } = notifMeta(item.type, colors);
           return (
             <TouchableOpacity
               style={[
@@ -76,7 +82,7 @@ export default function SupplierNotificationsScreen() {
                   borderColor: item.read ? colors.border : colors.cta + "20",
                 },
               ]}
-              onPress={() => markRead(item.id)}
+              onPress={() => handlePress(item)}
               activeOpacity={0.75}
             >
               {/* Unread accent strip */}

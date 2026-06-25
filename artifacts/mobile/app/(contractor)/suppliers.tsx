@@ -1,9 +1,5 @@
-import { useEffect } from "react";
-import { router } from "expo-router";
+import { Redirect } from "expo-router";
 
-export default function SuppliersRedirect() {
-  useEffect(() => {
-    router.replace("/(contractor)/dashboard");
-  }, []);
-  return null;
+export default function SuppliersScreen() {
+  return <Redirect href="/(contractor)/dashboard" />;
 }

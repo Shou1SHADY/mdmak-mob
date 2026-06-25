@@ -68,6 +68,8 @@
   "dependencies": {
     "expo-auth-session": "^56.0.14",
     "expo-document-picker": "^56.0.4",
+    "expo-print": "~15.0.8",
+    "expo-sharing": "~14.0.8",
     "firebase": "^12.13.0"
   }
 }

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { CATEGORIES, SAUDI_CITIES, CITIES_DISTRICTS, displayCity } from "@/constants/data";
 import { ProfileIncompleteGate, useProfileGate } from "@/components/ProfileIncompleteGate";
+import { BOQEditor, type BOQItem } from "@/components/BOQEditor";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const CARD_W = SCREEN_W > 400 ? 140 : 120;
@@ -55,6 +56,7 @@ export default function CreateRFQScreen() {
   const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [boqItems, setBoqItems] = useState<BOQItem[]>([]);
   const [isDraft, setIsDraft] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -76,6 +78,7 @@ export default function CreateRFQScreen() {
         city,
         district: district.trim() || null,
         deadline: deadline || null,
+        boqItems: boqItems.length > 0 ? boqItems : null,
         status: draft ? "Draft" : "New",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -90,7 +93,7 @@ export default function CreateRFQScreen() {
     }
   };
 
-  const totalSteps = 2;
+  const totalSteps = 3;
 
   const selectedCat = CATEGORIES.find((c) => c.label === category || c.labelAr === category);
   const isSmall = SCREEN_W < 375;
@@ -383,6 +386,26 @@ export default function CreateRFQScreen() {
               leftIcon="calendar"
               isRTL={isRTL}
             />
+
+            <Button
+              title={t.common.next}
+              onPress={() => setStep(3)}
+              fullWidth
+              size="lg"
+            />
+          </View>
+        )}
+
+        {step === 3 && (
+          <View style={styles.form}>
+            <View style={{ gap: 4 }}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.boq.title}</Text>
+              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.outline }}>
+                {isRTL ? "اختياري — أضف بنوداً لتحديد المواد والكميات التي يحتاجها الموردون" : "Optional — add items so suppliers know exactly what to price"}
+              </Text>
+            </View>
+
+            <BOQEditor items={boqItems} onChange={setBoqItems} />
 
             <View style={styles.btnRow}>
               <Button

@@ -15,6 +15,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { RFQ_STATUSES } from "@/constants/data";
+import { BOQEditor } from "@/components/BOQEditor";
 
 export default function SupplierRFQDetailScreen() {
   const colors = useColors();
@@ -158,6 +159,13 @@ export default function SupplierRFQDetailScreen() {
             </Text>
           </View>
         ) : null}
+
+        {/* BOQ section */}
+        {rfq.boqItems && rfq.boqItems.length > 0 && (
+          <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <BOQEditor items={rfq.boqItems as any} onChange={() => {}} readonly />
+          </View>
+        )}
 
         {/* Details grid */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
