@@ -223,7 +223,6 @@ const styles = StyleSheet.create({
   priceLabel: {
     fontSize: 10,
     fontWeight: "600",
-    letterSpacing: 0.8,
     textTransform: "uppercase",
     marginBottom: 3,
     fontFamily: "Inter_600SemiBold",

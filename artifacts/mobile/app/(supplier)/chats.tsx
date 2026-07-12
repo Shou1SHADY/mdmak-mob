@@ -22,7 +22,17 @@ interface ChatThread {
   lastMessage?: string;
   unreadFor?: string[];
   unreadCounts?: Record<string, number>;
+  lastMessageAt?: any;
   updatedAt?: any;
+  createdAt?: any;
+}
+
+// Handles both website timestamps (ISO strings) and legacy Firestore Timestamps
+function toMillis(ts: any): number {
+  if (!ts) return 0;
+  if (typeof ts.toDate === "function") return ts.toDate().getTime();
+  const ms = new Date(ts).getTime();
+  return isNaN(ms) ? 0 : ms;
 }
 
 function initials(str?: string) {
@@ -56,8 +66,8 @@ export default function SupplierChatsScreen() {
     const unsub = onSnapshot(q, (snap) => {
       const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as ChatThread));
       items.sort((a, b) => {
-        const ta = a.updatedAt?.toDate?.()?.getTime() ?? 0;
-        const tb = b.updatedAt?.toDate?.()?.getTime() ?? 0;
+        const ta = toMillis(a.lastMessageAt ?? a.updatedAt ?? a.createdAt);
+        const tb = toMillis(b.lastMessageAt ?? b.updatedAt ?? b.createdAt);
         return tb - ta;
       });
       setChats(items);
@@ -148,7 +158,7 @@ export default function SupplierChatsScreen() {
                     {title}
                   </Text>
                   <Text style={[styles.time, { color: hasUnread ? colors.accent : colors.outline }]}>
-                    {formatTime(item.updatedAt)}
+                    {formatTime(item.lastMessageAt ?? item.updatedAt ?? item.createdAt)}
                   </Text>
                 </View>
 

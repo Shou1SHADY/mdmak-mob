@@ -163,7 +163,7 @@ export default function RegisterScreen() {
                   >
                     <View style={[styles.roleIndicator, { backgroundColor: role === r.id ? colors.accent : colors.border }]} />
                     <Text style={[styles.roleLabel, { color: role === r.id ? colors.foreground : colors.secondary }]}>{r.label}</Text>
-                    <Text style={[styles.roleAr, { color: role === r.id ? colors.accent : colors.mutedForeground, letterSpacing: 0 }]}>{r.labelAr}</Text>
+                    <Text style={[styles.roleAr, { color: role === r.id ? colors.accent : colors.mutedForeground }]}>{r.labelAr}</Text>
                     <Text style={[styles.roleDesc, { color: colors.mutedForeground }]}>{r.desc}</Text>
                   </TouchableOpacity>
                 ))}

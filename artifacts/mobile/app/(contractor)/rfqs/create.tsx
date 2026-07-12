@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Dimensions,
 } from "react-native";
 import { router } from "expo-router";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -80,8 +80,8 @@ export default function CreateRFQScreen() {
         deadline: deadline || null,
         boqItems: boqItems.length > 0 ? boqItems : null,
         status: draft ? "Draft" : "New",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
       Alert.alert(t.common.success, draft ? t.rfq.savedDraft : t.rfq.published, [
         { text: t.common.ok, onPress: () => router.back() },
@@ -487,7 +487,6 @@ const styles = StyleSheet.create({
     fontWeight: "600" as const,
     fontFamily: "Inter_600SemiBold",
     textTransform: "uppercase" as const,
-    letterSpacing: 0.5,
   },
   required: {
     fontSize: 14,

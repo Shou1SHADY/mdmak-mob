@@ -378,7 +378,6 @@ const styles = StyleSheet.create({
   heading: {
     fontFamily: "HankenGrotesk_700Bold",
     fontSize: 22,
-    letterSpacing: -0.4,
     marginBottom: 3,
   },
   subheading: {
@@ -419,7 +418,6 @@ const styles = StyleSheet.create({
   dividerText: {
     fontFamily: "Inter_500Medium",
     fontSize: 12,
-    letterSpacing: 0.2,
   },
 
   // Social

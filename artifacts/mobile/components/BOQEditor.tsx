@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   metaChipText: { fontSize: 12, fontFamily: "Inter_500Medium" },
 
   // Form fields
-  fieldLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", textTransform: "uppercase", letterSpacing: 0.4 },
+  fieldLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" },
   input: { height: 50, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, fontSize: 14, fontFamily: "Inter_400Regular" },
   unitBtn: { height: 50, justifyContent: "space-between", alignItems: "center", paddingHorizontal: 14 },
   row: { gap: 10 },

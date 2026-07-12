@@ -90,7 +90,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 11,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
     lineHeight: 15,
   },
   subtitle: {

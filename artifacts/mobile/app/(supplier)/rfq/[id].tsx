@@ -287,14 +287,12 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     color: "rgba(255,255,255,0.9)",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
   heroTitle: {
     fontSize: 22,
     fontFamily: "HankenGrotesk_700Bold",
     color: "#FFFFFF",
     lineHeight: 30,
-    letterSpacing: -0.3,
   },
   heroStats: {
     gap: 16,
@@ -366,7 +364,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: "Inter_500Medium",
     textTransform: "uppercase",
-    letterSpacing: 0.4,
     marginBottom: 2,
   },
   detailValue: {

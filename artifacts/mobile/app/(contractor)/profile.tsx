@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
   statCard: { flex: 1, borderRadius: 14, borderWidth: 1, alignItems: "center", padding: 14, gap: 6 },
   statIconBox: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   statValue: { fontSize: 22, fontFamily: "HankenGrotesk_700Bold" },
-  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" as const, letterSpacing: 0.3 },
+  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" as const },
 
   // Organization
   cardHeader: { alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   infoRow: { alignItems: "center", gap: 12, paddingVertical: 10, paddingHorizontal: 4, borderRadius: 10, borderWidth: 0 },
   infoRowEmpty: { borderWidth: 1, borderStyle: "dashed" as const, paddingHorizontal: 10, borderRadius: 10 },
   infoIcon: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, letterSpacing: 0.5 },
+  infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const },
   infoValue: { fontSize: 15, fontFamily: "Inter_500Medium" },
   infoEmpty: { fontSize: 14, fontFamily: "Inter_400Regular" },
   infoSep: { height: StyleSheet.hairlineWidth, marginLeft: 54 },

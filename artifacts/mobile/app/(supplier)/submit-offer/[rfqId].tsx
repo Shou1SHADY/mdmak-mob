@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, Alert, TouchableOpacity, Platform, KeyboardAvoidingView, Modal, Pressable, TextInput,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { collection, addDoc, getDocs, query, where, serverTimestamp, getDoc, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, getDoc, doc, updateDoc, increment } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -110,8 +110,8 @@ export default function SubmitOfferScreen() {
         deliveryBatches: [{ deliveryDate: "", price, location: deliveryLocation.trim() || "" }],
         boqPricing: boqPricingArray,
         status: OFFER_STATUS.UNDER_REVIEW,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
       if (executionDuration.trim()) {
         offerData.executionDuration = executionDuration.trim();
@@ -129,7 +129,7 @@ export default function SubmitOfferScreen() {
             title: "عرض سعر جديد",
             message: `قدم المورد ${user?.orgName || user?.displayName || "مورد"} عرضاً بمبلغ ${Number(price).toLocaleString("ar-SA")} ر.س على مناقصة: ${rfqTitle}`,
             rfqId,
-            createdAt: serverTimestamp(),
+            createdAt: new Date().toISOString(),
             read: false,
           });
         } catch (e: any) {
@@ -180,7 +180,7 @@ export default function SubmitOfferScreen() {
         {/* RFQ context card */}
         {rfqTitle ? (
           <View style={{ borderRadius: 16, padding: 16, borderWidth: 1, gap: 4, backgroundColor: colors.card, borderColor: colors.border }}>
-            <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.outline, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.outline, textTransform: "uppercase" }}>
               {isRTL ? "المناقصة" : "Tender"}
             </Text>
             <Text style={{ fontSize: 15, fontFamily: "HankenGrotesk_700Bold", color: colors.foreground }} numberOfLines={2}>
@@ -220,7 +220,7 @@ export default function SubmitOfferScreen() {
 
           {/* Execution duration */}
           <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground, textTransform: "uppercase" }}>
               {isRTL ? "مدة التنفيذ (اختياري)" : "Execution Duration (optional)"}
             </Text>
             <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 10 }}>

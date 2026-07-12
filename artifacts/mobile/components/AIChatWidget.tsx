@@ -153,7 +153,7 @@ function ActionCard({
   onDismiss,
 }: {
   msg: AIChatMessage;
-  strings: typeof STRINGS.en;
+  strings: (typeof STRINGS)[keyof typeof STRINGS];
   colors: ReturnType<typeof useColors>;
   onConfirm: () => void;
   onDismiss: () => void;
@@ -246,7 +246,7 @@ function MessageBubble({
   onDismiss,
 }: {
   msg: AIChatMessage;
-  strings: typeof STRINGS.en;
+  strings: (typeof STRINGS)[keyof typeof STRINGS];
   colors: ReturnType<typeof useColors>;
   onConfirm: () => void;
   onDismiss: () => void;

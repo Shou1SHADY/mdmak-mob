@@ -98,7 +98,7 @@ export function DashboardHeader({
             </View>
             <View style={{ flex: 1 }}>
               <Text
-                style={{ fontFamily: "HankenGrotesk_700Bold", fontSize: 17, color: colors.foreground, letterSpacing: -0.2 }}
+                style={{ fontFamily: "HankenGrotesk_700Bold", fontSize: 17, color: colors.foreground }}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
@@ -354,7 +354,6 @@ const styles = StyleSheet.create({
   langCode: {
     fontSize: 12,
     fontFamily: "Inter_700Bold",
-    letterSpacing: 0.4,
   },
   // ── Bottom sheet ──────────────────────────────────────
   modalOuter: {
@@ -415,7 +414,6 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 26,
-    letterSpacing: -0.52,
     color: "#FFFFFF",
   },
   heroDesc: {
@@ -439,7 +437,6 @@ const styles = StyleSheet.create({
   heroBtnText: {
     fontFamily: "Inter_700Bold",
     fontSize: 13,
-    letterSpacing: 0.4,
   },
   // ── Quick action ──────────────────────────────────────
   quickActionCard: {
@@ -459,7 +456,6 @@ const styles = StyleSheet.create({
   },
   quickActionTitle: {
     fontSize: 12,
-    letterSpacing: 0.6,
     textAlign: "center",
   },
 });

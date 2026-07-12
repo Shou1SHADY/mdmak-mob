@@ -4,7 +4,7 @@ import {
   Modal, Pressable, TextInput, ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, serverTimestamp, addDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, addDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -130,7 +130,7 @@ export default function RFQDetailScreen() {
         text: t.rfq.republish,
         onPress: async () => {
           try {
-            await updateDoc(doc(db, "rfqs", id), { status: "New", updatedAt: serverTimestamp() });
+            await updateDoc(doc(db, "rfqs", id), { status: "New", updatedAt: new Date().toISOString() });
             Alert.alert(t.common.success ?? "Success", t.rfq.republished);
             fetchData();
           } catch (e: any) {
@@ -151,8 +151,8 @@ export default function RFQDetailScreen() {
           const newStatus = action === "accept" ? OFFER_STATUS.ACCEPTED : OFFER_STATUS.REJECTED;
           await updateDoc(doc(db, "offers", offer.id), {
             status: newStatus,
-            decidedAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
+            decidedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           });
 
           if (action === "accept") {
@@ -168,13 +168,13 @@ export default function RFQDetailScreen() {
                 contractorOrgId: user?.organizationId || user?.uid,
                 supplierId: offer.supplierId || offer.organizationId,
                 supplierOrgId: offer.organizationId,
-                createdAt: serverTimestamp(),
+                createdAt: new Date().toISOString(),
               });
             }
             // Update RFQ status to Awarded
             await updateDoc(doc(db, "rfqs", id), {
               status: "Awarded",
-              awardedAt: serverTimestamp(),
+              awardedAt: new Date().toISOString(),
             });
           }
 
@@ -193,7 +193,7 @@ export default function RFQDetailScreen() {
                   : `Your offer for "${rfq?.title || ""}" was ${action === "accept" ? "accepted" : "rejected"}.`,
                 offerId: offer.id,
                 rfqId: id,
-                createdAt: serverTimestamp(),
+                createdAt: new Date().toISOString(),
                 read: false,
               });
             } catch {}
@@ -218,7 +218,7 @@ export default function RFQDetailScreen() {
         status: OFFER_STATUS.PRICE_REDUCTION,
         targetPrice: priceNum,
         reductionNote: reductionNote.trim() || null,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date().toISOString(),
       });
 
       // Notify supplier
@@ -227,14 +227,14 @@ export default function RFQDetailScreen() {
         try {
           await addDoc(collection(db, "users", supplierId, "notifications"), {
             userId: supplierId,
-            type: "price_reduction_requested",
+            type: "price_reduction",
             title: isRTL ? "💰 طُلب منك تخفيض السعر" : "💰 Price reduction requested",
             message: isRTL
               ? `يطلب المقاول تخفيض سعرك إلى ${priceNum.toLocaleString("ar-SA")} ر.س على مناقصة: ${rfq?.title || ""}`
               : `The contractor requests a price reduction to SAR ${priceNum.toLocaleString("en-SA")} for: ${rfq?.title || ""}`,
             offerId: reduceOffer.id,
             rfqId: id,
-            createdAt: serverTimestamp(),
+            createdAt: new Date().toISOString(),
             read: false,
           });
         } catch {}
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 14 },
   rfqCard: { padding: 18, borderWidth: 1, gap: 8 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  category: { fontSize: 11, fontWeight: "700" as const, textTransform: "uppercase", letterSpacing: 0.6 },
+  category: { fontSize: 11, fontWeight: "700" as const, textTransform: "uppercase" },
   rfqTitle: { fontSize: 18, fontWeight: "700" as const },
   desc: { fontSize: 14, lineHeight: 21 },
   metaGrid: { flexDirection: "row", gap: 16, marginTop: 4 },
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
 
   priceSummary: { flexDirection: "row", borderWidth: 1, paddingVertical: 14, paddingHorizontal: 8 },
   priceSumItem: { flex: 1, alignItems: "center", gap: 3 },
-  priceSumLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase", letterSpacing: 0.4 },
+  priceSumLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" },
   priceSumValue: { fontSize: 15 },
   priceSumDivider: { width: 1, alignSelf: "stretch", marginVertical: 4 },
 

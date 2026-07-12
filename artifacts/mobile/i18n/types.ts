@@ -98,6 +98,7 @@ export interface Translations {
   dashboard: {
     dashboard: string;
     totalRfqs: string;
+    rfqsShort: string;
     active: string;
     offersIn: string;
     closed: string;
@@ -351,6 +352,8 @@ export interface Translations {
     noConversations: string;
     noConversationsDesc: string;
     sentByYou: string;
+    notFound: string;
+    newMessage: string;
   };
   offers: {
     title: string;

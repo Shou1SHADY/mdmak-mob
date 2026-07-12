@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   docStatus: { fontSize: 11, fontFamily: "Inter_400Regular" },
   viewBtn: { width: 28, height: 28, borderRadius: 8, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   badge: { borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 },
-  badgeText: { fontSize: 9, fontFamily: "Inter_600SemiBold", letterSpacing: 0.3 },
+  badgeText: { fontSize: 9, fontFamily: "Inter_600SemiBold" },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
@@ -216,7 +216,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Inter_500Medium",
     textAlign: "center",
-    letterSpacing: 2,
   },
   modalActions: { flexDirection: "row", gap: 10 },
   modalBtn: {

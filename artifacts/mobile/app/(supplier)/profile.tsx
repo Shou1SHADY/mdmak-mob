@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
   statCard: { flex: 1, borderRadius: 14, borderWidth: 1, alignItems: "center", padding: 14, gap: 6 },
   statIconBox: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   statValue: { fontSize: 22, fontFamily: "HankenGrotesk_700Bold" },
-  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" as const, letterSpacing: 0.3 },
+  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" as const },
 
   // Cards
   cardHeader: { alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
@@ -693,12 +693,12 @@ const styles = StyleSheet.create({
   // Info rows (view mode)
   infoRow: { alignItems: "center", gap: 12, paddingVertical: 8 },
   infoIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, letterSpacing: 0.5, marginBottom: 2 },
+  infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, marginBottom: 2 },
   infoValue: { fontSize: 15, fontFamily: "Inter_500Medium" },
 
   // Specializations
   label: { fontSize: 13, fontFamily: "Inter_500Medium" },
-  subLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, letterSpacing: 0.5 },
+  subLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const },
   chipsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { borderRadius: 8, borderWidth: 1.5, paddingHorizontal: 10, paddingVertical: 6, maxWidth: 140 },
   chipText: { fontSize: 12, fontFamily: "Inter_500Medium" },

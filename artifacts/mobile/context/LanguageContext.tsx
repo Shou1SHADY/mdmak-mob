@@ -8,13 +8,15 @@ export type Language = "en" | "ar";
 const STORAGE_KEY = "app_language";
 const translations: Record<Language, Translations> = { en, ar };
 
+// Arabic is the platform default (same rule as the website — locale detection
+// is disabled there too). Only an explicitly-English device switches to English.
 function detectDeviceLanguage(): Language {
   if (Platform.OS === "web") {
     try {
-      const navLang = (typeof navigator !== "undefined" && navigator.language) || "en";
-      return navLang.startsWith("ar") ? "ar" : "en";
+      const navLang = (typeof navigator !== "undefined" && navigator.language) || "ar";
+      return navLang.startsWith("en") ? "en" : "ar";
     } catch {
-      return "en";
+      return "ar";
     }
   }
   try {
@@ -22,18 +24,20 @@ function detectDeviceLanguage(): Language {
       (NativeModules.I18nManager?.localeIdentifier as string) ||
       (NativeModules.SettingsManager?.settings?.AppleLocale as string) ||
       (NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] as string) ||
-      "en";
-    return locale.startsWith("ar") ? "ar" : "en";
+      "ar";
+    return locale.startsWith("en") ? "en" : "ar";
   } catch {
-    return "en";
+    return "ar";
   }
 }
 
-function applyRTL(lang: Language) {
-  const isRTL = lang === "ar";
-  if (I18nManager.isRTL !== isRTL) {
-    I18nManager.allowRTL(isRTL);
-    I18nManager.forceRTL(isRTL);
+// This app implements RTL MANUALLY (every screen flips rows/text with isRTL).
+// Native forceRTL only applies after an app restart and would then mirror the
+// whole layout a second time on top of the manual flips — so it must stay off.
+function applyRTL(_lang: Language) {
+  if (I18nManager.isRTL) {
+    I18nManager.allowRTL(false);
+    I18nManager.forceRTL(false);
   }
 }
 
@@ -57,7 +61,7 @@ export function useT() {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("en");
+  const [language, setLanguageState] = useState<Language>("ar");
 
   useEffect(() => {
     (async () => {

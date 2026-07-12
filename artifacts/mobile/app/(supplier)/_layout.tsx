@@ -102,7 +102,6 @@ export default function SupplierLayout() {
           fontSize: 10,
           fontFamily: "Inter_600SemiBold",
           marginTop: 2,
-          letterSpacing: 0.15,
         } as any,
         tabBarItemStyle: {
           paddingVertical: 4,

@@ -43,7 +43,7 @@ function slicePath(cx: number, cy: number, oR: number, iR: number, sDeg: number,
 }
 slicePath.GAP = 3;
 
-function DonutChart({ slices, total, size = 150, textColor = "#0F172A" }: { slices: DonutSlice[]; total: number; size?: number; textColor?: string }) {
+function DonutChart({ slices, total, size = 150, textColor = "#0F172A", label = "RFQs" }: { slices: DonutSlice[]; total: number; size?: number; textColor?: string; label?: string }) {
   const cx = size / 2;
   const cy = size / 2;
   const oR = size / 2 - 4;
@@ -64,7 +64,7 @@ function DonutChart({ slices, total, size = 150, textColor = "#0F172A" }: { slic
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <Circle cx={cx} cy={cy} r={oR} fill="none" stroke="#E2E8F0" strokeWidth={oR - iR} />
         <SvgText x={cx} y={cy - 4} textAnchor="middle" fontSize={16} fontWeight="700" fill="#94a3b8" fontFamily="HankenGrotesk_700Bold">0</SvgText>
-        <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize={10} fill="#94a3b8" fontFamily="Inter_500Medium">RFQs</SvgText>
+        <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize={10} fill="#94a3b8" fontFamily="Inter_500Medium">{label}</SvgText>
       </Svg>
     );
   }
@@ -74,7 +74,7 @@ function DonutChart({ slices, total, size = 150, textColor = "#0F172A" }: { slic
       {paths.map((p, i) => <Path key={i} d={p.d} fill={p.color} />)}
       <Circle cx={cx} cy={cy} r={iR - 2} fill="none" />
       <SvgText x={cx} y={cy - 6} textAnchor="middle" fontSize={22} fontWeight="700" fill={textColor} fontFamily="HankenGrotesk_700Bold">{total}</SvgText>
-      <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize={10} fill="#94a3b8" fontFamily="Inter_500Medium">RFQs</SvgText>
+      <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize={10} fill="#94a3b8" fontFamily="Inter_500Medium">{label}</SvgText>
     </Svg>
   );
 }
@@ -307,6 +307,7 @@ export default function ContractorDashboard() {
               total={stats.total}
               size={160}
               textColor={colors.foreground}
+              label={t.dashboard.rfqsShort}
             />
           </View>
 
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
   statItem: { flex: 1, alignItems: "center", gap: 4 },
   statIconWrap: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", marginBottom: 2 },
   statValue: { fontSize: 20 },
-  statLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textTransform: "uppercase", letterSpacing: 0.3, textAlign: "center" },
+  statLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textTransform: "uppercase", textAlign: "center" },
   statDivider: { width: 1, height: 36, marginHorizontal: 2 },
 
   // Overview card
@@ -430,6 +431,6 @@ const styles = StyleSheet.create({
   footerStat: { flex: 1, alignItems: "center", gap: 4 },
   footerIconWrap: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center", marginBottom: 2 },
   footerValue: { fontSize: 18 },
-  footerLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textTransform: "uppercase", letterSpacing: 0.3, textAlign: "center" },
+  footerLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textTransform: "uppercase", textAlign: "center" },
   footerDivider: { width: 1, height: 32, marginHorizontal: 6 },
 });

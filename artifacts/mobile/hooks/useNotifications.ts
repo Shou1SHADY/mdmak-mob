@@ -37,7 +37,17 @@ export function useNotifications() {
     const unsub = onSnapshot(
       q,
       (snap) => {
-        setNotifications(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AppNotification)));
+        const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AppNotification));
+        // Re-sort client-side: createdAt mixes ISO strings (website) with legacy
+        // Firestore Timestamps, which Firestore's orderBy groups by type
+        const toMillis = (ts: any): number => {
+          if (!ts) return 0;
+          if (typeof ts.toDate === "function") return ts.toDate().getTime();
+          const ms = new Date(ts).getTime();
+          return isNaN(ms) ? 0 : ms;
+        };
+        items.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+        setNotifications(items);
         setLoading(false);
         setError(null);
       },

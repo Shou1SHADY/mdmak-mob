@@ -411,7 +411,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: "Inter_500Medium",
     textTransform: "uppercase",
-    letterSpacing: 0.4,
   },
   statDivider: {
     width: 1,
@@ -481,7 +480,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_600SemiBold",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
     marginBottom: 8,
   },
   optionScroll: {
@@ -596,6 +594,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.2,
   },
 });

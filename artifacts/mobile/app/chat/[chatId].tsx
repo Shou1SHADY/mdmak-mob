@@ -6,7 +6,7 @@ import {
 import { useLocalSearchParams, router } from "expo-router";
 import {
   collection, query, where, onSnapshot, orderBy, addDoc, getDocs,
-  serverTimestamp, doc, getDoc, updateDoc, arrayRemove, arrayUnion, increment, writeBatch,
+  doc, getDoc, setDoc, updateDoc, arrayRemove, arrayUnion, increment, writeBatch,
 } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -93,12 +93,9 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!validChatId || !user?.uid) return;
     const uid = user.uid;
-    getDoc(doc(db, "chats", chatId)).then((snap) => {
-      if (!snap.exists()) { setChatError("Chat not found"); return; }
-      const data = snap.data();
-      setChatTitle(data.rfqTitle || `Chat #${chatId.slice(0, 8)}`);
-      const partnerId = data.contractorId === uid ? data.supplierId : data.contractorId;
-      if (partnerId) setChatPartnerId(partnerId);
+    let creating = false;
+
+    const markRead = () => {
       // Mark chat as read (syncs unread badge on web)
       updateDoc(doc(db, "chats", chatId), {
         unreadFor: arrayRemove(uid),
@@ -115,8 +112,53 @@ export default function ChatScreen() {
         snap.docs.forEach((d) => batch.update(d.ref, { read: true }));
         return batch.commit();
       }).catch(() => {});
-    }).catch((e) => console.warn("[Chat] fetch error:", e));
-  }, [validChatId, chatId, user?.uid]);
+    };
+
+    // Auto-create the chat doc from the offer when it doesn't exist yet —
+    // same behavior and doc shape as the website (chatId == offerId)
+    const autoCreateFromOffer = async () => {
+      if (creating) return;
+      creating = true;
+      try {
+        const offerSnap = await getDoc(doc(db, "offers", chatId));
+        if (!offerSnap.exists()) { setChatError(t.chat.notFound); return; }
+        const offer = offerSnap.data();
+        await setDoc(doc(db, "chats", chatId), {
+          offerId: chatId,
+          rfqId: offer.rfqId || "",
+          rfqTitle: offer.rfqTitle || offer.title || "",
+          contractorId: offer.contractorId || "",
+          contractorOrgId: offer.contractorOrgId || offer.contractorId || "",
+          supplierId: offer.supplierId || "",
+          supplierOrgId: offer.organizationId || offer.supplierId || "",
+          createdAt: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.warn("[Chat] auto-create error:", e);
+        setChatError(t.chat.notFound);
+      } finally {
+        creating = false;
+      }
+    };
+
+    // Live subscription so unread state clears even while the screen is open
+    const unsub = onSnapshot(
+      doc(db, "chats", chatId),
+      (snap) => {
+        if (!snap.exists()) { autoCreateFromOffer(); return; }
+        setChatError(null);
+        const data = snap.data();
+        setChatTitle(data.rfqTitle || "");
+        const partnerId = data.contractorId === uid ? data.supplierId : data.contractorId;
+        if (partnerId) setChatPartnerId(partnerId);
+        const unreadFor: string[] = data.unreadFor || [];
+        const unreadCount: number = data.unreadCounts?.[uid] ?? 0;
+        if (unreadFor.includes(uid) || unreadCount > 0) markRead();
+      },
+      (e) => console.warn("[Chat] meta error:", e)
+    );
+    return unsub;
+  }, [validChatId, chatId, user?.uid, t.chat.notFound]);
 
   useEffect(() => {
     if (!validChatId) { setChatError(t.common.error); return; }
@@ -148,16 +190,28 @@ export default function ChatScreen() {
         createdAt: new Date().toISOString(),
       });
       // Non-critical: update chat metadata — errors swallowed so the send
-      // still feels successful even if rules deny this secondary write
+      // still feels successful even if rules deny this secondary write.
+      // lastMessageAt is an ISO string: the website sorts and renders with it.
       updateDoc(doc(db, "chats", chatId), {
         lastMessage: msg,
-        updatedAt: serverTimestamp(),
+        lastMessageAt: new Date().toISOString(),
         lastMessageSenderId: user.uid,
         ...(chatPartnerId ? {
           unreadFor: arrayUnion(chatPartnerId),
           [`unreadCounts.${chatPartnerId}`]: increment(1),
         } : {}),
       }).catch(() => {});
+      // Notify the partner — same payload the website writes for chat messages
+      if (chatPartnerId) {
+        addDoc(collection(db, "users", chatPartnerId, "notifications"), {
+          type: "new_chat_message",
+          message: msg.length > 80 ? msg.substring(0, 80) + "..." : msg,
+          chatId,
+          rfqTitle: chatTitle || "",
+          createdAt: new Date().toISOString(),
+          read: false,
+        }).catch(() => {});
+      }
     } catch (err: any) {
       Alert.alert(t.common.error, err.message || "Failed to send message");
       setText(msg);

@@ -4,7 +4,7 @@ import {
   Platform, StyleSheet, ScrollView, Modal, Alert, TextInput, Pressable,
 } from "react-native";
 import { router } from "expo-router";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -109,7 +109,7 @@ export default function MyOffersScreen() {
       await updateDoc(doc(db, "offers", updatePriceOffer.id), {
         price: newPrice,
         status: OFFER_STATUS.UNDER_REVIEW,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date().toISOString(),
       });
       // Notify contractor
       const contractorId = (updatePriceOffer as any).contractorId;
@@ -122,7 +122,7 @@ export default function MyOffersScreen() {
             message: `تم تحديث السعر لمناقصة: ${updatePriceOffer.rfqTitle || ""}. السعر الجديد: ${newPrice} ر.س`,
             offerId: updatePriceOffer.id,
             rfqId: updatePriceOffer.rfqId,
-            createdAt: serverTimestamp(),
+            createdAt: new Date().toISOString(),
             read: false,
           });
         } catch {}
@@ -154,7 +154,7 @@ export default function MyOffersScreen() {
               ? `قام المورد بسحب عرضه على مناقصة: ${rfqTitle}`
               : `The supplier withdrew their offer for: ${rfqTitle}`,
             rfqId: withdrawOffer.rfqId,
-            createdAt: serverTimestamp(),
+            createdAt: new Date().toISOString(),
             read: false,
           });
         } catch {}
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   statItem: { flex: 1, alignItems: "center", gap: 2 },
   statValue: { fontSize: 20 },
-  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase", letterSpacing: 0.4 },
+  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" },
   statDivider: { width: 1, height: 28, marginHorizontal: 8 },
 
   // Filter
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
   },
-  targetLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textTransform: "uppercase", letterSpacing: 0.4 },
+  targetLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textTransform: "uppercase" },
   targetValue: { fontSize: 18, fontFamily: "HankenGrotesk_700Bold", marginTop: 2 },
 
   noteBox: {

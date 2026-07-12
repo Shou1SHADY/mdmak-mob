@@ -229,7 +229,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Inter_500Medium",
     textTransform: "uppercase",
-    letterSpacing: 0.4,
     flex: 1,
   },
   topRight: {

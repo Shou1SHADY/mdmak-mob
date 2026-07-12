@@ -32,6 +32,9 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
       return { icon: "message-circle" as const, color: colors.primary, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };
     case "sample_sent":
       return { icon: "package" as const, color: colors.warning, nav: (n: AppNotification) => n.rfqId ? `/(contractor)/rfqs/${n.rfqId}` : null };
+    case "delivery_notice":
+    case "supply_completed":
+      return { icon: "truck" as const, color: colors.success, nav: (n: AppNotification) => n.rfqId ? `/(contractor)/rfqs/${n.rfqId}` : null };
     default:
       return { icon: "bell" as const, color: colors.accent, nav: () => null };
   }
@@ -57,12 +60,13 @@ function formatRelativeTime(ts: any, isRTL: boolean): string {
 
 // ─── Notification card ────────────────────────────────────────────────────────
 function NotifCard({
-  item, onPress, isRTL, colors,
+  item, onPress, isRTL, colors, fallbackTitle,
 }: {
   item: AppNotification;
   onPress: () => void;
   isRTL: boolean;
   colors: ReturnType<typeof useColors>;
+  fallbackTitle: string;
 }) {
   const { icon, color } = notifMeta(item.type, colors);
 
@@ -98,7 +102,7 @@ function NotifCard({
               ]}
               numberOfLines={2}
             >
-              {item.title}
+              {item.title || (item.type === "new_chat_message" || item.type === "new_message" ? fallbackTitle : "")}
             </Text>
             {!item.read && <View style={[styles.dot, { backgroundColor: colors.accent }]} />}
           </View>
@@ -228,6 +232,7 @@ export default function ContractorNotificationsScreen() {
             onPress={() => handlePress(item)}
             isRTL={isRTL}
             colors={colors}
+            fallbackTitle={t.chat.newMessage}
           />
         )}
         ListEmptyComponent={

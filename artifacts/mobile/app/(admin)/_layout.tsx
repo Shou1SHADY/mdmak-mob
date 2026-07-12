@@ -7,7 +7,7 @@ import { Stack, router } from "expo-router";
  */
 export default function AdminLayout() {
   useEffect(() => {
-    router.replace("/auth/login");
+    router.replace("/");
   }, []);
 
   return <Stack screenOptions={{ headerShown: false }} />;

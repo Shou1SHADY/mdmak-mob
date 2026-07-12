@@ -77,12 +77,30 @@ export default function WelcomeScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const isLast = page === SLIDES.length - 1;
 
+  // The pager lays slides out with row-reverse in RTL, so the slide at
+  // scroll offset 0 is the LAST one — map raw offsets to logical pages.
+  const pageFromOffset = (x: number) => {
+    const raw = Math.min(SLIDES.length - 1, Math.max(0, Math.round(x / SW)));
+    return isRTL ? SLIDES.length - 1 - raw : raw;
+  };
+  const offsetForPage = (p: number) => (isRTL ? SLIDES.length - 1 - p : p) * SW;
+
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const next = Math.round(e.nativeEvent.contentOffset.x / SW);
+    const next = pageFromOffset(e.nativeEvent.contentOffset.x);
     if (next !== page) setPage(next);
   };
 
-  const goTo = (p: number) => scrollRef.current?.scrollTo({ x: p * SW, animated: true });
+  const goTo = (p: number) => scrollRef.current?.scrollTo({ x: offsetForPage(p), animated: true });
+
+  // In RTL, start scrolled to the far end so the first slide is visible
+  React.useEffect(() => {
+    if (isRTL) {
+      requestAnimationFrame(() =>
+        scrollRef.current?.scrollTo({ x: offsetForPage(page), animated: false })
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRTL]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -286,7 +304,6 @@ const styles = StyleSheet.create({
   chipText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 12,
-    letterSpacing: 0.2,
   },
 
   /* ── Copy ── */
@@ -302,7 +319,6 @@ const styles = StyleSheet.create({
     fontSize: isSmall ? 22 : 26,
     textAlign: "center",
     lineHeight: isSmall ? 30 : 36,
-    letterSpacing: -0.5,
   },
   desc: {
     fontFamily: "Inter_400Regular",
@@ -358,7 +374,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     fontSize: 16,
     color: "#FFFFFF",
-    letterSpacing: 0.2,
   },
   navRow: {
     gap: 12,

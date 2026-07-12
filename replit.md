@@ -1,45 +1,55 @@
-# [Project name]
+# Mdmak Tech Mobile
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Expo/React Native companion app for the Mdmak Tech B2B procurement platform
+(mdmaktech.sa) — contractors publish RFQs, suppliers submit offers, both chat and
+track orders. Shares the website's Firebase backend; there is no separate mobile API.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `cd artifacts/mobile && pnpm run dev` — Expo dev server (QR / web preview)
+- `pnpm run typecheck` — full typecheck across all packages (must pass before builds)
+- `cd artifacts/mobile && pnpm run build:web` — static web export to `dist/`
+- `cd artifacts/mobile && pnpm run eas:preview` / `eas:prod` — EAS native builds
+- See `artifacts/mobile/DEPLOYMENT.md` for the full deployment checklist
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- App: Expo SDK 54, React Native 0.81, expo-router 6 (file-based, typed routes)
+- Backend: Firebase JS SDK (Auth, Firestore, Storage) — same project as the website
+  (`studio-2889504658-6ee2a`); config + fallbacks in `artifacts/mobile/lib/firebase.ts`
+- The template's Express/Postgres packages (`artifacts/api-server`, `lib/db`,
+  `lib/api-*`) are UNUSED scaffolding — the app talks only to Firebase
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/mobile/app/` — screens; role route groups `(contractor)`, `(supplier)`,
+  `(admin)` mirror the website's portals
+- `artifacts/mobile/constants/data.ts` — categories/cities/districts/status enums
+  mirrored from the website's `src/lib/constants.ts`; Arabic strings are the
+  canonical Firestore values. Keep in sync when the website list changes.
+- `artifacts/mobile/constants/colors.ts` — design tokens matching the website's
+  Tailwind theme (primary #0F172A, accent #20CBD5, cta #0369A1, success #12A063)
+- `artifacts/mobile/i18n/` — ar/en dictionaries; parity enforced by the
+  `Translations` type (typecheck fails on missing keys)
+- Firestore security rules live in the parent website repo (`../firestore.rules`)
+  and are deployed from there
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
-
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Arabic-first (RTL) like the website; `context/LanguageContext.tsx` drives direction
+- Firestore document shapes are byte-compatible with the website (verified for
+  `users`, `rfqs`, `offers`, `chats/{id}/messages`, `users/{uid}/notifications`)
+- Firebase config has hardcoded public fallbacks (same pattern as the website's
+  `src/firebase/config.ts`) so builds work with zero env setup
+- Push notifications use Expo's push gateway (`hooks/usePushToken.ts`); token is
+  stored on the user doc as `expoPushToken`
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- `pnpm run typecheck` pipes through nothing — never trust `tsc | tail` exit codes
+- `expo-doctor` warns about a duplicate `react` from the PARENT repo's
+  node_modules (this workspace nests inside studio-monaqasati) — expected, ignore
+- Run `npx expo install <pkg>` (not plain pnpm add) so versions match the SDK
+- `extra.eas.projectId` in app.json is intentionally absent until `eas init` links
+  the real EAS project (a fake ID breaks builds)

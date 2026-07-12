@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
   Platform, ActivityIndicator, ScrollView, Alert,
 } from "react-native";
-import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -115,13 +115,13 @@ export default function CompareScreen() {
     try {
       await updateDoc(doc(db, "offers", offer.id), {
         status: OFFER_STATUS.ACCEPTED,
-        decidedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        decidedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
       await updateDoc(doc(db, "rfqs", selectedRfq.id), {
         status: "Awarded",
-        awardedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        awardedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
       if (offer.supplierId) {
         await addDoc(collection(db, "users", offer.supplierId, "notifications"), {
@@ -133,7 +133,7 @@ export default function CompareScreen() {
             : `Your offer for "${offer.rfqTitle ?? selectedRfq.title}" was accepted`,
           offerId: offer.id,
           rfqId: selectedRfq.id,
-          createdAt: serverTimestamp(),
+          createdAt: new Date().toISOString(),
           read: false,
         });
       }
@@ -575,7 +575,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     fontSize: 10,
     textTransform: "uppercase",
-    letterSpacing: 0.4,
   },
   acceptBtn: {
     flexDirection: "row",

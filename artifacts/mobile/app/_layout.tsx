@@ -19,7 +19,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { ThemeProvider } from "@/context/ThemeContext";
-// usePushToken disabled until expo-notifications is installed via: npx expo install expo-notifications expo-device
+// Push registration intentionally disabled for now — re-enable after `eas init`
+// and push credentials are configured (see DEPLOYMENT.md).
 // import { usePushToken } from "@/hooks/usePushToken";
 
 SplashScreen.preventAutoHideAsync();

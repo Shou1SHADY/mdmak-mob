@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   statItem: { flex: 1, alignItems: "center", gap: 4 },
   statIconWrap: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", marginBottom: 2 },
   statValue: { fontSize: 20 },
-  statLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textTransform: "uppercase", letterSpacing: 0.3, textAlign: "center" },
+  statLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textTransform: "uppercase", textAlign: "center" },
   statDivider: { width: 1, height: 36, marginHorizontal: 2 },
   activityCard: { borderRadius: 14, borderWidth: 1, padding: 16, gap: 12 },
   activityHeader: { alignItems: "center", justifyContent: "space-between" },
@@ -301,6 +301,6 @@ const styles = StyleSheet.create({
   monthItem: { flex: 1, alignItems: "center", gap: 10 },
   monthIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   monthValue: { fontSize: 18 },
-  monthLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase", letterSpacing: 0.3, marginTop: 1 },
+  monthLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase", marginTop: 1 },
   monthDivider: { width: 1, height: 32, marginHorizontal: 8 },
 });

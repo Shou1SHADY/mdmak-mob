@@ -680,7 +680,7 @@ const styles = StyleSheet.create({
   filterSection: { gap: 12, paddingVertical: 14 },
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
   sectionDot: { width: 6, height: 6, borderRadius: 3 },
-  sectionTitle: { fontSize: 13, fontFamily: "Inter_700Bold", letterSpacing: 0.4, textTransform: "uppercase" },
+  sectionTitle: { fontSize: 13, fontFamily: "Inter_700Bold", textTransform: "uppercase" },
 
   // Category chips
   chipsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

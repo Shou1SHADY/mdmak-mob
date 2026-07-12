@@ -38,7 +38,7 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
         "android.permission.POST_NOTIFICATIONS"
-      ],
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png",
@@ -47,7 +47,14 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#20CBD5"
+        }
+      ]
     ],
     "notification": {
       "icon": "./assets/images/icon.png",
@@ -57,11 +64,6 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    },
-    "extra": {
-      "eas": {
-        "projectId": "mdmak-tech"
-      }
     }
   }
 }

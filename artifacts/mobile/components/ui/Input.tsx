@@ -69,7 +69,6 @@ export function Input({
             fontSize: typo.label.fontSize,
             fontWeight: typo.label.fontWeight,
             lineHeight: typo.label.lineHeight,
-            letterSpacing: typo.label.letterSpacing,
             color: colors.onSurfaceVariant,
             textAlign: isRTL ? "right" : "left",
             textTransform: "uppercase",

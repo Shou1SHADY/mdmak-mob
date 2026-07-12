@@ -15,8 +15,18 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
       return { icon: "check-circle" as const, color: colors.success, nav: (n: AppNotification) => n.rfqId ? `/(supplier)/rfq/${n.rfqId}` : null };
     case "offer_rejected":
       return { icon: "x-circle" as const, color: colors.destructive, nav: (n: AppNotification) => n.rfqId ? `/(supplier)/rfq/${n.rfqId}` : null };
+    case "price_reduction":
     case "price_reduction_requested":
       return { icon: "trending-down" as const, color: colors.warning, nav: (n: AppNotification) => n.rfqId ? `/(supplier)/rfq/${n.rfqId}` : null };
+    case "sample_requested":
+    case "sample_received":
+      return { icon: "package" as const, color: colors.warning, nav: (n: AppNotification) => n.offerId ? `/(supplier)/offers` : null };
+    case "delivery_confirmed":
+    case "supply_completed":
+      return { icon: "truck" as const, color: colors.success, nav: () => `/(supplier)/orders` };
+    case "invitation":
+    case "inquiry_reply":
+      return { icon: "users" as const, color: colors.cta, nav: () => null };
     case "new_chat_message":
     case "new_message":
       return { icon: "message-circle" as const, color: colors.primary, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };
@@ -107,7 +117,7 @@ export default function SupplierNotificationsScreen() {
                       ]}
                       numberOfLines={2}
                     >
-                      {item.title}
+                      {item.title || (item.type === "new_chat_message" || item.type === "new_message" ? t.chat.newMessage : t.tabs.notifications)}
                     </Text>
                     {!item.read && <View style={[styles.dot, { backgroundColor: colors.cta }]} />}
                   </View>

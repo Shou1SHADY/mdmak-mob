@@ -310,7 +310,6 @@ const styles = StyleSheet.create({
     fontFamily: "HankenGrotesk_700Bold",
     fontSize: 28,
     color: "#FFFFFF",
-    letterSpacing: -0.7,
     textAlign: "center",
   },
 
@@ -378,6 +377,5 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_500Medium",
     fontSize: 11,
     color: "rgba(255,255,255,0.45)",
-    letterSpacing: 0.2,
   },
 });
