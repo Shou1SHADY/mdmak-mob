@@ -577,6 +577,7 @@ export interface Translations {
     optional: string;
     overdue: string;
     noDate: string;
+    history: string;
     stage: string;
     track: string;
     status: string;
@@ -592,6 +593,30 @@ export interface Translations {
       event: string;
       social_media: string;
       other: string;
+    };
+    gates: {
+      bid_docs: string;
+      estimate: string;
+      fit: string;
+      go_no_go: string;
+      boq_priced: string;
+      cost: string;
+      margin_approved: string;
+      bid_bond: string;
+      submitted: string;
+      clarifications: string;
+      final_price: string;
+      scope_captured: string;
+      discount_answered: string;
+      performance_review: string;
+      satisfaction_captured: string;
+      renewal_feedback: string;
+    };
+    roles: {
+      client: string;
+      main_contractor: string;
+      consultant: string;
+      supplier: string;
     };
     activityTypes: {
       call: string;

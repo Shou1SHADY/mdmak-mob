@@ -258,7 +258,7 @@ export default function CrmOpportunityDetailScreen() {
                   style={[styles.gateItem, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}
                   numberOfLines={1}
                 >
-                  • {gate.id}
+                  • {labelFor(t.crm.gates, gate.id)}
                 </Text>
               ))}
             </View>
@@ -331,7 +331,7 @@ export default function CrmOpportunityDetailScreen() {
         {history.length > 0 && (
           <View style={[styles.panel, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.panelTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-              {t.crm.stage}
+              {t.crm.history}
             </Text>
             {history.slice(-6).reverse().map((entry, i) => (
               <View key={`${entry.at}-${i}`} style={[styles.historyRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>

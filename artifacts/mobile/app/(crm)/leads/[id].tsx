@@ -38,6 +38,7 @@ import {
   stageColor,
   tierColor,
 } from "@/lib/crm-display";
+import { labelFor } from "@/lib/labels";
 
 /**
  * One lead.
@@ -223,7 +224,7 @@ export default function CrmLeadDetailScreen() {
                 style={[styles.identityMeta, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}
                 numberOfLines={2}
               >
-                {[contact.company, contact.city, partyRoles(contact).join(", ")]
+                {[contact.company, contact.city, partyRoles(contact).map((r) => labelFor(t.crm.roles, r)).join(" · ")]
                   .filter(Boolean)
                   .join(" · ")}
               </Text>
