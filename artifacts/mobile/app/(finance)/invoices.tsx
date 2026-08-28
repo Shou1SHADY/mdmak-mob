@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { scrollBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { StatsCard } from "@/components/StatsCard";
@@ -137,7 +138,7 @@ export default function InvoicesScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: (insets.bottom || 0) + 96,
+            paddingBottom: scrollBottomPadding(insets.bottom, false),
           }}
           ListHeaderComponent={
             invoices.length > 0 ? (

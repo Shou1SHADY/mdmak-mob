@@ -47,6 +47,8 @@ function RootLayoutNav() {
       <Stack.Screen name="(goods)" />
       <Stack.Screen name="(connections)" />
       <Stack.Screen name="apps" />
+      {/* Design-QA only; deliberately not in the module registry. */}
+      <Stack.Screen name="design-preview" />
       <Stack.Screen name="chat/[chatId]" />
     </Stack>
   );

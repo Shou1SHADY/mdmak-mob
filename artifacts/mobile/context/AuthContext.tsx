@@ -25,6 +25,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { isPreview, PREVIEW_USER } from "@/lib/preview";
 
 /* eslint-disable no-console */
 const devLog = (...args: any[]) => { if (__DEV__) console.log(...args); };
@@ -204,6 +205,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    // Design-preview: adopt a fixture owner and never contact Firebase. Web
+    // only, off unless sessionStorage says otherwise (see lib/preview.ts).
+    if (isPreview()) {
+      setUser(PREVIEW_USER);
+      setOrganization({
+        id: PREVIEW_USER.organizationId,
+        type: "contractor",
+        name: PREVIEW_USER.orgName,
+        phone: PREVIEW_USER.phone,
+        city: PREVIEW_USER.city,
+        specializations: [],
+        serviceAreas: [],
+        verified: true,
+        documents: {},
+      });
+      setLoading(false);
+      return;
+    }
+
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       devLog("[Auth] onAuthStateChanged:", firebaseUser?.uid ?? "signed out");
       try {

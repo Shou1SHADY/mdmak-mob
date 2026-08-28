@@ -8,6 +8,7 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { scrollBottomPadding } from "@/lib/layout";
 import {
   communicationForRole,
   componentsForRole,
@@ -94,7 +95,7 @@ export default function AppsLauncherScreen() {
         showBack
       />
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: (insets.bottom || 0) + 96 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: scrollBottomPadding(insets.bottom, false) }}
         showsVerticalScrollIndicator={false}
       >
         {modules.map((mod) => {

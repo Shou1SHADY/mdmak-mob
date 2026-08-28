@@ -77,6 +77,9 @@ export function CrmChoice<T extends string>({
       {scroll ? (
         <ScrollView
           horizontal
+          // Hug the content: a horizontal scroller left to flex would stretch
+          // to the parent's height and stretch its chips with it.
+          style={{ flexGrow: 0, flexShrink: 0 }}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}
         >
@@ -92,7 +95,7 @@ export function CrmChoice<T extends string>({
 const styles = StyleSheet.create({
   wrap: { marginBottom: 16 },
   label: { fontSize: 13, lineHeight: 21, fontFamily: "Inter_500Medium", marginBottom: 8 },
-  row: { gap: 8, paddingVertical: 2 },
+  row: { alignItems: "center", gap: 8, paddingVertical: 2, paddingHorizontal: 2 },
   rowWrap: { flexWrap: "wrap", gap: 8 },
   chip: {
     // 44px minimum touch target, per the project's accessibility rule.

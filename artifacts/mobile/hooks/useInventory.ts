@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { isPreview, PREVIEW_INVENTORY, PREVIEW_REQUESTS, PREVIEW_WAREHOUSES } from "@/lib/preview";
 import type { WarehouseRequestStatus } from "@/lib/warehouse-requests";
 
 export interface Warehouse {
@@ -54,6 +55,7 @@ export interface WarehouseRequest {
 
 /** Every warehouse in the member's organization, live. */
 export function useWarehouses() {
+  if (isPreview()) return { warehouses: PREVIEW_WAREHOUSES as Warehouse[], central: PREVIEW_WAREHOUSES[0] as Warehouse, orgId: "preview-user", isLoading: false };
   const { user } = useAuth();
   const orgId = user?.organizationId || "";
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -92,6 +94,7 @@ export function useWarehouses() {
 
 /** One warehouse's stock, live. */
 export function useInventoryItems(warehouseId: string | undefined | null) {
+  if (isPreview()) return { items: PREVIEW_INVENTORY as InventoryItem[], isLoading: false };
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -126,6 +129,7 @@ export function useInventoryItems(warehouseId: string | undefined | null) {
  * reading anywhere else would show an empty inbox on a busy site.
  */
 export function useWarehouseRequests(centralWarehouseId: string | undefined | null) {
+  if (isPreview()) return { requests: PREVIEW_REQUESTS as WarehouseRequest[], isLoading: false };
   const [requests, setRequests] = useState<WarehouseRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

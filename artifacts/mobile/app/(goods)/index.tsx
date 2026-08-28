@@ -6,6 +6,7 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { scrollBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { Input } from "@/components/ui/Input";
@@ -102,7 +103,7 @@ export default function GoodsReceivedScreen() {
           stickySectionHeadersEnabled={false}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: (insets.bottom || 0) + 96,
+            paddingBottom: scrollBottomPadding(insets.bottom, false),
           }}
           renderSectionHeader={({ section }) => (
             <Text

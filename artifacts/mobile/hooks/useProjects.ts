@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { isPreview, PREVIEW_BOQ, PREVIEW_PROJECTS } from "@/lib/preview";
 import type { ProjectStatus } from "@/lib/project-status";
 
 /** The project fields this app reads. The website writes more; nothing here
@@ -46,6 +47,7 @@ export interface BoqItem {
 
 /** Every project in the signed-in member's organization, live. */
 export function useProjects() {
+  if (isPreview()) return { projects: PREVIEW_PROJECTS as Project[], orgId: "preview-user", isLoading: false, error: null };
   const { user } = useAuth();
   const orgId = user?.organizationId || "";
   const [projects, setProjects] = useState<Project[]>([]);
@@ -85,6 +87,10 @@ export function useProjects() {
  * displays them and writes none.
  */
 export function useProject(projectId: string | undefined | null) {
+  if (isPreview()) {
+    const p = (PREVIEW_PROJECTS as Project[]).find((x) => x.id === projectId) ?? (PREVIEW_PROJECTS as Project[])[0];
+    return { project: p, boqItems: PREVIEW_BOQ as BoqItem[], isLoading: false };
+  }
   const [project, setProject] = useState<Project | null>(null);
   const [boqItems, setBoqItems] = useState<BoqItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,6 +136,7 @@ export function useProject(projectId: string | undefined | null) {
  * own `projectId` is what the website's tender views filter on.
  */
 export function useProjectTenders(projectId: string | undefined | null) {
+  if (isPreview()) return { tenders: [{ id: "r1", title: "توريد حديد التسليح", status: "New", offersCount: 4 }, { id: "r2", title: "Ready-mix concrete", status: "Awarded", offersCount: 7 }], isLoading: false };
   const [tenders, setTenders] = useState<Record<string, any>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

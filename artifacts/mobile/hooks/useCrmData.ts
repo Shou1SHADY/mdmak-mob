@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { isPreview, PREVIEW_ACTIVITIES, PREVIEW_CONTACTS, PREVIEW_OPPORTUNITIES } from "@/lib/preview";
 import {
   CRM_ACTIVITIES,
   CRM_CONTACTS,
@@ -32,7 +33,24 @@ export interface TeamMember {
  * should move on the phone without a manual refresh, which is most of the point
  * of having it on the phone.
  */
+
+/** Fixture shape for design preview — mirrors what the live hook returns. */
+function previewCrmData() {
+  const contactsById = new Map(PREVIEW_CONTACTS.map((c) => [c.id, c]));
+  return {
+    orgId: "preview-user",
+    contacts: PREVIEW_CONTACTS,
+    contactsById,
+    opportunities: PREVIEW_OPPORTUNITIES,
+    activities: PREVIEW_ACTIVITIES,
+    team: [{ id: "preview-user", name: "سعود العتيبي", defaultGroupId: null }],
+    error: null,
+    isLoading: false,
+  };
+}
 export function useCrmData(options?: { opportunities?: boolean; activities?: boolean }) {
+  // Design-preview short-circuit: fixtures instead of Firestore.
+  if (isPreview()) return previewCrmData();
   const { user } = useAuth();
   const orgId = user?.organizationId || "";
   const wantOpportunities = !!options?.opportunities;

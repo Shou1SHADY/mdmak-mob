@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { scrollBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useInventoryItems, useWarehouses, type InventoryItem } from "@/hooks/useInventory";
 
@@ -130,7 +131,7 @@ export default function WarehouseDetailScreen() {
           renderItem={renderItem}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: (insets.bottom || 0) + 96,
+            paddingBottom: scrollBottomPadding(insets.bottom, false),
           }}
           ListEmptyComponent={
             <EmptyState

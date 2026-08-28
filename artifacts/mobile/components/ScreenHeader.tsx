@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Platform, ViewStyle, Modal, Pressable } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, Modal, Pressable } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { headerTopPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { SaudiArabiaFlag, UKFlag } from "@/components/ui/FlagIcon";
 import { Image } from "expo-image";
@@ -28,14 +29,17 @@ export function ScreenHeader({ title, subtitle, showBack = false, right, style }
         styles.container,
         {
           backgroundColor: colors.surface,
-          paddingTop: insets.top + (Platform.OS === "web" ? 67 : 10),
+          paddingTop: headerTopPadding(insets.top, 10),
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
         },
         style,
       ]}
     >
-      <View style={styles.row}>
+      {/* The row must mirror, not just the icon: with a hardcoded direction the
+          back control stayed on the left in Arabic while its arrow pointed
+          right, which reads as a forward action on the wrong edge. */}
+      <View style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         {showBack ? (
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
@@ -79,7 +83,7 @@ export function DashboardHeader({
       <View
         style={[
           {
-            paddingTop: insets.top + (Platform.OS === "web" ? 67 : 4),
+            paddingTop: headerTopPadding(insets.top, 4),
             backgroundColor: colors.surface,
             borderBottomWidth: 1,
             borderBottomColor: colors.border,

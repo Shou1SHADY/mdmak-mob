@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { isPreview, PREVIEW_DELIVERIES, PREVIEW_EMPLOYEES, PREVIEW_GUARANTEES, PREVIEW_INVOICES, PREVIEW_LINKS } from "@/lib/preview";
 
 /**
  * A live listener over any top-level collection scoped to the signed-in member's
@@ -12,7 +13,19 @@ import { useAuth } from "@/context/AuthContext";
  * only read. One hook rather than three near-identical ones; anything needing a
  * different query (guarantees, which match on TWO org fields) keeps its own.
  */
+/** Fixture set per collection, for design preview. */
+const PREVIEW_BY_COLLECTION: Record<string, unknown[]> = {
+  invoices: PREVIEW_INVOICES,
+  employees: PREVIEW_EMPLOYEES,
+  guarantees: PREVIEW_GUARANTEES,
+  deliveries: PREVIEW_DELIVERIES,
+  contractorSupplierLinks: PREVIEW_LINKS,
+};
+
 export function useOrgCollection<T>(collectionName: string, field = "organizationId") {
+  if (isPreview()) {
+    return { items: (PREVIEW_BY_COLLECTION[collectionName] ?? []) as T[], orgId: "preview-user", isLoading: false };
+  }
   const { user } = useAuth();
   const orgId = user?.organizationId || "";
   const [items, setItems] = useState<T[]>([]);

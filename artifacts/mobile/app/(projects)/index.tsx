@@ -17,6 +17,7 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { scrollBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { Input } from "@/components/ui/Input";
@@ -217,6 +218,9 @@ export default function ProjectsListScreen() {
         </View>
         <ScrollView
           horizontal
+          // Hug the content: a horizontal scroller left to flex would stretch
+          // to the parent's height and stretch its chips with it.
+          style={{ flexGrow: 0, flexShrink: 0 }}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={[styles.chipRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}
         >
@@ -270,7 +274,7 @@ export default function ProjectsListScreen() {
           renderItem={renderProject}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: (insets.bottom || 0) + 96,
+            paddingBottom: scrollBottomPadding(insets.bottom, false),
           }}
           ListEmptyComponent={
             <EmptyState
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 0 },
-  chipRow: { gap: 8, paddingBottom: 10 },
+  chipRow: { alignItems: "center", gap: 8, paddingBottom: 10, paddingHorizontal: 4 },
   filterChip: {
     alignItems: "center",
     gap: 6,

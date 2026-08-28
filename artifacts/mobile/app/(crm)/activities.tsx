@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { scrollBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { useCrmData } from "@/hooks/useCrmData";
@@ -130,39 +131,45 @@ export default function CrmActivitiesScreen() {
         }
       />
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.chipRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}
-      >
-        {chips.map((chip) => {
-          const active = typeFilter === chip.value;
-          return (
-            <TouchableOpacity
-              key={chip.value}
-              onPress={() => setTypeFilter(chip.value)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              style={[
-                styles.filterChip,
-                {
-                  backgroundColor: active ? colors.cta : colors.card,
-                  borderColor: active ? colors.cta : colors.border,
-                },
-              ]}
-            >
-              <Text
+      {/* The wrapper is load-bearing. A horizontal ScrollView placed directly
+          in this flex column claims the remaining height and stretches every
+          chip into a full-height box — which is what the type filter was doing.
+          A content-sized parent pins it, matching the other filtered lists. */}
+      <View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.chipRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}
+        >
+          {chips.map((chip) => {
+            const active = typeFilter === chip.value;
+            return (
+              <TouchableOpacity
+                key={chip.value}
+                onPress={() => setTypeFilter(chip.value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
                 style={[
-                  styles.filterChipText,
-                  { color: active ? colors.ctaForeground : colors.mutedForeground },
+                  styles.filterChip,
+                  {
+                    backgroundColor: active ? colors.cta : colors.card,
+                    borderColor: active ? colors.cta : colors.border,
+                  },
                 ]}
               >
-                {chip.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    { color: active ? colors.ctaForeground : colors.mutedForeground },
+                  ]}
+                >
+                  {chip.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {isLoading ? (
         <View style={{ paddingHorizontal: 16 }}>
@@ -176,7 +183,7 @@ export default function CrmActivitiesScreen() {
           stickySectionHeadersEnabled={false}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: (insets.bottom || 0) + 96,
+            paddingBottom: scrollBottomPadding(insets.bottom, false),
           }}
           renderSectionHeader={({ section }) => (
             <Text
@@ -295,7 +302,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  chipRow: { gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
+  chipRow: { alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   filterChip: {
     // 44px minimum touch target, per the project accessibility rule.
     minHeight: 44,
