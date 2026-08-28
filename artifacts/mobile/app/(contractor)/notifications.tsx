@@ -30,7 +30,7 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
       return { icon: "slash" as const, color: colors.outline, nav: (n: AppNotification) => n.rfqId ? `/(contractor)/rfqs/${n.rfqId}` : null };
     case "new_chat_message":
     case "new_message":
-      return { icon: "message-circle" as const, color: colors.primary, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };
+      return { icon: "message-circle" as const, color: colors.primaryText, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };
     case "sample_sent":
       return { icon: "package" as const, color: colors.warning, nav: (n: AppNotification) => n.rfqId ? `/(contractor)/rfqs/${n.rfqId}` : null };
     case "delivery_notice":

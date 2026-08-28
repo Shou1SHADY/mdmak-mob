@@ -8,7 +8,8 @@ import {
   Platform,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Dimensions,
+  ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,12 +24,24 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
-const HERO_H = Math.max(SCREEN_H * 0.40, 260);
+/**
+ * The hero is sized per render, not once at import.
+ *
+ * Dimensions.get("window") at module scope froze the screen size at the
+ * moment the bundle loaded: it survived rotation, split view, and a resized
+ * browser window, and on the web it was read before the viewport was even
+ * settled. It also took 40% of the height unconditionally, which on a 568pt
+ * phone left the panel too short for its own contents.
+ */
+const HERO_MIN = 200;
+const HERO_MAX = 300;
 
 export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { width: screenW, height: screenH } = useWindowDimensions();
+  const heroH = Math.min(Math.max(screenH * 0.34, HERO_MIN), HERO_MAX);
+  const logoW = Math.round(Math.min(210, heroH * 0.85));
   const { user, login, logout, signInWithGoogle } = useAuth();
   const t = useT();
   const { isRTL } = useLanguage();
@@ -155,16 +168,16 @@ export default function LoginScreen() {
     }
   };
 
-  const topPad = insets.top + (Platform.OS === "web" ? 72 : 20);
+  const topPad = insets.top + (Platform.OS === "web" ? 24 : 20);
 
   return (
-    <View style={[styles.root, { backgroundColor: "#0A1123" }]}>
+    <View style={[styles.root, { backgroundColor: colors.drawerBg }]}>
       {/* ── Hero — background photo ── */}
-      <View style={[styles.hero, { height: HERO_H }]}>
+      <View style={[styles.hero, { height: heroH }]}>
         {/* Background photo */}
         <Image
           source={require("@/assets/images/login.png")}
-          style={{ position: "absolute", width: SCREEN_W, height: HERO_H }}
+          style={{ position: "absolute", width: screenW, height: heroH }}
           contentFit="cover"
           contentPosition="center"
         />
@@ -174,7 +187,7 @@ export default function LoginScreen() {
         <View style={[styles.heroContent, { paddingTop: topPad }]}>
           <Image
             source={require("@/assets/images/figma/logo1.png")}
-            style={styles.logo}
+            style={[styles.logo, { width: logoW, height: Math.round(logoW / 3) }]}
             contentFit="contain"
           />
           <View style={styles.taglineRow}>
@@ -192,8 +205,19 @@ export default function LoginScreen() {
           {/* Handle */}
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-          {/* No scroll — all content fits in one view */}
-          <View style={styles.inner}>
+          {/*
+            It scrolls. "All content fits in one view" held on a 6.1" phone and
+            nowhere else: on a 568pt screen the Google button and the sign-up
+            link fell off the bottom with no way to reach them, and with the
+            keyboard open it happened on every device.
+          */}
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.inner}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
             {/* Heading */}
             <Text style={[styles.heading, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
               {t.auth.login.title}
@@ -306,12 +330,12 @@ export default function LoginScreen() {
             >
               <Text style={[styles.signupText, { color: colors.outline }]}>
                 {t.auth.login.noAccount}{" "}
-                <Text style={{ color: colors.cta, fontFamily: "Inter_700Bold" }}>
+                <Text style={{ color: colors.cta, fontFamily: "Inter_600SemiBold" }}>
                   {t.auth.login.signUp}
                 </Text>
               </Text>
             </TouchableOpacity>
-          </View>
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -332,8 +356,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
-    paddingBottom: 32,
-    gap: 10,
+    paddingBottom: 24,
+    gap: 8,
   },
   logo: {
     width: 210,
@@ -344,10 +368,10 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontFamily: "Inter_400Regular",
-    fontSize: 13.5,
-    color: "rgba(255,255,255,0.72)",
+    fontSize: 14,
+    color: "rgba(255,255,255,0.78)",
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 24,
   },
 
   // Form panel
@@ -369,22 +393,25 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
 
-  // Static inner content (no scroll)
-  inner: {
+  scroll: {
     flex: 1,
+  },
+  inner: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 10,
   },
   heading: {
-    fontFamily: "HankenGrotesk_700Bold",
-    fontSize: 22,
-    marginBottom: 3,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 24,
+    lineHeight: 40,
+    marginBottom: 4,
   },
   subheading: {
     fontFamily: "Inter_400Regular",
-    fontSize: 13.5,
-    lineHeight: 20,
-    marginBottom: 14,
+    fontSize: 14,
+    lineHeight: 24,
+    marginBottom: 16,
   },
 
   // Fields
@@ -399,8 +426,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   forgotText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    lineHeight: 24,
   },
 
   // Divider
@@ -416,8 +444,9 @@ const styles = StyleSheet.create({
     height: 1,
   },
   dividerText: {
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_600SemiBold",
     fontSize: 12,
+    lineHeight: 20,
   },
 
   // Social
@@ -444,6 +473,7 @@ const styles = StyleSheet.create({
   socialLabel: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 14,
+    lineHeight: 24,
   },
 
   // Sign up
@@ -457,5 +487,6 @@ const styles = StyleSheet.create({
   signupText: {
     fontFamily: "Inter_400Regular",
     fontSize: 14,
+    lineHeight: 24,
   },
 });

@@ -17,7 +17,7 @@ export default function NotFoundScreen() {
         </Text>
 
         <Link href="/" style={styles.link}>
-          <Text style={[styles.linkText, { color: colors.primary }]}>
+          <Text style={[styles.linkText, { color: colors.primaryText }]}>
             {t.errors.goHome}
           </Text>
         </Link>

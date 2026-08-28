@@ -180,14 +180,14 @@ export default function CreateRFQScreen() {
                 <Text style={[styles.required, { color: colors.destructive }]}>*</Text>
               </View>
               {selectedCat && (
-                <View style={[styles.selectedChip, { backgroundColor: colors.primary + "12", borderColor: colors.primary }]}
+                <View style={[styles.selectedChip, { backgroundColor: colors.primaryText + "12", borderColor: colors.primaryText }]}
                   >
-                  <Feather name={ICON_MAP[selectedCat.id] || "tag"} size={14} color={colors.primary} />
-                  <Text style={[styles.selectedChipText, { color: colors.primary }]}>
+                  <Feather name={ICON_MAP[selectedCat.id] || "tag"} size={14} color={colors.primaryText} />
+                  <Text style={[styles.selectedChipText, { color: colors.primaryText }]}>
                     {isRTL ? selectedCat.labelAr : selectedCat.label}
                   </Text>
                   <TouchableOpacity onPress={() => setCategory("")} style={{ padding: 2 }}>
-                    <Feather name="x" size={14} color={colors.primary} />
+                    <Feather name="x" size={14} color={colors.primaryText} />
                   </TouchableOpacity>
                 </View>
               )}
@@ -211,22 +211,22 @@ export default function CreateRFQScreen() {
                       {
                         width: isSmall ? 110 : CARD_W,
                         height: isSmall ? 88 : CARD_H,
-                        backgroundColor: isActive ? colors.primary + "10" : colors.card,
-                        borderColor: isActive ? colors.primary : colors.border,
+                        backgroundColor: isActive ? colors.primaryText + "10" : colors.card,
+                        borderColor: isActive ? colors.primaryText : colors.border,
                       },
                     ]}
                     onPress={() => setCategory(isActive ? "" : cat.labelAr)}
                     activeOpacity={0.75}
                   >
                     <View style={[styles.catIconBox, {
-                      backgroundColor: isActive ? colors.primary + "18" : colors.muted + "60",
+                      backgroundColor: isActive ? colors.primaryText + "18" : colors.muted + "60",
                     }]}>
-                      <Feather name={icon} size={20} color={isActive ? colors.primary : colors.outline} />
+                      <Feather name={icon} size={20} color={isActive ? colors.primaryText : colors.outline} />
                     </View>
                     <Text
                       style={[
                         styles.catCardText,
-                        { color: isActive ? colors.primary : colors.foreground },
+                        { color: isActive ? colors.primaryText : colors.foreground },
                         isActive && { fontFamily: "Inter_600SemiBold" },
                       ]}
                       numberOfLines={2}

@@ -162,8 +162,8 @@ export function DashboardHeader({
               style={[
                 styles.langOption,
                 {
-                  backgroundColor: language === "ar" ? colors.primary + "08" : "transparent",
-                  borderColor: language === "ar" ? colors.primary + "30" : colors.border,
+                  backgroundColor: language === "ar" ? colors.primaryText + "08" : "transparent",
+                  borderColor: language === "ar" ? colors.primaryText + "30" : colors.border,
                 },
               ]}
               onPress={() => { setLanguage("ar"); setShowSheet(false); }}
@@ -188,8 +188,8 @@ export function DashboardHeader({
               style={[
                 styles.langOption,
                 {
-                  backgroundColor: language === "en" ? colors.primary + "08" : "transparent",
-                  borderColor: language === "en" ? colors.primary + "30" : colors.border,
+                  backgroundColor: language === "en" ? colors.primaryText + "08" : "transparent",
+                  borderColor: language === "en" ? colors.primaryText + "30" : colors.border,
                 },
               ]}
               onPress={() => { setLanguage("en"); setShowSheet(false); }}

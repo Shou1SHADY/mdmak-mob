@@ -300,14 +300,14 @@ export default function BrowseRFQsScreen() {
           )}
           {filterCity !== "All" && (
             <TouchableOpacity
-              style={[styles.activePill, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}
+              style={[styles.activePill, { backgroundColor: colors.primaryText + "10", borderColor: colors.primaryText + "30" }]}
               onPress={() => setFilterCity("All")}
             >
-              <Feather name="map-pin" size={11} color={colors.primary} />
-              <Text style={[styles.activePillText, { color: colors.primary }]} numberOfLines={1}>
+              <Feather name="map-pin" size={11} color={colors.primaryText} />
+              <Text style={[styles.activePillText, { color: colors.primaryText }]} numberOfLines={1}>
                 {displayCity(filterCity, isRTL)}
               </Text>
-              <Feather name="x" size={11} color={colors.primary} />
+              <Feather name="x" size={11} color={colors.primaryText} />
             </TouchableOpacity>
           )}
           {filterStatus !== "All" && (

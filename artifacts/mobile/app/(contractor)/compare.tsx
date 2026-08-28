@@ -219,7 +219,7 @@ export default function CompareScreen() {
 
         {rfqLoading ? (
           <View style={styles.centered}>
-            <ActivityIndicator size="large" color={colors.primary} />
+            <ActivityIndicator size="large" color={colors.primaryText} />
           </View>
         ) : rfqError ? (
           <View style={styles.centered}>
@@ -319,7 +319,7 @@ export default function CompareScreen() {
 
       {offersLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.primaryText} />
         </View>
       ) : offersError ? (
         <View style={styles.centered}>
@@ -381,8 +381,8 @@ export default function CompareScreen() {
 
                 {/* Price + Duration + Date row */}
                 <View style={[styles.metricsRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <View style={[styles.metricBlock, { backgroundColor: (isBest ? colors.success : colors.primary) + "0D" }]}>
-                    <Text style={[styles.metricValue, { color: isBest ? colors.success : colors.primary }]}>
+                  <View style={[styles.metricBlock, { backgroundColor: (isBest ? colors.success : colors.primaryText) + "0D" }]}>
+                    <Text style={[styles.metricValue, { color: isBest ? colors.success : colors.primaryText }]}>
                       {price.toLocaleString(isRTL ? "ar-SA" : "en-US")}
                     </Text>
                     <Text style={[styles.metricLabel, { color: colors.outline }]}>{t.compare.currency}</Text>

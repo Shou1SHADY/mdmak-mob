@@ -30,7 +30,7 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
       return { icon: "users" as const, color: colors.cta, nav: () => null };
     case "new_chat_message":
     case "new_message":
-      return { icon: "message-circle" as const, color: colors.primary, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };
+      return { icon: "message-circle" as const, color: colors.primaryText, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };
     default:
       return { icon: "bell" as const, color: colors.accent, nav: () => null };
   }

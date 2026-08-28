@@ -148,7 +148,7 @@ export default function SupplierDashboard() {
 
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primaryText} />}
         showsVerticalScrollIndicator={false}
       >
         <WelcomeHeroCard
@@ -180,7 +180,7 @@ export default function SupplierDashboard() {
         {/* Stats strip */}
         <View style={[styles.statsStrip, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {[
-            { label: t.dashboard.myOffers, value: stats.totalOffers, color: colors.primary, icon: "tag" },
+            { label: t.dashboard.myOffers, value: stats.totalOffers, color: colors.primaryText, icon: "tag" },
             { label: t.dashboard.pending, value: stats.pending, color: colors.warning, icon: "clock" },
             { label: t.dashboard.accepted, value: stats.accepted, color: colors.success, icon: "check-circle" },
             { label: t.dashboard.openRfqs, value: stats.openRfqs, color: colors.cta, icon: "file-text" },
@@ -252,8 +252,8 @@ export default function SupplierDashboard() {
             </View>
             <View style={[styles.monthDivider, { backgroundColor: colors.border }]} />
             <View style={[styles.monthItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <LinearGradient colors={[colors.primary + "22", colors.primary + "08"]} style={styles.monthIconWrap}>
-                <Feather name="tag" size={13} color={colors.primary} />
+              <LinearGradient colors={[colors.primaryText + "22", colors.primaryText + "08"]} style={styles.monthIconWrap}>
+                <Feather name="tag" size={13} color={colors.primaryText} />
               </LinearGradient>
               <View>
                 <Text style={[styles.monthValue, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>{stats.totalOffers}</Text>

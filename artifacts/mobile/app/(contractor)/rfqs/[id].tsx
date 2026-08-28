@@ -273,7 +273,7 @@ export default function RFQDetailScreen() {
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScreenHeader title={t.rfq.detail} showBack />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.primaryText} />
         </View>
       </View>
     );
@@ -356,13 +356,13 @@ export default function RFQDetailScreen() {
           </TouchableOpacity>
           {offers.length > 0 && (
             <TouchableOpacity
-              style={[styles.exportBtn, { borderColor: colors.primary + "40", backgroundColor: colors.primary + "08", flexDirection: isRTL ? "row-reverse" : "row" }]}
+              style={[styles.exportBtn, { borderColor: colors.primaryText + "40", backgroundColor: colors.primaryText + "08", flexDirection: isRTL ? "row-reverse" : "row" }]}
               onPress={handleExportComparison}
               disabled={pdfLoading}
               activeOpacity={0.75}
             >
-              <Feather name="bar-chart-2" size={13} color={colors.primary} />
-              <Text style={[styles.exportBtnText, { color: colors.primary }]}>{isRTL ? "تصدير مقارنة العروض" : "Export Comparison"}</Text>
+              <Feather name="bar-chart-2" size={13} color={colors.primaryText} />
+              <Text style={[styles.exportBtnText, { color: colors.primaryText }]}>{isRTL ? "تصدير مقارنة العروض" : "Export Comparison"}</Text>
             </TouchableOpacity>
           )}
         </View>

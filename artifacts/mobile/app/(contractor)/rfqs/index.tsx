@@ -131,7 +131,7 @@ export default function MyRFQsScreen() {
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.primary, fontFamily: "HankenGrotesk_700Bold" }]}>
+            <Text style={[styles.statValue, { color: colors.primaryText, fontFamily: "HankenGrotesk_700Bold" }]}>
               {stats.active}
             </Text>
             <Text style={[styles.statLabel, { color: colors.outline }]}>{t.dashboard.active}</Text>
@@ -208,20 +208,20 @@ export default function MyRFQsScreen() {
             <Text style={[styles.filterLabel, { color: colors.secondary, textAlign: isRTL ? "right" : "left" }]}>{t.rfq.category}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.optionScroll, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <TouchableOpacity
-                style={[styles.optionChip, { backgroundColor: draftCategory === "" ? colors.primary + "18" : colors.muted, borderColor: draftCategory === "" ? colors.primary + "60" : colors.border }]}
+                style={[styles.optionChip, { backgroundColor: draftCategory === "" ? colors.primaryText + "18" : colors.muted, borderColor: draftCategory === "" ? colors.primaryText + "60" : colors.border }]}
                 onPress={() => setDraftCategory("")}
               >
-                <Text style={[styles.optionChipText, { color: draftCategory === "" ? colors.primary : colors.mutedForeground }]}>{t.common.all}</Text>
+                <Text style={[styles.optionChipText, { color: draftCategory === "" ? colors.primaryText : colors.mutedForeground }]}>{t.common.all}</Text>
               </TouchableOpacity>
               {CATEGORIES.map((cat) => {
                 const active = draftCategory === cat.labelAr;
                 return (
                   <TouchableOpacity
                     key={cat.id}
-                    style={[styles.optionChip, { backgroundColor: active ? colors.primary + "18" : colors.muted, borderColor: active ? colors.primary + "60" : colors.border }]}
+                    style={[styles.optionChip, { backgroundColor: active ? colors.primaryText + "18" : colors.muted, borderColor: active ? colors.primaryText + "60" : colors.border }]}
                     onPress={() => setDraftCategory(active ? "" : cat.labelAr)}
                   >
-                    <Text style={[styles.optionChipText, { color: active ? colors.primary : colors.mutedForeground }]}>{isRTL ? cat.labelAr : cat.label}</Text>
+                    <Text style={[styles.optionChipText, { color: active ? colors.primaryText : colors.mutedForeground }]}>{isRTL ? cat.labelAr : cat.label}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -231,20 +231,20 @@ export default function MyRFQsScreen() {
             <Text style={[styles.filterLabel, { color: colors.secondary, textAlign: isRTL ? "right" : "left", marginTop: 14 }]}>{t.rfq.city}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.optionScroll, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <TouchableOpacity
-                style={[styles.optionChip, { backgroundColor: draftCity === "" ? colors.primary + "18" : colors.muted, borderColor: draftCity === "" ? colors.primary + "60" : colors.border }]}
+                style={[styles.optionChip, { backgroundColor: draftCity === "" ? colors.primaryText + "18" : colors.muted, borderColor: draftCity === "" ? colors.primaryText + "60" : colors.border }]}
                 onPress={() => setDraftCity("")}
               >
-                <Text style={[styles.optionChipText, { color: draftCity === "" ? colors.primary : colors.mutedForeground }]}>{t.common.all}</Text>
+                <Text style={[styles.optionChipText, { color: draftCity === "" ? colors.primaryText : colors.mutedForeground }]}>{t.common.all}</Text>
               </TouchableOpacity>
               {SAUDI_CITIES.map((city) => {
                 const active = draftCity === city;
                 return (
                   <TouchableOpacity
                     key={city}
-                    style={[styles.optionChip, { backgroundColor: active ? colors.primary + "18" : colors.muted, borderColor: active ? colors.primary + "60" : colors.border }]}
+                    style={[styles.optionChip, { backgroundColor: active ? colors.primaryText + "18" : colors.muted, borderColor: active ? colors.primaryText + "60" : colors.border }]}
                     onPress={() => setDraftCity(active ? "" : city)}
                   >
-                    <Text style={[styles.optionChipText, { color: active ? colors.primary : colors.mutedForeground }]}>{displayCity(city, isRTL)}</Text>
+                    <Text style={[styles.optionChipText, { color: active ? colors.primaryText : colors.mutedForeground }]}>{displayCity(city, isRTL)}</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -277,7 +277,7 @@ export default function MyRFQsScreen() {
           {filterChips.map((item) => {
             const active = statusFilter === item.id;
             const count = statusCounts[item.id] ?? 0;
-            const chipColor = active ? (item as any).color ?? colors.primary : undefined;
+            const chipColor = active ? (item as any).color ?? colors.primaryText : undefined;
             return (
               <TouchableOpacity
                 key={item.id}
@@ -285,10 +285,10 @@ export default function MyRFQsScreen() {
                   styles.chip,
                   {
                     backgroundColor: active
-                      ? (chipColor ?? colors.primary) + "18"
+                      ? (chipColor ?? colors.primaryText) + "18"
                       : colors.card,
                     borderColor: active
-                      ? (chipColor ?? colors.primary) + "60"
+                      ? (chipColor ?? colors.primaryText) + "60"
                       : colors.border,
                   },
                 ]}
@@ -297,11 +297,11 @@ export default function MyRFQsScreen() {
                 accessibilityState={{ selected: active }}
               >
                 {active && (
-                  <View style={[styles.chipDot, { backgroundColor: chipColor ?? colors.primary }]} />
+                  <View style={[styles.chipDot, { backgroundColor: chipColor ?? colors.primaryText }]} />
                 )}
                 <Text style={[
                   styles.chipText,
-                  { color: active ? (chipColor ?? colors.primary) : colors.onSurfaceVariant },
+                  { color: active ? (chipColor ?? colors.primaryText) : colors.onSurfaceVariant },
                 ]}>
                   {isRTL && (item as any).labelAr ? (item as any).labelAr : item.label}
                 </Text>
@@ -309,11 +309,11 @@ export default function MyRFQsScreen() {
                   styles.chipBadge,
                   {
                     backgroundColor: active
-                      ? (chipColor ?? colors.primary) + "22"
+                      ? (chipColor ?? colors.primaryText) + "22"
                       : colors.muted,
                   },
                 ]}>
-                  <Text style={[styles.chipBadgeText, { color: active ? (chipColor ?? colors.primary) : colors.outline }]}>
+                  <Text style={[styles.chipBadgeText, { color: active ? (chipColor ?? colors.primaryText) : colors.outline }]}>
                     {count}
                   </Text>
                 </View>
@@ -356,7 +356,7 @@ export default function MyRFQsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => { setRefreshing(true); fetchRFQs(); }}
-              tintColor={colors.primary}
+              tintColor={colors.primaryText}
             />
           }
           ListEmptyComponent={

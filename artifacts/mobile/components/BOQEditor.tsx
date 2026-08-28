@@ -126,14 +126,14 @@ function ItemForm({ item, onChange, isRTL, colors, t }: ItemFormProps) {
                     style={[
                       styles.unitRow,
                       { borderBottomColor: colors.border, borderBottomWidth: i < BOQ_UNITS.length - 1 ? 1 : 0 },
-                      active && { backgroundColor: colors.primary + "10" },
+                      active && { backgroundColor: colors.primaryText + "10" },
                     ]}
                     onPress={() => { onChange({ ...item, unit: u.id }); setUnitModal(false); }}
                   >
-                    <Text style={{ fontSize: 15, fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular", color: active ? colors.primary : colors.foreground }}>
+                    <Text style={{ fontSize: 15, fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular", color: active ? colors.primaryText : colors.foreground }}>
                       {isRTL ? u.labelAr : u.labelEn}
                     </Text>
-                    {active && <Feather name="check" size={16} color={colors.primary} />}
+                    {active && <Feather name="check" size={16} color={colors.primaryText} />}
                   </TouchableOpacity>
                 );
               })}
@@ -246,8 +246,8 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
             >
               {/* Index badge + description row */}
               <View style={[styles.itemHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                <View style={[styles.indexBadge, { backgroundColor: colors.primary + "12" }]}>
-                  <Text style={[styles.indexText, { color: colors.primary }]}>{idx + 1}</Text>
+                <View style={[styles.indexBadge, { backgroundColor: colors.primaryText + "12" }]}>
+                  <Text style={[styles.indexText, { color: colors.primaryText }]}>{idx + 1}</Text>
                 </View>
                 <Text style={[styles.itemDesc, { color: colors.foreground, flex: 1, textAlign: isRTL ? "right" : "left" }]} numberOfLines={2}>
                   {item.description}

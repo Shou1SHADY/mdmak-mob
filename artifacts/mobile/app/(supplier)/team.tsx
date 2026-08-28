@@ -67,8 +67,8 @@ export default function SupplierTeamScreen() {
                 {item.email}
               </Text>
             </View>
-            <View style={[styles.roleBadge, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "20" }]}>
-              <Text style={[styles.roleText, { color: colors.primary }]}>
+            <View style={[styles.roleBadge, { backgroundColor: colors.primaryText + "10", borderColor: colors.primaryText + "20" }]}>
+              <Text style={[styles.roleText, { color: colors.primaryText }]}>
                 {item.role?.charAt(0)?.toUpperCase() ?? "?"}{item.role ? item.role.slice(1) : ""}
               </Text>
             </View>

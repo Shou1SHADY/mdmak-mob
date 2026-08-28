@@ -200,8 +200,8 @@ export function ProfileTourGuide({
 
           {/* Header row */}
           <View style={[styles.headerRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-            <View style={[styles.stepBadge, { backgroundColor: colors.primary + "14" }]}>
-              <Text style={[styles.stepBadgeText, { color: colors.primary }]}>{stepLabel}</Text>
+            <View style={[styles.stepBadge, { backgroundColor: colors.primaryText + "14" }]}>
+              <Text style={[styles.stepBadgeText, { color: colors.primaryText }]}>{stepLabel}</Text>
             </View>
             <Pressable onPress={onDismiss} style={styles.closeBtn} hitSlop={12}>
               <Feather name="x" size={18} color={colors.outline} />
@@ -211,8 +211,8 @@ export function ProfileTourGuide({
           {/* Step content */}
           <Animated.View style={{ opacity: stepAnim }}>
             <View style={[styles.iconRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <View style={[styles.stepIconBox, { backgroundColor: colors.primary + "12" }]}>
-                <Feather name={current.icon} size={26} color={colors.primary} />
+              <View style={[styles.stepIconBox, { backgroundColor: colors.primaryText + "12" }]}>
+                <Feather name={current.icon} size={26} color={colors.primaryText} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text
@@ -241,7 +241,7 @@ export function ProfileTourGuide({
                   style={[
                     styles.dot,
                     {
-                      backgroundColor: i === step ? colors.primary : colors.border,
+                      backgroundColor: i === step ? colors.primaryText : colors.border,
                       width: i === step ? 20 : 7,
                     },
                   ]}

@@ -37,6 +37,19 @@ if (envFile) {
   console.log(`Loaded ${envFile}`);
 }
 
+// Refuse to build with no env file rather than quietly aiming at production.
+//
+// `npm run build:web` with no argument produced a production-pointed bundle
+// that was then deployed to the UAT site — the failure was a single line of
+// log output, easy to scroll past. Pass an env file (npm run build:web:uat),
+// or --prod to say production out loud.
+if (!envFile && !process.argv.includes("--prod")) {
+  console.error("Refusing to build: no env file given, which means PRODUCTION Firebase.");
+  console.error("  UAT:        npm run build:web:uat");
+  console.error("  Production: node scripts/build-web.mjs --prod");
+  process.exit(1);
+}
+
 const project = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
 // Say it out loud. Shipping a public test link at the live project is the
 // mistake this whole file exists to make hard to commit by accident.

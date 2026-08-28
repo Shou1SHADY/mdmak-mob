@@ -298,8 +298,8 @@ export default function SubmitOfferScreen() {
               {boqItems.map((item, idx) => (
                 <View key={item.id} style={{ gap: 6 }}>
                   <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 8 }}>
-                    <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: colors.primary + "12", alignItems: "center", justifyContent: "center" }}>
-                      <Text style={{ fontSize: 10, fontFamily: "Inter_700Bold", color: colors.primary }}>{idx + 1}</Text>
+                    <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: colors.primaryText + "12", alignItems: "center", justifyContent: "center" }}>
+                      <Text style={{ fontSize: 10, fontFamily: "Inter_700Bold", color: colors.primaryText }}>{idx + 1}</Text>
                     </View>
                     <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground, flex: 1, textAlign: isRTL ? "right" : "left" }} numberOfLines={2}>
                       {item.description}
@@ -337,9 +337,9 @@ export default function SubmitOfferScreen() {
           )}
 
           {/* Info banner */}
-          <View style={{ borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: isRTL ? "row-reverse" : "row", gap: 10, alignItems: "flex-start", backgroundColor: colors.accentBlueSoft, borderColor: colors.primary + "30" }}>
-            <Feather name="info" size={16} color={colors.primary} />
-            <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.primary }}>
+          <View style={{ borderRadius: 12, borderWidth: 1, padding: 14, flexDirection: isRTL ? "row-reverse" : "row", gap: 10, alignItems: "flex-start", backgroundColor: colors.accentBlueSoft, borderColor: colors.primaryText + "30" }}>
+            <Feather name="info" size={16} color={colors.primaryText} />
+            <Text style={{ flex: 1, fontSize: 13, lineHeight: 19, color: colors.primaryText }}>
               {t.rfq.offerPriceInfo}
             </Text>
           </View>
@@ -366,17 +366,17 @@ export default function SubmitOfferScreen() {
                   paddingHorizontal: 20,
                   borderBottomWidth: i < DURATION_UNITS.length - 1 ? 1 : 0,
                   borderBottomColor: colors.border,
-                  backgroundColor: executionDurationUnit === unit.id ? colors.primary + "10" : "transparent",
+                  backgroundColor: executionDurationUnit === unit.id ? colors.primaryText + "10" : "transparent",
                   flexDirection: isRTL ? "row-reverse" : "row",
                   alignItems: "center",
                   justifyContent: "space-between",
                 }}
                 onPress={() => { setExecutionDurationUnit(unit.id); setUnitPickerVisible(false); }}
               >
-                <Text style={{ fontSize: 15, fontFamily: executionDurationUnit === unit.id ? "Inter_600SemiBold" : "Inter_400Regular", color: executionDurationUnit === unit.id ? colors.primary : colors.foreground }}>
+                <Text style={{ fontSize: 15, fontFamily: executionDurationUnit === unit.id ? "Inter_600SemiBold" : "Inter_400Regular", color: executionDurationUnit === unit.id ? colors.primaryText : colors.foreground }}>
                   {isRTL ? unit.labelAr : unit.labelEn}
                 </Text>
-                {executionDurationUnit === unit.id && <Feather name="check" size={16} color={colors.primary} />}
+                {executionDurationUnit === unit.id && <Feather name="check" size={16} color={colors.primaryText} />}
               </TouchableOpacity>
             ))}
           </View>

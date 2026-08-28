@@ -51,7 +51,7 @@ export function Input({
 
   const borderColor = borderAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [colors.border, error ? colors.destructive : colors.primary],
+    outputRange: [colors.border, error ? colors.destructive : colors.primaryText],
   });
 
   const sp = colors.spacing;
@@ -96,7 +96,7 @@ export function Input({
             <Feather
               name={leftIcon}
               size={iconSize}
-              color={focused ? colors.primary : colors.outline}
+              color={focused ? colors.primaryText : colors.outline}
             />
           </View>
         )}

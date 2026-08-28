@@ -61,8 +61,8 @@ export default function TeamScreen() {
         contentContainerStyle={[styles.list, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
         renderItem={({ item }) => (
           <View style={[styles.memberItem, { borderBottomColor: colors.border }]}>
-            <View style={[styles.avatar, { backgroundColor: colors.primary + "20" }]}>
-              <Text style={[styles.avatarText, { color: colors.primary }]}>
+            <View style={[styles.avatar, { backgroundColor: colors.primaryText + "20" }]}>
+              <Text style={[styles.avatarText, { color: colors.primaryText }]}>
                 {item.displayName.charAt(0).toUpperCase()}
               </Text>
             </View>

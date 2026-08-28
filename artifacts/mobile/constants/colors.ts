@@ -9,8 +9,15 @@ const colors = {
     card: "#FFFFFF",
     cardForeground: "#020617",
 
+    // primary is a FILL: a solid brand surface with primaryForeground on it.
+    // primaryText is the same brand as INK on the page. They were one token,
+    // and the token cannot be both — a fill has to contrast with the page and
+    // ink has to contrast with it, which are opposite requirements. Inverting
+    // the single token for dark mode duly turned fourteen filled buttons and
+    // the register hero into near-white panels with white text on them.
     primary: "#0F172A",
     primaryForeground: "#FFFFFF",
+    primaryText: "#0F172A",
 
     cta: "#0369A1",
     ctaForeground: "#FFFFFF",
@@ -19,18 +26,18 @@ const colors = {
     secondaryForeground: "#FFFFFF",
 
     muted: "#F1F5F9",
-    mutedForeground: "#64748B",
+    mutedForeground: "#475569", // 7.6:1 — was #64748B at 4.6:1
 
     accent: "#20CBD5",
-    accentForeground: "#FFFFFF",
+    accentForeground: "#04252A", // white on teal is 2.0:1
 
-    destructive: "#EF4444",
+    destructive: "#DC2626", // 4.9:1 both ways — was #EF4444 at 3.8:1
     destructiveForeground: "#FFFFFF",
 
-    success: "#12A063",
+    success: "#0F7A4C", // 5.4:1 both ways — was #12A063 at 3.4:1
     successForeground: "#FFFFFF",
 
-    warning: "#F59E0B",
+    warning: "#A16207", // 5.0:1 both ways — was #F59E0B at 2.2:1
     warningForeground: "#FFFFFF",
 
     border: "#E2E8F0",
@@ -50,8 +57,8 @@ const colors = {
     accentBlueSoft: "#E0E7FF",
     accentPurpleSoft: "#EEF2FF",
     surfaceGray: "#F1F5F9",
-    outline: "#94A3B8",
-    onSurfaceVariant: "#475569",
+    outline: "#64748B", // 4.6:1 — was #94A3B8 at 2.5:1
+    onSurfaceVariant: "#334155", // 10.9:1
 
     chartColors: ["#0F172A", "#0369A1", "#12A063", "#334155", "#64748B"],
 
@@ -90,8 +97,13 @@ const colors = {
     card: "#172136", // more separation from background
     cardForeground: "#F1F5F9",
 
-    primary: "#E2E8F0", // inverted: primary is a FOREGROUND in dark
-    primaryForeground: "#0B1221", // pairs with the inverted primary
+    // The brand navy cannot be a fill here — it is the background. A deep
+    // brand blue keeps the "filled, important" reading and carries white at
+    // 6.6:1, while staying clearly distinct from the lighter cta blue.
+    primary: "#0F5FA8",
+    primaryForeground: "#FFFFFF",
+    // Brand ink and brand tints: 10:1 on the background.
+    primaryText: "#A8C0DC",
 
     cta: "#38BDF8",
     ctaForeground: "#0B1221",
@@ -136,7 +148,12 @@ const colors = {
 
     chartColors: ["#38BDF8", "#20CBD5", "#4ADE80", "#94A3B8", "#64748B"],
 
-    gradientPrimary: ["#0B1221", "#131C30"] as [string, string],
+    // The app-wide header gradient, under white text on eleven screens. It ran
+    // from the page colour to almost the page colour, so every header dissolved
+    // into the screen behind it — in light mode the same gradient is a solid
+    // navy block. A deep brand blue restores the header as a surface: 9.3:1
+    // under white, 2.0:1 against the page.
+    gradientPrimary: ["#134A80", "#0B2C4F"] as [string, string],
     gradientBlue: ["#0284C7", "#0369A1"] as [string, string],
     gradientTeal: ["#0B1221", "#0369A1"] as [string, string],
     gradientGlass: ["rgba(255,255,255,0.06)", "rgba(255,255,255,0.02)"] as [string, string],

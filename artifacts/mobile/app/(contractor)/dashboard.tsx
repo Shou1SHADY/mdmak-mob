@@ -250,7 +250,7 @@ export default function ContractorDashboard() {
 
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primaryText} />}
         showsVerticalScrollIndicator={false}
       >
         <WelcomeHeroCard
@@ -282,7 +282,7 @@ export default function ContractorDashboard() {
         {/* Stats strip */}
         <View style={[styles.statsStrip, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {[
-            { label: t.dashboard.totalRfqs, value: stats.total,      color: colors.primary, icon: "file-text"    },
+            { label: t.dashboard.totalRfqs, value: stats.total,      color: colors.primaryText, icon: "file-text"    },
             { label: t.dashboard.active,     value: stats.inProgress,  color: colors.cta,     icon: "activity"     },
             { label: t.dashboard.offersIn,   value: stats.offers,      color: colors.success, icon: "tag"          },
             { label: t.dashboard.closed,     value: stats.closed,      color: "#22c55e",      icon: "check-circle" },
@@ -359,8 +359,8 @@ export default function ContractorDashboard() {
           {/* Footer stats */}
           <View style={[styles.overviewFooter, { borderTopColor: colors.border, flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <View style={styles.footerStat}>
-              <View style={[styles.footerIconWrap, { backgroundColor: colors.primary + "14" }]}>
-                <Feather name="file-text" size={13} color={colors.primary} />
+              <View style={[styles.footerIconWrap, { backgroundColor: colors.primaryText + "14" }]}>
+                <Feather name="file-text" size={13} color={colors.primaryText} />
               </View>
               <Text style={[styles.footerValue, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>{stats.total}</Text>
               <Text style={[styles.footerLabel, { color: colors.outline }]}>{t.dashboard.totalRfqs}</Text>

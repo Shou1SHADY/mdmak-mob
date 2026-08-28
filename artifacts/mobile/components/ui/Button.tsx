@@ -104,7 +104,7 @@ export function Button({
   const getTextStyle = (): TextStyle => {
     const variants: Record<Variant, TextStyle> = {
       primary: { color: colors.ctaForeground },
-      secondary: { color: colors.primary },
+      secondary: { color: colors.primaryText },
       ghost: { color: colors.cta },
       destructive: { color: colors.destructiveForeground },
       outline: { color: colors.foreground },

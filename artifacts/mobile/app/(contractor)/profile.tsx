@@ -22,24 +22,6 @@ import { router } from "expo-router";
 import { ProfileTourGuide, useProfileTour } from "@/components/ProfileTourGuide";
 
 /* ─── Quick Action Pill ─── */
-function QuickActionPill({
-  icon, label, color, onPress,
-}: {
-  icon: keyof typeof Feather.glyphMap; label: string; color: string; onPress: () => void;
-}) {
-  const colors = useColors();
-  return (
-    <TouchableOpacity
-      style={[styles.pill, { backgroundColor: color + "15", borderColor: color + "30" }]}
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
-      <Feather name={icon} size={16} color={color} />
-      <Text style={[styles.pillText, { color }]} numberOfLines={1}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
 /* ─── Menu Row ─── */
 function MenuRow({
   icon, label, subtitle, color, onPress, isLast, isRTL,
@@ -272,11 +254,6 @@ export default function ContractorProfileScreen() {
       </LinearGradient>
 
       {/* ── Quick Actions ── */}
-      <View style={[styles.quickActions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-        <QuickActionPill icon="file-text" label={t.dashboard.totalRfqs} color={colors.primary} onPress={() => router.push("/(contractor)/rfqs/index")} />
-        <QuickActionPill icon="activity" label={t.dashboard.active} color={colors.cta} onPress={() => router.push("/(contractor)/rfqs/index")} />
-        <QuickActionPill icon="tag" label={t.dashboard.offersIn} color={colors.success} onPress={() => router.push("/(contractor)/rfqs/index")} />
-      </View>
 
       <ScrollView
         ref={scrollRef}
@@ -323,13 +300,30 @@ export default function ContractorProfileScreen() {
         </Card>
 
         {/* ── Stats ── */}
+        {/*
+          One row, with the numbers on it.
+
+          A row of label-only pills used to sit above these cards, carrying the
+          same three icons, labels and colours and sending all three to the same
+          screen — so the screen showed each statistic twice, and the copy shown
+          first was the half without the value on it. The cards absorbed the tap
+          targets; the pills are gone.
+        */}
         <View style={[styles.statsGrid, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           {[
-            { label: t.dashboard.totalRfqs, value: stats.totalRfqs, icon: "file-text", color: colors.primary, bg: colors.primary + "10" },
+            { label: t.dashboard.totalRfqs, value: stats.totalRfqs, icon: "file-text", color: colors.primaryText, bg: colors.primaryText + "10" },
             { label: t.dashboard.active, value: stats.activeRfqs, icon: "activity", color: colors.cta, bg: colors.cta + "10" },
             { label: t.dashboard.offersIn, value: stats.totalOffers, icon: "tag", color: colors.success, bg: colors.success + "10" },
           ].map((s) => (
-            <Card key={s.label} style={[styles.statCard, { borderColor: s.color + "20" }]}>
+            <TouchableOpacity
+              key={s.label}
+              style={{ flex: 1 }}
+              onPress={() => router.push("/(contractor)/rfqs/index")}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={`${s.label}: ${loadingStats ? "—" : s.value}`}
+            >
+            <Card style={[styles.statCard, { borderColor: s.color + "20" }]}>
               <View style={[styles.statIconBox, { backgroundColor: s.bg }]}>
                 <Feather name={s.icon as any} size={18} color={s.color} />
               </View>
@@ -338,6 +332,7 @@ export default function ContractorProfileScreen() {
               </Text>
               <Text style={[styles.statLabel, { color: colors.outline }]} numberOfLines={1} ellipsizeMode="tail">{s.label}</Text>
             </Card>
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -346,8 +341,8 @@ export default function ContractorProfileScreen() {
         <Card style={{ borderRadius: 16, borderWidth: 1, borderColor: editing ? colors.cta + "60" : colors.border }}>
           <View style={[styles.cardHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 10 }}>
-              <View style={[styles.cardHeaderIcon, { backgroundColor: colors.primary + "12" }]}>
-                <Feather name="briefcase" size={16} color={colors.primary} />
+              <View style={[styles.cardHeaderIcon, { backgroundColor: colors.primaryText + "12" }]}>
+                <Feather name="briefcase" size={16} color={colors.primaryText} />
               </View>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.profile.organization}</Text>
             </View>
@@ -598,9 +593,6 @@ const styles = StyleSheet.create({
   roleText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 
   // Quick actions
-  quickActions: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginTop: 12, marginBottom: 8 },
-  pill: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 24, borderWidth: 1.5 },
-  pillText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 
   // Scroll
   scroll: { padding: 16, gap: 12 },
@@ -621,10 +613,10 @@ const styles = StyleSheet.create({
 
   // Stats grid
   statsGrid: { flexDirection: "row", gap: 8 },
-  statCard: { flex: 1, borderRadius: 14, borderWidth: 1, alignItems: "center", padding: 14, gap: 6 },
+  statCard: { borderRadius: 14, borderWidth: 1, alignItems: "center", padding: 14, gap: 6 },
   statIconBox: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  statValue: { fontSize: 22, fontFamily: "HankenGrotesk_700Bold" },
-  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" as const },
+  statValue: { fontSize: 24, lineHeight: 32, fontFamily: "Inter_600SemiBold" },
+  statLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", textAlign: "center" },
 
   // Organization
   cardHeader: { alignItems: "center", justifyContent: "space-between", marginBottom: 14 },

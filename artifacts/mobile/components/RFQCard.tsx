@@ -185,7 +185,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
             <Feather
               name={isRTL ? "chevron-left" : "chevron-right"}
               size={14}
-              color={colors.primary}
+              color={colors.primaryText}
             />
           </View>
         </View>

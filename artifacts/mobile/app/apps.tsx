@@ -39,7 +39,7 @@ export default function AppsLauncherScreen() {
 
   const accent = (token: AccentToken): string => {
     const map: Record<AccentToken, string> = {
-      primary: colors.primary,
+      primary: colors.primaryText,
       secondary: colors.secondary,
       accent: colors.accent,
       success: colors.success,
