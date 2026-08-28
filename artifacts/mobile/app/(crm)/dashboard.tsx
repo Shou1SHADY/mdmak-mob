@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { scrollBottomPadding } from "@/lib/layout";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { StatsCard } from "@/components/StatsCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { useCrmData } from "@/hooks/useCrmData";
@@ -80,7 +80,7 @@ export default function CrmDashboardScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={t.crm.title} subtitle={t.crm.dashboard} showBack />
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: scrollBottomPadding(insets.bottom, false) }}
+        contentContainerStyle={{ padding: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
         showsVerticalScrollIndicator={false}
       >
         {isLoading ? (

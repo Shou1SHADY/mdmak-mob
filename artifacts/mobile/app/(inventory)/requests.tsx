@@ -14,7 +14,7 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { scrollBottomPadding } from "@/lib/layout";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { CrmSheet } from "@/components/crm/CrmSheet";
@@ -155,7 +155,7 @@ export default function WarehouseRequestsScreen() {
         stickySectionHeadersEnabled={false}
         contentContainerStyle={{
           paddingHorizontal: 16,
-          paddingBottom: scrollBottomPadding(insets.bottom, false),
+          paddingBottom: tabScreenBottomPadding(insets.bottom),
         }}
         renderSectionHeader={({ section }) => (
           <Text

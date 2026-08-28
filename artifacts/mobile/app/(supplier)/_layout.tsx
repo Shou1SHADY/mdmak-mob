@@ -1,48 +1,24 @@
 import React from "react";
 import { Tabs, Redirect } from "expo-router";
-import { Feather } from "@expo/vector-icons";
-import { Platform, View, StyleSheet, ActivityIndicator } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, ActivityIndicator } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { AIChatWidget } from "@/components/AIChatWidget";
+import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
 
-function TabIcon({
-  name,
-  focused,
-  colors,
-}: {
-  name: keyof typeof Feather.glyphMap;
-  focused: boolean;
-  colors: ReturnType<typeof useColors>;
-}) {
-  return (
-    <View
-      style={[
-        styles.iconWrap,
-        focused && {
-          backgroundColor: colors.cta + "18",
-          borderColor: colors.cta + "22",
-          borderWidth: 1,
-        },
-      ]}
-    >
-      <Feather
-        name={name}
-        size={21}
-        color={focused ? colors.cta : colors.outline}
-      />
-    </View>
-  );
-}
 
+/**
+ * The tab bar comes from components/ModuleTabBar — the same one every module
+ * uses. It lived here as an inline copy, and the module bars were written from
+ * it by hand, so six bars drifted apart: the label size that fit here sheared
+ * off in the modules. One definition, one geometry.
+ */
 export default function SupplierLayout() {
   const colors = useColors();
   const t = useT();
-  const insets = useSafeAreaInsets();
-  const isWeb = Platform.OS === "web";
   const { user, loading } = useAuth();
+  const tabOptions = useModuleTabOptions();
 
   // Auth guard — protects every screen in this layout group
   if (loading) {
@@ -54,67 +30,15 @@ export default function SupplierLayout() {
   }
   if (!user) return <Redirect href="/auth/login" />;
   if (user.role !== "Supplier") return <Redirect href="/" />;
-  const bottomOffset = (insets.bottom || 0) + 10;
-
-  const tabBarStyle = isWeb
-    ? {
-        backgroundColor: colors.surface,
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
-        height: 82,
-        paddingBottom: 14,
-        paddingTop: 6,
-        paddingHorizontal: 12,
-        elevation: 0,
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 12,
-      }
-    : {
-        position: "absolute" as const,
-        left: 12,
-        right: 12,
-        bottom: bottomOffset,
-        height: 72,
-        borderRadius: 22,
-        backgroundColor: colors.surface,
-        borderTopWidth: 0,
-        paddingBottom: 6,
-        paddingTop: 0,
-        paddingHorizontal: 4,
-        shadowColor: "#0A1120",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.14,
-        shadowRadius: 28,
-        elevation: 18,
-      };
-
   return (
     <View style={{ flex: 1 }}>
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.cta,
-        tabBarInactiveTintColor: colors.outline,
-        tabBarStyle: tabBarStyle as any,
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontFamily: "Inter_600SemiBold",
-          marginTop: 2,
-        } as any,
-        tabBarItemStyle: {
-          paddingVertical: 4,
-          gap: 0,
-        } as any,
-      }}
-    >
+    <Tabs screenOptions={tabOptions}>
       <Tabs.Screen
         name="dashboard"
         options={{
           title: t.tabs.dashboard,
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="grid" focused={focused} colors={colors} />
+            <ModuleTabIcon name="grid" focused={focused} />
           ),
         }}
       />
@@ -124,7 +48,7 @@ export default function SupplierLayout() {
           title: t.tabs.browseRfqs,
           tabBarLabel: t.tabs.browseRfqsShort,
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="search" focused={focused} colors={colors} />
+            <ModuleTabIcon name="search" focused={focused} />
           ),
         }}
       />
@@ -133,7 +57,7 @@ export default function SupplierLayout() {
         options={{
           title: t.tabs.offers,
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="tag" focused={focused} colors={colors} />
+            <ModuleTabIcon name="tag" focused={focused} />
           ),
         }}
       />
@@ -142,7 +66,7 @@ export default function SupplierLayout() {
         options={{
           title: t.tabs.messages,
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="message-circle" focused={focused} colors={colors} />
+            <ModuleTabIcon name="message-circle" focused={focused} />
           ),
         }}
       />
@@ -151,7 +75,7 @@ export default function SupplierLayout() {
         options={{
           title: t.tabs.profile,
           tabBarIcon: ({ focused }) => (
-            <TabIcon name="user" focused={focused} colors={colors} />
+            <ModuleTabIcon name="user" focused={focused} />
           ),
         }}
       />
@@ -166,14 +90,3 @@ export default function SupplierLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  iconWrap: {
-    width: 46,
-    height: 32,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-});

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { scrollBottomPadding } from "@/lib/layout";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { useGuarantees } from "@/hooks/useOrgCollection";
@@ -81,7 +81,7 @@ export default function GuaranteesScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             padding: 16,
-            paddingBottom: scrollBottomPadding(insets.bottom, false),
+            paddingBottom: tabScreenBottomPadding(insets.bottom),
           }}
           renderItem={({ item }) => {
             const tint = statusColor(item.status);

@@ -1,11 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { Stack, Redirect } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
 
 /**
  * Goods Received.
@@ -13,12 +14,22 @@ import { usePermissions } from "@/hooks/usePermissions";
  * Contractor-only: confirming a delivery is the contractor's side of the
  * transaction, and firestore.rules requires `contractorOrgId` to match the
  * caller's org plus the `deliveries.confirm` permission.
+ *
+ * Tabs, not a Stack. A module owns its own bottom bar listing its own screens —
+ * the mobile equivalent of the module's sidebar section on the website. With a
+ * Stack the bar vanished on entry, so a module's screens looked like unrelated
+ * pages reachable one at a time, with a back arrow as the only way out.
+ *
+ * Detail screens are registered with `href: null`: they belong to this
+ * navigator, so the bar stays visible while you read a record, but they are not
+ * themselves destinations in it.
  */
 export default function GoodsLayout() {
   const colors = useColors();
   const t = useT();
   const { user, loading } = useAuth();
   const { can, isLoading: permsLoading } = usePermissions();
+  const tabOptions = useModuleTabOptions();
 
   if (loading || permsLoading) {
     return (
@@ -46,9 +57,15 @@ export default function GoodsLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
-      <Stack.Screen name="index" />
-    </Stack>
+    <Tabs screenOptions={tabOptions}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: t.modules.items.goods_received,
+          tabBarIcon: ({ focused }) => <ModuleTabIcon name="package" focused={focused} />,
+        }}
+      />
+    </Tabs>
   );
 }
 

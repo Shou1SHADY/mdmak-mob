@@ -1,11 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { Stack, Redirect } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
 
 /**
  * The Inventory module.
@@ -18,12 +19,22 @@ import { usePermissions } from "@/hooks/usePermissions";
  * are guarded by org membership rather than that permission, so the gate here is
  * slightly tighter than the rules — which is the right direction: a member with
  * no inventory job has no reason to be moving stock.
+ *
+ * Tabs, not a Stack. A module owns its own bottom bar listing its own screens —
+ * the mobile equivalent of the module's sidebar section on the website. With a
+ * Stack the bar vanished on entry, so a module's screens looked like unrelated
+ * pages reachable one at a time, with a back arrow as the only way out.
+ *
+ * Detail screens are registered with `href: null`: they belong to this
+ * navigator, so the bar stays visible while you read a record, but they are not
+ * themselves destinations in it.
  */
 export default function InventoryLayout() {
   const colors = useColors();
   const t = useT();
   const { user, loading } = useAuth();
   const { can, isLoading: permsLoading } = usePermissions();
+  const tabOptions = useModuleTabOptions();
 
   if (loading || permsLoading) {
     return (
@@ -50,12 +61,31 @@ export default function InventoryLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="[id]" />
-      <Stack.Screen name="requests" />
-      <Stack.Screen name="waste" />
-    </Stack>
+    <Tabs screenOptions={tabOptions}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: t.modules.items.warehouses,
+          tabBarIcon: ({ focused }) => <ModuleTabIcon name="home" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="requests"
+        options={{
+          title: t.modules.items.warehouse_requests,
+          tabBarIcon: ({ focused }) => <ModuleTabIcon name="clipboard" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="waste"
+        options={{
+          title: t.modules.items.waste,
+          tabBarIcon: ({ focused }) => <ModuleTabIcon name="trash-2" focused={focused} />,
+        }}
+      />
+      {/* In the navigator so the bar stays put, but not destinations in it. */}
+      <Tabs.Screen name="[id]" options={{ href: null }} />
+    </Tabs>
   );
 }
 

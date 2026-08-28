@@ -15,7 +15,7 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { scrollBottomPadding } from "@/lib/layout";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { CrmSheet } from "@/components/crm/CrmSheet";
@@ -189,7 +189,7 @@ export default function CrmOpportunityDetailScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={opp.title} subtitle={opp.contactName ?? t.crm.opportunities} showBack />
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: scrollBottomPadding(insets.bottom, false) }}
+        contentContainerStyle={{ padding: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
         showsVerticalScrollIndicator={false}
       >
         {/* Headline */}

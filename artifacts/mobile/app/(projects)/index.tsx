@@ -17,7 +17,7 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { scrollBottomPadding } from "@/lib/layout";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { Input } from "@/components/ui/Input";
@@ -274,7 +274,7 @@ export default function ProjectsListScreen() {
           renderItem={renderProject}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: scrollBottomPadding(insets.bottom, false),
+            paddingBottom: tabScreenBottomPadding(insets.bottom),
           }}
           ListEmptyComponent={
             <EmptyState

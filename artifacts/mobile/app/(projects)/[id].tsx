@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { scrollBottomPadding } from "@/lib/layout";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { CrmChoice } from "@/components/crm/CrmChoice";
 import { useProject, useProjectTenders } from "@/hooks/useProjects";
 import { useProjectPermissions } from "@/hooks/usePermissions";
@@ -108,7 +108,7 @@ export default function ProjectDetailScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={project.name} subtitle={project.clientName ?? t.projects.title} showBack />
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: scrollBottomPadding(insets.bottom, false) }}
+        contentContainerStyle={{ padding: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
         showsVerticalScrollIndicator={false}
       >
         {/* Headline */}

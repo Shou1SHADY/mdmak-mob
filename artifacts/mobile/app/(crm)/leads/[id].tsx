@@ -16,7 +16,7 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { scrollBottomPadding } from "@/lib/layout";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { Input } from "@/components/ui/Input";
 import { CrmSheet } from "@/components/crm/CrmSheet";
 import { CrmChoice } from "@/components/crm/CrmChoice";
@@ -203,7 +203,7 @@ export default function CrmLeadDetailScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={contact.name} subtitle={t.crm.leads} showBack />
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: scrollBottomPadding(insets.bottom, false) }}
+        contentContainerStyle={{ padding: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
         showsVerticalScrollIndicator={false}
       >
         {/* Identity */}

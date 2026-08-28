@@ -1,11 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { Stack, Redirect } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
 
 /**
  * Finance and HR.
@@ -18,12 +19,22 @@ import { usePermissions } from "@/hooks/usePermissions";
  * shape, and splitting them would mean two layouts differing only in a
  * permission id. `invoices.manage` guards Finance and `employees.manage` guards
  * HR, matching the website's nav items; each screen re-checks its own.
+ *
+ * Tabs, not a Stack. A module owns its own bottom bar listing its own screens —
+ * the mobile equivalent of the module's sidebar section on the website. With a
+ * Stack the bar vanished on entry, so a module's screens looked like unrelated
+ * pages reachable one at a time, with a back arrow as the only way out.
+ *
+ * Detail screens are registered with `href: null`: they belong to this
+ * navigator, so the bar stays visible while you read a record, but they are not
+ * themselves destinations in it.
  */
 export default function FinanceLayout() {
   const colors = useColors();
   const t = useT();
   const { user, loading } = useAuth();
   const { can, isLoading: permsLoading } = usePermissions();
+  const tabOptions = useModuleTabOptions();
 
   if (loading || permsLoading) {
     return (
@@ -50,11 +61,29 @@ export default function FinanceLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
-      <Stack.Screen name="invoices" />
-      <Stack.Screen name="guarantees" />
-      <Stack.Screen name="employees" />
-    </Stack>
+    <Tabs screenOptions={tabOptions}>
+      <Tabs.Screen
+        name="invoices"
+        options={{
+          title: t.modules.items.invoices,
+          tabBarIcon: ({ focused }) => <ModuleTabIcon name="file" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="guarantees"
+        options={{
+          title: t.modules.items.guarantees,
+          tabBarIcon: ({ focused }) => <ModuleTabIcon name="shield" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="employees"
+        options={{
+          title: t.modules.items.employees,
+          tabBarIcon: ({ focused }) => <ModuleTabIcon name="briefcase" focused={focused} />,
+        }}
+      />
+    </Tabs>
   );
 }
 

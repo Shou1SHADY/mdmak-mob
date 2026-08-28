@@ -1,11 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { Stack, Redirect } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
 
 /**
  * The Project Management module.
@@ -18,12 +19,22 @@ import { usePermissions } from "@/hooks/usePermissions";
  * list. Anything scoped to ONE project re-checks with `useProjectPermissions`,
  * because a project seat overrides the member's default group in both
  * directions.
+ *
+ * Tabs, not a Stack. A module owns its own bottom bar listing its own screens —
+ * the mobile equivalent of the module's sidebar section on the website. With a
+ * Stack the bar vanished on entry, so a module's screens looked like unrelated
+ * pages reachable one at a time, with a back arrow as the only way out.
+ *
+ * Detail screens are registered with `href: null`: they belong to this
+ * navigator, so the bar stays visible while you read a record, but they are not
+ * themselves destinations in it.
  */
 export default function ProjectsLayout() {
   const colors = useColors();
   const t = useT();
   const { user, loading } = useAuth();
   const { can, isLoading: permsLoading } = usePermissions();
+  const tabOptions = useModuleTabOptions();
 
   if (loading || permsLoading) {
     return (
@@ -51,10 +62,17 @@ export default function ProjectsLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="[id]" />
-    </Stack>
+    <Tabs screenOptions={tabOptions}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: t.modules.items.projects,
+          tabBarIcon: ({ focused }) => <ModuleTabIcon name="folder" focused={focused} />,
+        }}
+      />
+      {/* In the navigator so the bar stays put, but not destinations in it. */}
+      <Tabs.Screen name="[id]" options={{ href: null }} />
+    </Tabs>
   );
 }
 
