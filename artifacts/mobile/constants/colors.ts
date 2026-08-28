@@ -87,11 +87,11 @@ const colors = {
     background: "#0B1221",
     foreground: "#F1F5F9",
 
-    card: "#131C30",
+    card: "#172136", // more separation from background
     cardForeground: "#F1F5F9",
 
-    primary: "#0F172A",
-    primaryForeground: "#F8FAFC",
+    primary: "#E2E8F0", // inverted: primary is a FOREGROUND in dark
+    primaryForeground: "#0B1221", // pairs with the inverted primary
 
     cta: "#38BDF8",
     ctaForeground: "#0B1221",
@@ -99,7 +99,7 @@ const colors = {
     secondary: "#94A3B8",
     secondaryForeground: "#0B1221",
 
-    muted: "#1C2A42",
+    muted: "#213052", // reads as a filled chip, not a void
     mutedForeground: "#94A3B8",
 
     accent: "#20CBD5",
@@ -114,10 +114,10 @@ const colors = {
     warning: "#FBBF24",
     warningForeground: "#0B1221",
 
-    border: "#1E2D45",
+    border: "#2A3A57", // visible against the lifted card
     input: "#1E2D45",
 
-    surface: "#131C30",
+    surface: "#172136", // matches card
     surfaceSecondary: "#0F1828",
 
     tabBar: "#131C30",
@@ -131,7 +131,7 @@ const colors = {
     accentBlueSoft: "#1C2A42",
     accentPurpleSoft: "#1E2A42",
     surfaceGray: "#1C2A42",
-    outline: "#64748B",
+    outline: "#8A9BB4", // ~5.6:1 on the dark background
     onSurfaceVariant: "#94A3B8",
 
     chartColors: ["#38BDF8", "#20CBD5", "#4ADE80", "#94A3B8", "#64748B"],

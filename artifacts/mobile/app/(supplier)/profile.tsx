@@ -8,6 +8,7 @@ import { updateDoc, collection, query, where, getDocs } from "firebase/firestore
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import type { LegalDoc } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
@@ -315,7 +316,7 @@ export default function SupplierProfileScreen() {
       <ScrollView
         ref={scrollRef}
         style={{ flex: 1 }}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 82 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Profile Completeness ── */}

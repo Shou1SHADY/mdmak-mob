@@ -9,6 +9,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path, Circle, Text as SvgText } from "react-native-svg";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -238,7 +239,7 @@ export default function ContractorDashboard() {
       />
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 82) }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
       >

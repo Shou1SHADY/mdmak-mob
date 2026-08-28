@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
@@ -136,7 +137,7 @@ export default function SupplierDashboard() {
       />
 
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 82) }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
       >

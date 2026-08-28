@@ -5,6 +5,7 @@ import {
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
@@ -49,7 +50,7 @@ export default function SupplierTeamScreen() {
       <FlatList
         data={members}
         keyExtractor={(item) => item.uid}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <View style={[styles.memberItem, { backgroundColor: colors.card, borderColor: colors.border }]}>

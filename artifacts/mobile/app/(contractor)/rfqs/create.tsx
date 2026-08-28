@@ -8,6 +8,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
@@ -145,7 +146,7 @@ export default function CreateRFQScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

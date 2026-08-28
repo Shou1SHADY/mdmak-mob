@@ -17,6 +17,7 @@ import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -349,7 +350,7 @@ export default function MyRFQsScreen() {
           )}
           contentContainerStyle={[
             styles.list,
-            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 54 : 82) },
+            { paddingBottom: tabScreenBottomPadding(insets.bottom) },
           ]}
           refreshControl={
             <RefreshControl

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
@@ -124,7 +125,7 @@ export default function ContractorChatsScreen() {
       <FlatList
         data={chats}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 90 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         renderItem={({ item }) => {

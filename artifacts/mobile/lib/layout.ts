@@ -50,3 +50,25 @@ export const STACK_CLEARANCE = 24;
 export function scrollBottomPadding(insetBottom: number, hasTabBar: boolean): number {
   return (insetBottom || 0) + (hasTabBar ? TAB_BAR_CLEARANCE : STACK_CLEARANCE);
 }
+
+/**
+ * Bottom padding for a screen that sits inside a role tab bar.
+ *
+ * On native the bar FLOATS: it is absolutely positioned at
+ * `insets.bottom + 10` and is 72 tall, so it occupies up to
+ * `insets.bottom + 82`. Screens were padding to exactly that — flush with
+ * the bar, no gap, and the bar's rounded corners and shadow then sat on top
+ * of the last row. That is why the dashboard chart looked cut off.
+ *
+ * On web the bar is in normal flow and takes its own space, so the content
+ * only needs a small visual buffer.
+ */
+export const FLOATING_TAB_BAR_OFFSET = 10;
+export const FLOATING_TAB_BAR_HEIGHT = 72;
+const TAB_BAR_GAP = 16;
+
+export function tabScreenBottomPadding(insetBottom: number): number {
+  const inset = insetBottom || 0;
+  if (Platform.OS === "web") return inset + 34;
+  return inset + FLOATING_TAB_BAR_OFFSET + FLOATING_TAB_BAR_HEIGHT + TAB_BAR_GAP;
+}

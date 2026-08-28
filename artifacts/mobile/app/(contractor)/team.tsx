@@ -7,6 +7,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -57,7 +58,7 @@ export default function TeamScreen() {
       <FlatList
         data={members}
         keyExtractor={(item) => item.uid}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
         renderItem={({ item }) => (
           <View style={[styles.memberItem, { borderBottomColor: colors.border }]}>
             <View style={[styles.avatar, { backgroundColor: colors.primary + "20" }]}>

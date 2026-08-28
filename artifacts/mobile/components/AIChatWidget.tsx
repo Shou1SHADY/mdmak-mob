@@ -324,7 +324,11 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
   const [inputH, setInputH] = useState(40);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const translateY = useRef(new Animated.Value(SHEET_H)).current;
+  // Closed position must clear the sheet's FULL rendered height. The sheet
+  // adds `paddingBottom: insets.bottom` on top of SHEET_H, so translating by
+  // SHEET_H alone left it peeking by exactly the safe-area inset.
+  const hiddenY = SHEET_H + (insets.bottom || 0);
+  const translateY = useRef(new Animated.Value(hiddenY)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
@@ -340,9 +344,15 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
     ]).start(() => setTimeout(() => inputRef.current?.focus(), 100));
   }, [translateY, backdropOpacity]);
 
+  // The inset can arrive after the first render on web; keep the resting
+  // position in step with it so the sheet never settles part-way on screen.
+  useEffect(() => {
+    if (!isOpen) translateY.setValue(hiddenY);
+  }, [hiddenY, isOpen, translateY]);
+
   const closeSheet = useCallback(() => {
     Animated.parallel([
-      Animated.timing(translateY, { toValue: SHEET_H, duration: 260, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: hiddenY, duration: 260, useNativeDriver: true }),
       Animated.timing(backdropOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
     ]).start(() => setIsOpen(false));
   }, [translateY, backdropOpacity]);

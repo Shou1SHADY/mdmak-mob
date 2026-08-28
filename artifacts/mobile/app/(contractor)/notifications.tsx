@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useNotifications, AppNotification } from "@/hooks/useNotifications";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -223,7 +224,7 @@ export default function ContractorNotificationsScreen() {
       <FlatList
         data={notifications}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + 90 }]}
+        contentContainerStyle={[styles.list, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         renderItem={({ item }) => (

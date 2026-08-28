@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useNotifications, AppNotification } from "@/hooks/useNotifications";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -78,7 +79,7 @@ export default function SupplierNotificationsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.list,
-          { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 24) },
+          { paddingBottom: tabScreenBottomPadding(insets.bottom) },
         ]}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {

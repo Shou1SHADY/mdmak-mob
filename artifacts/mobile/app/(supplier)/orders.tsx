@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
@@ -76,7 +77,7 @@ export default function OrdersScreen() {
               onPress={() => router.push(`/chat/${item.id}`)}
             />
           )}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 82) }]}
+          contentContainerStyle={[styles.list, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={<EmptyState icon="package" title={t.orders.noOrders} subtitle={t.orders.noOrdersDesc} />}
         />

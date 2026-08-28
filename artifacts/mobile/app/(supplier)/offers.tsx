@@ -8,6 +8,7 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, a
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
@@ -314,7 +315,7 @@ export default function MyOffersScreen() {
           )}
           contentContainerStyle={[
             styles.list,
-            { paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 82) },
+            { paddingBottom: tabScreenBottomPadding(insets.bottom) },
           ]}
           refreshControl={
             <RefreshControl

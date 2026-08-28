@@ -7,6 +7,7 @@ import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc } fr
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -239,7 +240,7 @@ export default function CompareScreen() {
           <FlatList
             data={rfqs}
             keyExtractor={r => r.id}
-            contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: insets.bottom + 80 }}
+            contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <TouchableOpacity
@@ -337,7 +338,7 @@ export default function CompareScreen() {
         <EmptyState icon="inbox" title={t.compare.noOffers} subtitle={t.compare.noOffersDesc} />
       ) : (
         <ScrollView
-          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: insets.bottom + 80 }}
+          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
           showsVerticalScrollIndicator={false}
         >
           {sortedOffers.map((offer, idx) => {

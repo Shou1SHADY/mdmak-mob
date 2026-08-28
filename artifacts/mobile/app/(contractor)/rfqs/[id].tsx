@@ -8,6 +8,7 @@ import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, addD
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -304,7 +305,7 @@ export default function RFQDetailScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={t.rfq.detail} showBack />
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}>
         {/* RFQ Card */}
         {rfq && (
           <View style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl }]}>

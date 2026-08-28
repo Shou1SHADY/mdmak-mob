@@ -7,6 +7,7 @@ import { collection, addDoc, getDocs, query, where, getDoc, doc, updateDoc, incr
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -173,7 +174,7 @@ export default function SubmitOfferScreen() {
       <ScreenHeader title={t.rfq.submitOffer} showBack />
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: insets.bottom + 60 }}
+        contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
