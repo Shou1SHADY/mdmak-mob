@@ -10,12 +10,12 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { OFFER_STATUS } from "@/constants/data";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { ProfileIncompleteGate, useProfileGate } from "@/components/ProfileIncompleteGate";
 import type { BOQItem } from "@/components/BOQEditor";
+import { buildOfferDoc, readRfqLineItems } from "@/lib/contracts";
 
 const DURATION_UNITS = [
   { id: "أيام", labelAr: "أيام", labelEn: "Days" },
@@ -42,6 +42,10 @@ export default function SubmitOfferScreen() {
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [rfqTitle, setRfqTitle] = useState("");
   const [contractorId, setContractorId] = useState<string | null>(null);
+  // The website queries offers by the contractor's ORG, not their uid, so the
+  // RFQ's organizationId has to be carried onto the offer as contractorOrgId.
+  const [contractorOrgId, setContractorOrgId] = useState<string | null>(null);
+  const [rfqProjectId, setRfqProjectId] = useState<string | null>(null);
   const [boqItems, setBoqItems] = useState<BOQItem[]>([]);
   const [boqPricing, setBoqPricing] = useState<Record<string, string>>({}); // boqItemId -> unitPrice string
 
@@ -65,9 +69,10 @@ export default function SubmitOfferScreen() {
           const data = rfqDoc.data();
           setRfqTitle(data.title || "");
           setContractorId(data.contractorId || null);
-          if (data.boqItems && Array.isArray(data.boqItems)) {
-            setBoqItems(data.boqItems as BOQItem[]);
-          }
+          setContractorOrgId(data.organizationId || data.contractorId || null);
+          setRfqProjectId(data.projectId ?? null);
+          // Handles both shapes: `boqItems` from this app, `products` from the website.
+          setBoqItems(readRfqLineItems(data) as BOQItem[]);
         }
       } catch (e: any) {
         console.warn("[SubmitOffer] Failed to load RFQ:", e.message);
@@ -77,7 +82,7 @@ export default function SubmitOfferScreen() {
   }, [rfqId, user?.organizationId]);
 
   const handleSubmit = async () => {
-    if (alreadySubmitted) return;
+    if (alreadySubmitted || !user) return;
     const priceNum = parseFloat(price);
     if (!price || isNaN(priceNum) || priceNum <= 0) {
       Alert.alert(t.common.error, t.rfq.invalidPrice);
@@ -94,29 +99,24 @@ export default function SubmitOfferScreen() {
           }).filter((p) => p.unitPrice > 0)
         : null;
 
-      const offerData: Record<string, any> = {
+      const offerData = buildOfferDoc({
+        uid: user.uid,
+        organizationId: user.organizationId,
+        displayName: user.displayName,
+        orgName: user.orgName,
         rfqId,
         rfqTitle,
-        supplierId: user?.uid,
-        organizationId: user?.organizationId,
-        supplierName: user?.displayName,
-        companyName: user?.orgName,
-        submittedByUserId: user?.uid,
-        submittedByUserName: user?.displayName,
         contractorId: contractorId || null,
+        contractorOrgId,
+        projectId: rfqProjectId,
         price,
+        quantity: String(boqItems.reduce((sum, i) => sum + (i.quantity || 0), 0) || ""),
         notes: notes.trim() || null,
         deliveryLocation: deliveryLocation.trim() || null,
-        deliveryBatches: [{ deliveryDate: "", price, location: deliveryLocation.trim() || "" }],
         boqPricing: boqPricingArray,
-        status: OFFER_STATUS.UNDER_REVIEW,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      if (executionDuration.trim()) {
-        offerData.executionDuration = executionDuration.trim();
-        offerData.executionDurationUnit = executionDurationUnit;
-      }
+        executionDuration: executionDuration.trim() || undefined,
+        executionDurationUnit,
+      });
 
       await addDoc(collection(db, "offers"), offerData);
 

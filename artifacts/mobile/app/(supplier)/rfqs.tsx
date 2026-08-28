@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
@@ -17,13 +18,27 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { CATEGORIES, SAUDI_CITIES, RFQ_STATUSES, CITIES_EN, displayCity } from "@/constants/data";
 
-const OPEN_STATUSES = ["New", "Active", "Under Review"];
+// The same set the website's supplier feed uses: an RFQ is browsable while it
+// is open ("New") and stays visible once awarded ("Awarded") so a supplier can
+// still see the outcome. "Active"/"Under Review" are contractor-side states the
+// website never lists here.
+const OPEN_STATUSES = ["New", "Awarded"];
+
+/** `createdAt` is written as an ISO string by both apps; older mobile rows may
+ *  still hold a Firestore Timestamp. */
+function createdAtMs(value: any): number {
+  if (!value) return 0;
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  const ms = new Date(value).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
+}
 
 export default function BrowseRFQsScreen() {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
 
   const [rfqs, setRfqs] = useState<RFQItem[]>([]);
   const [filtered, setFiltered] = useState<RFQItem[]>([]);
@@ -88,16 +103,35 @@ export default function BrowseRFQsScreen() {
 
   const fetchRFQs = async () => {
     try {
-      const snap = await getDocs(
-        query(collection(db, "rfqs"), where("status", "in", OPEN_STATUSES))
+      const orgId = user?.organizationId;
+      // Two queries, mirroring the website: public RFQs anyone may bid on, plus
+      // private ones this supplier's org was explicitly invited to. Querying the
+      // whole collection instead — as this screen used to — surfaced other
+      // contractors' private RFQs to every supplier.
+      const [publicSnap, privateSnap] = await Promise.all([
+        getDocs(query(
+          collection(db, "rfqs"),
+          where("status", "in", OPEN_STATUSES),
+          where("visibility", "==", "public")
+        )),
+        orgId
+          ? getDocs(query(
+              collection(db, "rfqs"),
+              where("allowedSupplierOrgIds", "array-contains", orgId)
+            ))
+          : Promise.resolve(null),
+      ]);
+
+      const byId = new Map<string, RFQItem>();
+      publicSnap.docs.forEach((d) => byId.set(d.id, { id: d.id, ...d.data() } as RFQItem));
+      privateSnap?.docs.forEach((d) => {
+        const item = { id: d.id, ...d.data() } as RFQItem;
+        if (OPEN_STATUSES.includes(item.status)) byId.set(d.id, item);
+      });
+
+      const items = Array.from(byId.values()).sort(
+        (a, b) => createdAtMs(b.createdAt) - createdAtMs(a.createdAt)
       );
-      const items = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() } as RFQItem))
-        .sort((a, b) => {
-          const ta = typeof a.createdAt?.toDate === "function" ? a.createdAt.toDate().getTime() : 0;
-          const tb = typeof b.createdAt?.toDate === "function" ? b.createdAt.toDate().getTime() : 0;
-          return tb - ta;
-        });
       setRfqs(items);
     } catch (e: any) {
       console.warn("[BrowseRFQs]", e.message);
@@ -143,7 +177,9 @@ export default function BrowseRFQsScreen() {
     setFiltered(res);
   };
 
-  useEffect(() => { fetchRFQs(); }, []);
+  // Depends on the org id: on first mount auth may not have resolved yet, and
+  // without a re-run the invited-only RFQs would never load.
+  useEffect(() => { fetchRFQs(); }, [user?.organizationId]);
   useEffect(() => {
     applyFilters(rfqs, search, filterCategory, filterCity, filterStatus);
   }, [search, filterCategory, filterCity, filterStatus, rfqs]);

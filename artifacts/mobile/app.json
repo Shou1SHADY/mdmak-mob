@@ -42,7 +42,17 @@
     },
     "web": {
       "favicon": "./assets/images/icon.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "output": "single",
+      "name": "Mdmak Tech",
+      "shortName": "Mdmak",
+      "display": "standalone",
+      "orientation": "portrait",
+      "themeColor": "#0F172A",
+      "backgroundColor": "#0F172A",
+      "lang": "ar",
+      "startUrl": "/",
+      "description": "Mdmak Tech — B2B procurement for contractors and suppliers"
     },
     "plugins": [
       "expo-router",

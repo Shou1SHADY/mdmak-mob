@@ -75,8 +75,15 @@ onlyBuiltDependencies:
   - protobufjs
   - unrs-resolver
 
-neverBuiltDependencies:
-  - esbuild
+# NOTE: pnpm 10 refuses a workspace that sets BOTH onlyBuiltDependencies and
+# neverBuiltDependencies (ERR_PNPM_CONFIG_CONFLICT_BUILT_DEPENDENCIES), which
+# made every install fail. The pair was redundant anyway: onlyBuiltDependencies
+# above is an ALLOWLIST, so anything absent from it — esbuild included — already
+# never runs its install scripts. Dropping the redundant half changes no
+# behaviour and unblocks installs.
+#
+# The minimumReleaseAge supply-chain policy at the top of this file is a
+# separate setting and is deliberately left exactly as it was.
 
 overrides:
   # replit uses linux-x64 only, we can exclude all other platforms

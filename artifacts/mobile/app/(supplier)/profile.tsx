@@ -4,7 +4,7 @@ import {
   Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import type { LegalDoc } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
+import { identityDocRef } from "@/lib/org-identity";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -82,6 +83,9 @@ export default function SupplierProfileScreen() {
   const t = useT();
   const { setLanguage, isRTL } = useLanguage();
   const { user, organization, logout, refreshUser } = useAuth();
+  // Company details live on users/{uid} for a solo company but on
+  // organizations/{id} for a secondary one — write them wherever they are read.
+  const identityRef = () => identityDocRef(user!.uid, user?.organizationId, user?.organizationRole);
 
   const [editingSpecs, setEditingSpecs] = useState(false);
   const [editingInfo, setEditingInfo] = useState(false);
@@ -159,7 +163,7 @@ export default function SupplierProfileScreen() {
     setSaving(true);
     const isProfileComplete = !!(orgName?.trim() && phone?.trim() && crNumber?.trim() && taxNumber?.trim() && city?.trim() && location?.trim());
     try {
-      await updateDoc(doc(db, "users", user.uid), {
+      await updateDoc(identityRef(), {
         companyName: orgName, orgName, crNumber,
         taxNumber, phone, city, location, website, description,
         profileCompleted: isProfileComplete,
@@ -189,7 +193,7 @@ export default function SupplierProfileScreen() {
     if (!user?.organizationId) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, "users", user.uid), {
+      await updateDoc(identityRef(), {
         specializations: selectedSpecs,
         serviceAreas: selectedAreas,
       });
@@ -213,7 +217,7 @@ export default function SupplierProfileScreen() {
     setDocuments(updated);
     if (user?.uid) {
       try {
-        await updateDoc(doc(db, "users", user.uid), { documents: updated });
+        await updateDoc(identityRef(), { documents: updated });
       } catch {
         Alert.alert(t.common.error, t.profile.saveFailed);
       }

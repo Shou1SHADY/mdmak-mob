@@ -24,6 +24,12 @@ export interface RFQItem {
   createdByUserId?: string;
   createdByUserName?: string;
   boqItems?: import("@/components/BOQEditor").BOQItem[];
+  /** The website's line-item key — read both via readRfqLineItems(). */
+  products?: Array<Record<string, any>>;
+  /** "public" or "private"; private RFQs list their invitees in allowedSupplierOrgIds. */
+  visibility?: string;
+  allowedSupplierOrgIds?: string[];
+  projectId?: string | null;
 }
 
 interface RFQCardProps {

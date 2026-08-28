@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform,
   Modal, Pressable, TextInput, ActivityIndicator,
@@ -11,6 +11,8 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { readRfqLineItems } from "@/lib/contracts";
+import { usePermissions } from "@/hooks/usePermissions";
 import { RFQItem } from "@/components/RFQCard";
 import { OfferItem, OfferCard } from "@/components/OfferCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -28,8 +30,10 @@ export default function RFQDetailScreen() {
   const t = useT();
   const { isRTL } = useLanguage();
   const { user } = useAuth();
+  const { can } = usePermissions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [rfq, setRfq] = useState<RFQItem | null>(null);
+  const rfqLineItems = useMemo(() => readRfqLineItems(rfq as any), [rfq]);
   const [offers, setOffers] = useState<OfferItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -142,6 +146,13 @@ export default function RFQDetailScreen() {
   };
 
   const handleAcceptReject = async (offer: OfferItem, action: "accept" | "reject") => {
+    // Same gate the website applies, and the same one firestore.rules enforces:
+    // deciding on an offer needs 'offers.accept'. Checking here turns a silent
+    // rules rejection into an explanation.
+    if (!can("offers.accept")) {
+      Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
+      return;
+    }
     const confirmMsg = action === "accept" ? t.rfq.acceptOffer : t.rfq.rejectOffer;
     Alert.alert(t.common.confirm, confirmMsg, [
       { text: t.common.cancel, style: "cancel" },
@@ -355,10 +366,11 @@ export default function RFQDetailScreen() {
           )}
         </View>
 
-        {/* BOQ section (if exists) */}
-        {rfq && rfq.boqItems && rfq.boqItems.length > 0 && (
+        {/* BOQ section — normalised so RFQs published on the website, which
+            carry their lines as `products`, render here too. */}
+        {rfqLineItems.length > 0 && (
           <View style={[styles.boqSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <BOQEditor items={rfq.boqItems as any} onChange={() => {}} readonly />
+            <BOQEditor items={rfqLineItems as any} onChange={() => {}} readonly />
           </View>
         )}
 

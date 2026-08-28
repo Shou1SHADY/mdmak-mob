@@ -10,6 +10,7 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { usePermissions } from "@/hooks/usePermissions";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { OFFER_STATUS } from "@/constants/data";
 
@@ -43,6 +44,7 @@ export default function CompareScreen() {
   const t = useT();
   const { isRTL } = useLanguage();
   const { user, organization } = useAuth();
+  const { can } = usePermissions();
 
   const [rfqs, setRfqs] = useState<RFQRow[]>([]);
   const [rfqLoading, setRfqLoading] = useState(true);
@@ -111,6 +113,11 @@ export default function CompareScreen() {
   /* ── Accept offer ── */
   const handleAccept = async (offer: OfferRow) => {
     if (!user || !selectedRfq) return;
+    // Awarding an offer requires 'offers.accept', exactly as on the website.
+    if (!can("offers.accept")) {
+      Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
+      return;
+    }
     setProcessing(offer.id);
     try {
       await updateDoc(doc(db, "offers", offer.id), {

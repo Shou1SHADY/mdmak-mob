@@ -8,15 +8,18 @@
     "dev:clear": "npx expo start -c",
     "dev:web": "npx expo start --web",
     "build": "node scripts/build.js",
-    "build:web": "npx expo export --platform web",
+    "build:web": "node scripts/build-web.mjs",
     "build:android": "npx expo run:android",
     "build:ios": "npx expo run:ios",
     "serve": "node server/serve.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc --noEmit",
+    "check:mirrors": "node scripts/check-mirrors.mjs",
     "eas:dev": "npx eas build --platform all --profile development",
     "eas:preview": "npx eas build --platform all --profile preview",
-    "eas:prod": "npx eas build --platform all --profile production"
+    "eas:prod": "npx eas build --platform all --profile production",
+    "serve:lan": "node scripts/serve-lan.mjs",
+    "build:web:uat": "node scripts/build-web.mjs .env.uat"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

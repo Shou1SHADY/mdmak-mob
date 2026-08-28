@@ -39,12 +39,12 @@ const GOOGLE_DISCOVERY = {
   authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
 };
 
-function generateId(): string {
-  // Use Firebase's own ID generator — cryptographically random, collision-safe
-  return doc(collection(db, "_ids")).id;
-}
-
 export type UserRole = "Contractor" | "Supplier" | "Admin";
+
+// Mirrors the website's UserRole/OrganizationRole pair. "member" accounts are
+// created by the website's team invite flow; the mobile app never creates one,
+// but it must read the role so it can honour the same permission gates.
+export type OrganizationRole = "owner" | "member";
 
 export interface AppUser {
   uid: string;
@@ -52,6 +52,9 @@ export interface AppUser {
   displayName: string;
   role: UserRole;
   organizationId: string;
+  organizationRole: OrganizationRole;
+  /** teamGroups doc id backing this member's permissions; null for owners. */
+  defaultGroupId: string | null;
   orgName: string;
   phone?: string;
   city?: string;
@@ -124,10 +127,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const data = userDoc.data();
     devLog("[Auth] User doc fields:", Object.keys(data).join(", "));
+
+    // A solo/primary organization is keyed by the owner's own uid — the same
+    // convention the website uses. Backfilling anything else here would make the
+    // website read the account as a secondary company (see isSecondaryOrg).
     let orgId = data.organizationId || data.orgId || "";
     if (!orgId) {
-      devLog("[Auth] No organizationId found, generating one...");
-      orgId = generateId();
+      devLog("[Auth] No organizationId found, defaulting to uid");
+      orgId = firebaseUser.uid;
       try {
         await setDoc(doc(db, "users", firebaseUser.uid), { organizationId: orgId }, { merge: true });
         devLog("[Auth] Saved organizationId:", orgId);
@@ -135,36 +142,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         devWarn("[Auth] Failed to save organizationId:", e);
       }
     }
+
+    const organizationRole: OrganizationRole =
+      data.organizationRole === "member" ? "member" : "owner";
+
+    // Company identity resolution, mirroring the website's useResolvedProfile:
+    //  - primary/solo company (orgId === uid) -> identity is on users/{uid}
+    //  - team member (organizationRole === "member") -> identity is the owner's
+    //    users/{orgId} doc, which the member cannot read; keep their own name and
+    //    fetch nothing, the org name comes from the owner doc when readable
+    //  - secondary company added on the website -> identity lives on
+    //    organizations/{orgId} and must NOT fall back to the primary company
+    const secondary = orgId !== firebaseUser.uid && organizationRole !== "member";
+    let identity: Record<string, any> = data;
+    if (secondary) {
+      try {
+        const orgDoc = await getDoc(doc(db, "organizations", orgId));
+        // Deliberately NOT merged with `data`: an unset field on the secondary
+        // company must read as blank, never as the primary company's value.
+        identity = orgDoc.exists() ? (orgDoc.data() as Record<string, any>) : {};
+      } catch (e) {
+        devWarn("[Auth] Failed to read secondary org identity:", e);
+        identity = {};
+      }
+    }
+
     const appUser: AppUser = {
       uid: firebaseUser.uid,
       email: firebaseUser.email ?? "",
-      displayName: data.name ?? data.displayName ?? "",
+      displayName: identity.name ?? data.name ?? data.displayName ?? "",
       role: data.role as UserRole,
       organizationId: orgId,
-      orgName: data.companyName ?? data.orgName ?? "",
-      phone: data.phone,
-      city: data.city,
+      organizationRole,
+      defaultGroupId: data.defaultGroupId ?? null,
+      orgName: identity.companyName ?? identity.orgName ?? "",
+      phone: identity.phone,
+      city: identity.city,
       emailVerified: firebaseUser.emailVerified,
-      profileCompleted: data.profileCompleted ?? true,
+      profileCompleted: identity.profileCompleted ?? data.profileCompleted ?? true,
     };
     setUser(appUser);
-    devLog("[Auth] User state set, orgId:", appUser.organizationId, "role:", appUser.role);
+    devLog("[Auth] User state set, orgId:", appUser.organizationId, "role:", appUser.role, "orgRole:", organizationRole);
 
     setOrganization({
       id: orgId,
       type: data.role === "Supplier" ? "supplier" : "contractor",
-      name: data.companyName ?? data.orgName ?? "",
-      crNumber: data.crNumber,
-      taxNumber: data.taxNumber,
-      phone: data.phone,
-      city: data.city,
-      location: data.location,
-      website: data.website,
-      description: data.description,
-      specializations: data.specializations ?? [],
-      serviceAreas: data.serviceAreas ?? [],
-      verified: data.verified ?? false,
-      documents: data.documents ?? data.legalDocuments ?? {},
+      name: identity.companyName ?? identity.orgName ?? "",
+      crNumber: identity.crNumber,
+      taxNumber: identity.taxNumber,
+      phone: identity.phone,
+      city: identity.city,
+      location: identity.location,
+      website: identity.website,
+      description: identity.description,
+      specializations: identity.specializations ?? [],
+      serviceAreas: identity.serviceAreas ?? identity.coverageCities ?? [],
+      verified: identity.verified ?? identity.isVerified ?? false,
+      documents: identity.documents ?? identity.legalDocuments ?? {},
     });
     return appUser;
   }
@@ -232,7 +266,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     devLog("[Auth] Firebase sign-up succeeded, uid:", cred.user.uid);
     await sendEmailVerification(cred.user);
 
-    const organizationId = generateId();
+    // The website keys a solo/primary organization by the owner's own uid
+    // (see its API route that creates users, and useResolvedProfile). A generated
+    // id here would make the site treat the account as a SECONDARY company and
+    // look for its identity in organizations/{id} — a doc that does not exist —
+    // so the whole company profile would read as blank on the website.
+    const organizationId = cred.user.uid;
 
     try {
       await setDoc(doc(db, "users", cred.user.uid), {
@@ -328,7 +367,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         devLog("[Auth] Truly new Google user, creating profile");
-        const organizationId = generateId();
+        const organizationId = fbUser.uid;
         const displayName = fbUser.displayName || fbUser.email?.split("@")[0] || "User";
 
         await setDoc(doc(db, "users", fbUser.uid), {
@@ -428,7 +467,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      const organizationId = generateId();
+      const organizationId = fbUser.uid;
       const displayName = fbUser.displayName || fbUser.email?.split("@")[0] || "User";
 
       await setDoc(doc(db, "users", fbUser.uid), {

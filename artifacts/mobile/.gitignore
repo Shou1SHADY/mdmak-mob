@@ -35,8 +35,21 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# Env files: deny by default, allow only the ones that are genuinely public.
+#
+# .env.uat holds EXPO_PUBLIC_FIREBASE_* values. Those are PUBLIC by
+# construction — every one of them is inlined into the client bundle and
+# readable by anyone who opens the app. They identify the project; they
+# authorise nothing. Access is controlled by firestore.rules and Firebase
+# Auth. Committing them is what makes `npm run build:web:uat` reproducible
+# for anyone else on the team.
+#
+# Anything else matching .env* stays ignored, so a future file holding a real
+# secret (an admin key, a Twilio token) is excluded unless someone
+# deliberately adds an exception here.
+.env*
+!.env.example
+!.env.uat
 
 # typescript
 *.tsbuildinfo
@@ -48,6 +61,5 @@ coverage/
 # misc
 *.log
 
-.env
 
 ../../../.env*

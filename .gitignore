@@ -49,3 +49,13 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Firebase
+# Local deploy cache the CLI writes per hosting target — machine-specific,
+# regenerated on every deploy, and pointless in history.
+.firebase/
+*firebase-debug.log
+
+# Service-account keys must never be committed.
+*firebase-adminsdk*.json
+service-account.json

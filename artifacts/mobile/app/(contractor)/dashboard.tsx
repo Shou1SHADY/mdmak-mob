@@ -210,6 +210,18 @@ export default function ContractorDashboard() {
         orgName={organization?.name}
         userName={user?.displayName}
         right={
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {/* The app switcher. Every module the member may open lives behind
+              it, mirroring the website's launcher rather than competing with
+              the five role tabs below. */}
+          <TouchableOpacity
+            style={[styles.bellBtn, { backgroundColor: colors.accentBlueSoft }]}
+            onPress={() => router.push("/apps")}
+            accessibilityRole="button"
+            accessibilityLabel={t.modules.launcherTitle}
+          >
+            <Feather name="grid" size={18} color={colors.cta} />
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.bellBtn, { backgroundColor: colors.accentBlueSoft }]}
             onPress={() => router.push("/(contractor)/notifications")}
@@ -221,6 +233,7 @@ export default function ContractorDashboard() {
               </View>
             )}
           </TouchableOpacity>
+          </View>
         }
       />
 

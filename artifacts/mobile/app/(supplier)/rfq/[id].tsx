@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, Platform, TouchableOpacity,
 } from "react-native";
@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
+import { readRfqLineItems } from "@/lib/contracts";
 import { RFQItem } from "@/components/RFQCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
@@ -24,6 +25,7 @@ export default function SupplierRFQDetailScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [rfq, setRfq] = useState<RFQItem | null>(null);
+  const rfqLineItems = useMemo(() => readRfqLineItems(rfq as any), [rfq]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -160,10 +162,11 @@ export default function SupplierRFQDetailScreen() {
           </View>
         ) : null}
 
-        {/* BOQ section */}
-        {rfq.boqItems && rfq.boqItems.length > 0 && (
+        {/* BOQ section — normalised so RFQs published on the website, which
+            carry their lines as `products`, render here too. */}
+        {rfqLineItems.length > 0 && (
           <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <BOQEditor items={rfq.boqItems as any} onChange={() => {}} readonly />
+            <BOQEditor items={rfqLineItems as any} onChange={() => {}} readonly />
           </View>
         )}
 

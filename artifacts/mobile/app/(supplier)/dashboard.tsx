@@ -49,9 +49,12 @@ export default function SupplierDashboard() {
       const offerItems = offSnap.docs.map((d) => ({ id: d.id, ...d.data() } as OfferItem));
       setOffers(offerItems);
 
+      // Public only — without the visibility filter this teaser listed other
+      // contractors' private RFQs, which the website never shows a supplier.
       const rfqSnap = await getDocs(query(
         collection(db, "rfqs"),
         where("status", "==", "New"),
+        where("visibility", "==", "public"),
         orderBy("createdAt", "desc"),
         limit(5)
       ));
@@ -105,6 +108,18 @@ export default function SupplierDashboard() {
         orgName={organization?.name}
         userName={user?.displayName}
         right={
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {/* The app switcher. Every module the member may open lives behind
+              it, mirroring the website's launcher rather than competing with
+              the five role tabs below. */}
+          <TouchableOpacity
+            style={[styles.bellBtn, { backgroundColor: colors.accentBlueSoft }]}
+            onPress={() => router.push("/apps")}
+            accessibilityRole="button"
+            accessibilityLabel={t.modules.launcherTitle}
+          >
+            <Feather name="grid" size={18} color={colors.cta} />
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.bellBtn, { backgroundColor: colors.accentBlueSoft }]}
             onPress={() => router.push("/(supplier)/notifications")}
@@ -116,6 +131,7 @@ export default function SupplierDashboard() {
               </View>
             )}
           </TouchableOpacity>
+          </View>
         }
       />
 

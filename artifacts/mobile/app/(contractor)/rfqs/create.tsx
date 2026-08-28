@@ -11,6 +11,8 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
+import { buildRfqDoc } from "@/lib/contracts";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { CATEGORIES, SAUDI_CITIES, CITIES_DISTRICTS, displayCity } from "@/constants/data";
@@ -45,6 +47,7 @@ export default function CreateRFQScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user, organization } = useAuth();
+  const { can } = usePermissions();
   const t = useT();
   const { isRTL } = useLanguage();
   const { isComplete, missingFields } = useProfileGate("contractor", organization ?? null);
@@ -61,28 +64,34 @@ export default function CreateRFQScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (draft: boolean) => {
-    if (!title.trim() || !category || !city) {
+    // The website gates RFQ creation on 'rfq.create'; firestore.rules requires
+    // it too, so an ungated member would just see the write fail.
+    if (!can("rfq.create")) {
+      Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
+      return;
+    }
+    if (!user || !title.trim() || !category || !city) {
       Alert.alert(t.rfq.missingTitle, t.rfq.missingFields);
       return;
     }
     setLoading(true);
     try {
-      await addDoc(collection(db, "rfqs"), {
-        contractorId: user?.uid,
-        organizationId: user?.organizationId,
-        createdByUserId: user?.uid,
-        createdByUserName: user?.displayName,
-        title: title.trim(),
-        description: description.trim(),
-        category,
-        city,
-        district: district.trim() || null,
-        deadline: deadline || null,
-        boqItems: boqItems.length > 0 ? boqItems : null,
-        status: draft ? "Draft" : "New",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+      await addDoc(
+        collection(db, "rfqs"),
+        buildRfqDoc({
+          uid: user.uid,
+          organizationId: user.organizationId,
+          displayName: user.displayName,
+          title: title.trim(),
+          description: description.trim(),
+          category,
+          city,
+          district: district.trim() || null,
+          deadline: deadline || null,
+          items: boqItems,
+          isDraft: draft,
+        })
+      );
       Alert.alert(t.common.success, draft ? t.rfq.savedDraft : t.rfq.published, [
         { text: t.common.ok, onPress: () => router.back() },
       ]);

@@ -38,6 +38,15 @@ function RootLayoutNav() {
       <Stack.Screen name="auth/register" />
       <Stack.Screen name="(contractor)" />
       <Stack.Screen name="(supplier)" />
+      {/* Modules live outside the role tab groups: the CRM is one route group
+          serving both roles, and the launcher is reachable from either. */}
+      <Stack.Screen name="(crm)" />
+      <Stack.Screen name="(projects)" />
+      <Stack.Screen name="(inventory)" />
+      <Stack.Screen name="(finance)" />
+      <Stack.Screen name="(goods)" />
+      <Stack.Screen name="(connections)" />
+      <Stack.Screen name="apps" />
       <Stack.Screen name="chat/[chatId]" />
     </Stack>
   );

@@ -23,12 +23,8 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { SAUDI_CITIES, displayCity, CITIES_EN } from "@/constants/data";
-import { doc, collection, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-
-function generateId(): string {
-  return doc(collection(db, "_ids")).id;
-}
 
 function CityPickerModal({
   visible,
@@ -194,13 +190,17 @@ export default function OnboardingScreen() {
     if (!user) return;
     setLoading(true);
     try {
-      const organizationId = generateId();
+      // Never mint a fresh organization id here: the account already has one,
+      // and for a solo company the website expects it to equal the uid. Team
+      // members keep their owner's org and their "member" role untouched —
+      // completing a profile must not silently promote them to owner.
+      const isMember = user.organizationRole === "member";
       await setDoc(
         doc(db, "users", user.uid),
         {
-          organizationId,
+          organizationId: user.organizationId || user.uid,
           companyName: orgName.trim(),
-          organizationRole: "owner",
+          ...(isMember ? {} : { organizationRole: "owner" }),
           city,
           profileCompleted: true,
           updatedAt: serverTimestamp(),
