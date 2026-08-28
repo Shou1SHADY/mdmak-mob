@@ -205,7 +205,7 @@ export default function DesignPreviewScreen() {
                 accessibilityRole="button"
                 style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row", borderTopColor: colors.border }]}
               >
-                <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flex: 1, gap: 4 }}>
                   <Text
                     style={[styles.rowLabel, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
                   >
@@ -254,32 +254,32 @@ export default function DesignPreviewScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  body: { fontSize: 14, lineHeight: 23, fontFamily: "Inter_400Regular" },
+  body: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
   banner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     borderRadius: 12,
     borderWidth: 1,
     padding: 12,
     marginBottom: 12,
   },
-  bannerText: { flex: 1, fontSize: 12, lineHeight: 20, fontFamily: "Inter_500Medium" },
+  bannerText: { flex: 1, fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   panel: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12 },
-  control: { marginBottom: 14 },
-  controlLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_500Medium", marginBottom: 8 },
+  control: { marginBottom: 16 },
+  controlLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", marginBottom: 8 },
   segment: { flexDirection: "row", borderRadius: 12, borderWidth: 1, overflow: "hidden" },
   segmentItem: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center" },
-  segmentText: { fontSize: 13, lineHeight: 21, fontFamily: "Inter_600SemiBold" },
-  groupTitle: { fontSize: 15, lineHeight: 24, fontFamily: "Inter_600SemiBold", marginBottom: 6 },
+  segmentText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  groupTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold", marginBottom: 8 },
   row: {
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     minHeight: 52,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  rowLabel: { fontSize: 14, lineHeight: 23, fontFamily: "Inter_500Medium" },
-  rowNote: { fontSize: 11, lineHeight: 18, fontFamily: "Inter_400Regular" },
+  rowLabel: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  rowNote: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   exit: {
     alignItems: "center",
     justifyContent: "center",
@@ -289,6 +289,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: 4,
   },
-  exitText: { fontSize: 13, lineHeight: 21, fontFamily: "Inter_600SemiBold" },
-  footnote: { fontSize: 11, lineHeight: 18, textAlign: "center", marginTop: 14 },
+  exitText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  footnote: { fontSize: 12, lineHeight: 20, textAlign: "center", marginTop: 16 },
 });

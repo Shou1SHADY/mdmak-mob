@@ -258,10 +258,10 @@ const styles = StyleSheet.create({
   summary: {
     alignItems: "center",
     gap: 8,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     minHeight: 44,
   },
-  summaryText: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium", lineHeight: 18 },
+  summaryText: { flex: 1, fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 });

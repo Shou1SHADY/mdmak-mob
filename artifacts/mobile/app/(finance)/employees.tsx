@@ -127,7 +127,7 @@ export default function EmployeesScreen() {
                   {(item.name || "?").trim().charAt(0).toUpperCase()}
                 </Text>
               </View>
-              <View style={{ flex: 1, gap: 3 }}>
+              <View style={{ flex: 1, gap: 4 }}>
                 <Text
                   style={[styles.name, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
                   numberOfLines={1}
@@ -162,7 +162,7 @@ export default function EmployeesScreen() {
 }
 
 const styles = StyleSheet.create({
-  controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10 },
+  controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   searchBox: {
     alignItems: "center",
     gap: 8,
@@ -171,21 +171,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 0 },
+  searchInput: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", paddingVertical: 0 },
   statRow: { gap: 12, marginBottom: 12 },
   row: {
     alignItems: "center",
     gap: 12,
     borderRadius: 12,
     borderWidth: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 8,
     minHeight: 56,
   },
   avatar: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 16, lineHeight: 26, fontFamily: "Inter_600SemiBold" },
-  name: { fontSize: 14, lineHeight: 23, fontFamily: "Inter_500Medium" },
-  role: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  salary: { fontSize: 13, lineHeight: 21, fontFamily: "Inter_600SemiBold" },
+  avatarText: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
+  name: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  role: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
+  salary: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
 });

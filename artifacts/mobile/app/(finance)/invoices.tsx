@@ -214,7 +214,7 @@ export default function InvoicesScreen() {
 }
 
 const styles = StyleSheet.create({
-  controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10 },
+  controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   searchBox: {
     alignItems: "center",
     gap: 8,
@@ -223,15 +223,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 0 },
+  searchInput: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", paddingVertical: 0 },
   statRow: { gap: 12, marginBottom: 12 },
-  card: { borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10, gap: 6 },
-  cardTop: { alignItems: "center", gap: 10 },
-  number: { flex: 1, fontSize: 15, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
-  amount: { fontSize: 14, lineHeight: 23, fontFamily: "Inter_600SemiBold" },
-  client: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  metaRow: { alignItems: "center", gap: 8, marginTop: 2 },
-  pill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
-  pillText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  due: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  card: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 8, gap: 8 },
+  cardTop: { alignItems: "center", gap: 8 },
+  number: { flex: 1, fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
+  amount: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  client: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
+  metaRow: { alignItems: "center", gap: 8, marginTop: 4 },
+  pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
+  pillText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  due: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 });

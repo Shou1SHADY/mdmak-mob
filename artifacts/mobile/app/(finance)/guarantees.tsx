@@ -135,11 +135,11 @@ export default function GuaranteesScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10, gap: 6 },
-  title: { fontSize: 15, fontFamily: "Inter_600SemiBold", lineHeight: 24 },
-  meta: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  metaRow: { alignItems: "center", gap: 8, marginTop: 2 },
-  pill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
-  pillText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  expiry: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  card: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 8, gap: 8 },
+  title: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
+  meta: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
+  metaRow: { alignItems: "center", gap: 8, marginTop: 4 },
+  pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
+  pillText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  expiry: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 });

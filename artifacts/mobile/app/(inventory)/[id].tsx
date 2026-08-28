@@ -56,7 +56,7 @@ export default function WarehouseDetailScreen() {
           { backgroundColor: colors.card, borderColor: colors.border, flexDirection: isRTL ? "row-reverse" : "row" },
         ]}
       >
-        <View style={{ flex: 1, gap: 3 }}>
+        <View style={{ flex: 1, gap: 4 }}>
           <Text
             style={[styles.name, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
             numberOfLines={1}
@@ -148,7 +148,7 @@ export default function WarehouseDetailScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10 },
+  controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   searchBox: {
     alignItems: "center",
     gap: 8,
@@ -157,21 +157,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 0 },
+  searchInput: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", paddingVertical: 0 },
   row: {
     alignItems: "center",
     gap: 12,
     borderRadius: 12,
     borderWidth: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 8,
     minHeight: 56,
   },
-  name: { fontSize: 14, lineHeight: 23, fontFamily: "Inter_500Medium" },
-  tagRow: { gap: 6, flexWrap: "wrap" },
-  pill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 7 },
-  pillText: { fontSize: 10, fontFamily: "Inter_500Medium" },
-  qty: { fontSize: 16, lineHeight: 26, fontFamily: "Inter_600SemiBold" },
-  unit: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  name: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  tagRow: { gap: 8, flexWrap: "wrap" },
+  pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  pillText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  qty: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
+  unit: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 });

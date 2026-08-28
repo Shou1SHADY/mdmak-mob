@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   moduleHeader: {
     alignItems: "center",
     gap: 12,
-    padding: 14,
+    padding: 16,
   },
   moduleIcon: {
     width: 42,
@@ -244,22 +244,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  moduleTitles: { flex: 1, gap: 2 },
-  moduleTitle: { fontSize: 15, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
-  moduleDesc: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  moduleTitles: { flex: 1, gap: 4 },
+  moduleTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
+  moduleDesc: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   webBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  webBadgeText: { fontSize: 10, fontFamily: "Inter_500Medium" },
+  webBadgeText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   items: { borderTopWidth: StyleSheet.hairlineWidth },
   item: {
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     paddingHorizontal: 16,
     // 44px minimum touch target.
     minHeight: 44,
   },
-  itemText: { flex: 1, fontSize: 13, lineHeight: 21, fontFamily: "Inter_400Regular" },
+  itemText: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
   sectionLabel: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",
     marginTop: 8,
     marginBottom: 8,

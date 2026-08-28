@@ -120,14 +120,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   grabber: { alignItems: "center", paddingTop: 8, paddingBottom: 4 },
-  grabberBar: { width: 40, height: 4, borderRadius: 2 },
+  grabberBar: { width: 40, height: 4, borderRadius: 4 },
   header: {
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 12,
     gap: 12,
   },
-  title: { flex: 1, fontSize: 18, lineHeight: 29, fontFamily: "Inter_600SemiBold" },
+  title: { flex: 1, fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
   body: { flexGrow: 0 },
   footer: { paddingTop: 12 },
 });

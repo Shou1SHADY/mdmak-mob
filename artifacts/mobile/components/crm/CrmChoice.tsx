@@ -94,16 +94,16 @@ export function CrmChoice<T extends string>({
 
 const styles = StyleSheet.create({
   wrap: { marginBottom: 16 },
-  label: { fontSize: 13, lineHeight: 21, fontFamily: "Inter_500Medium", marginBottom: 8 },
-  row: { alignItems: "center", gap: 8, paddingVertical: 2, paddingHorizontal: 2 },
+  label: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", marginBottom: 8 },
+  row: { alignItems: "center", gap: 8, paddingVertical: 4, paddingHorizontal: 4 },
   rowWrap: { flexWrap: "wrap", gap: 8 },
   chip: {
     // 44px minimum touch target, per the project's accessibility rule.
     minHeight: 44,
     justifyContent: "center",
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
   },
-  chipText: { fontSize: 13, lineHeight: 21, fontFamily: "Inter_500Medium" },
+  chipText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
 });
