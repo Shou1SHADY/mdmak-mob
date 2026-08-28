@@ -297,3 +297,29 @@ export const PREVIEW_DELIVERIES = [
 export const PREVIEW_LINKS = [
   { id: "l1", contractorOrgId: "org-a", supplierOrgId: "preview-user", contractorName: "شركة الراجحي للمقاولات", status: "active" },
 ];
+
+/**
+ * The role dashboards query Firestore inline rather than through the shared
+ * hooks, so they need their own fixtures. Without them the dashboards render
+ * their error state in preview — which hides the tab bar and the AI widget,
+ * the two things most in need of review down there.
+ */
+export const PREVIEW_CONTRACTOR_RFQS = [
+  { id: "r1", title: "\u062a\u0648\u0631\u064a\u062f \u062d\u062f\u064a\u062f \u0627\u0644\u062a\u0633\u0644\u064a\u062d \u2014 \u0623\u0628\u0631\u0627\u062c \u0627\u0644\u064a\u0627\u0633\u0645\u064a\u0646", category: "\u062d\u062f\u064a\u062f \u0648\u0645\u0639\u0627\u062f\u0646", city: "\u0627\u0644\u0631\u064a\u0627\u0636", status: "New", offersCount: 4, createdAt: new Date().toISOString(), organizationId: "preview-user" },
+  { id: "r2", title: "Ready-mix concrete supply", category: "\u062e\u0631\u0633\u0627\u0646\u0629 \u062c\u0627\u0647\u0632\u0629 \u0648\u0645\u0648\u0627\u062f \u062e\u0627\u0645", city: "\u062c\u062f\u0629", status: "Awarded", offersCount: 7, createdAt: new Date().toISOString(), organizationId: "preview-user" },
+  { id: "r3", title: "\u0623\u0639\u0645\u0627\u0644 \u0643\u0647\u0631\u0628\u0627\u0621", category: "\u0643\u0647\u0631\u0628\u0627\u0621 \u0648\u0625\u0646\u0627\u0631\u0629", city: "\u0627\u0644\u062f\u0645\u0627\u0645", status: "Under Review", offersCount: 2, createdAt: new Date().toISOString(), organizationId: "preview-user" },
+  { id: "r4", title: "\u0639\u0632\u0644 \u0645\u0627\u0626\u064a", category: "\u0639\u0632\u0644 \u0648\u0623\u0633\u0642\u0641", city: "\u0627\u0644\u0631\u064a\u0627\u0636", status: "Draft", offersCount: 0, createdAt: new Date().toISOString(), organizationId: "preview-user" },
+];
+
+export const PREVIEW_CONTRACTOR_STATS = {
+  total: 4, draft: 1, newRfqs: 1, active: 0, underReview: 1, awarded: 1,
+  closed: 0, inProgress: 3, offers: 13,
+};
+
+export const PREVIEW_SUPPLIER_OFFERS = [
+  { id: "of1", rfqTitle: "\u062a\u0648\u0631\u064a\u062f \u062d\u062f\u064a\u062f \u0627\u0644\u062a\u0633\u0644\u064a\u062d", price: "1250000", status: "\u0642\u064a\u062f \u0627\u0644\u0645\u0631\u0627\u062c\u0639\u0629", createdAt: new Date().toISOString(), organizationId: "preview-user" },
+  { id: "of2", rfqTitle: "Ready-mix concrete supply", price: "340000", status: "\u0645\u0642\u0628\u0648\u0644", createdAt: new Date().toISOString(), organizationId: "preview-user" },
+  { id: "of3", rfqTitle: "\u0623\u0639\u0645\u0627\u0644 \u0643\u0647\u0631\u0628\u0627\u0621", price: "88000", status: "\u0645\u0631\u0641\u0648\u0636", createdAt: new Date().toISOString(), organizationId: "preview-user" },
+];
+
+export const PREVIEW_SUPPLIER_STATS = { totalOffers: 3, pending: 1, accepted: 1, openRfqs: 5 };

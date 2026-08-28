@@ -12,6 +12,7 @@ import { useColors } from "@/hooks/useColors";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { isPreview, PREVIEW_CONTRACTOR_RFQS, PREVIEW_CONTRACTOR_STATS } from "@/lib/preview";
 import { db } from "@/lib/firebase";
 import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -110,6 +111,15 @@ export default function ContractorDashboard() {
   const { unreadCount } = useNotifications();
 
   const fetchData = async () => {
+    // Design preview: serve fixtures so the tab bar, the AI widget and the
+    // chart area below the fold can be reviewed without an account.
+    if (isPreview()) {
+      setRfqs(PREVIEW_CONTRACTOR_RFQS as RFQItem[]);
+      setStats(PREVIEW_CONTRACTOR_STATS);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     const orgId = user?.organizationId;
     if (!orgId) { setLoading(false); return; }
     setFetchError(false);

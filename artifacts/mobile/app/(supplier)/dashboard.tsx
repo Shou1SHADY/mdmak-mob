@@ -11,6 +11,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
+import { isPreview, PREVIEW_CONTRACTOR_RFQS, PREVIEW_SUPPLIER_OFFERS, PREVIEW_SUPPLIER_STATS } from "@/lib/preview";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
 import { OfferCard, OfferItem } from "@/components/OfferCard";
@@ -37,6 +38,15 @@ export default function SupplierDashboard() {
   const { unreadCount } = useNotifications();
 
   const fetchData = async () => {
+    // Design preview: see the contractor dashboard for why.
+    if (isPreview()) {
+      setOffers(PREVIEW_SUPPLIER_OFFERS as OfferItem[]);
+      setRecentRfqs(PREVIEW_CONTRACTOR_RFQS as RFQItem[]);
+      setStats(PREVIEW_SUPPLIER_STATS);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     const orgId = user?.organizationId;
     if (!orgId) { setLoading(false); return; }
     setFetchError(false);
