@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { useColorScheme, ColorSchemeName } from "react-native";
+import { useColorScheme, ColorSchemeName, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import designTokens from "@/constants/colors";
 
@@ -80,6 +80,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const isDark = resolvedScheme === "dark";
   const tokens = isDark ? darkTheme : lightTheme;
+
+  // Paint the PAGE itself, not just the React tree.
+  //
+  // Installed to a home screen with viewport-fit=cover, the app draws into
+  // the safe areas but the document behind it keeps the browser default of
+  // white — which showed as a white band across the bottom, under the tab
+  // bar and around the home indicator. Rubber-band overscroll exposes the
+  // same band at the top.
+  //
+  // A CSS media query cannot solve this alone: the user may choose a theme
+  // that differs from the system one, so the page has to follow the RESOLVED
+  // theme. theme-color moves with it so the status bar matches too.
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof document === "undefined") return;
+    const bg = tokens.colors.background;
+    document.documentElement.style.backgroundColor = bg;
+    if (document.body) document.body.style.backgroundColor = bg;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", bg);
+  }, [tokens]);
 
   return (
     <ThemeContext.Provider value={{ tokens, isDark, themeMode, setThemeMode }}>

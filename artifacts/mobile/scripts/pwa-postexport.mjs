@@ -89,6 +89,26 @@ const tags = [
   // viewport-fit=cover lets the app paint under the notch and home indicator;
   // react-native-safe-area-context already insets the content correctly.
   `    <meta name="format-detection" content="telephone=no" />`,
+  // The exported HTML declares no background at all, so the document is white
+  // until React paints — and STAYS white in the safe areas, which is the band
+  // that appeared across the bottom of an installed PWA, under the tab bar and
+  // around the home indicator. This covers the first frame and the areas the
+  // React tree never paints; ThemeContext then keeps the colour in step with
+  // whichever theme the user actually chose, which a media query alone cannot.
+  //
+  // 100dvh, not 100%: the dynamic viewport unit follows the browser chrome
+  // collapsing, where a percentage height leaves a gap.
+  `    <style id="app-surface">`,
+  `      html, body {`,
+  `        background-color: #F8FAFC;`,
+  `        min-height: 100dvh;`,
+  `        overscroll-behavior: none;`,
+  `      }`,
+  `      @media (prefers-color-scheme: dark) {`,
+  `        html, body { background-color: #0B1221; }`,
+  `      }`,
+  `      #root { min-height: 100dvh; }`,
+  `    </style>`,
   MARK_CLOSE,
 ].join("\n");
 
