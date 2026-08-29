@@ -88,74 +88,74 @@ const colors = {
   },
 
   dark: {
-    text: "#F8FAFC",
-    tint: "#38BDF8",
+    text: "#EAEFF7",
+    tint: "#4DA3FF",
 
-    background: "#0B1221",
-    foreground: "#F1F5F9",
+    background: "#0A0E17",
+    foreground: "#EAEFF7",
 
-    card: "#172136", // more separation from background
-    cardForeground: "#F1F5F9",
+    card: "#171F2E", // more separation from background
+    cardForeground: "#EAEFF7",
 
     // The brand navy cannot be a fill here — it is the background. A deep
     // brand blue keeps the "filled, important" reading and carries white at
     // 6.6:1, while staying clearly distinct from the lighter cta blue.
-    primary: "#0F5FA8",
+    primary: "#1C5FA6",
     primaryForeground: "#FFFFFF",
     // Brand ink and brand tints: 10:1 on the background.
-    primaryText: "#A8C0DC",
+    primaryText: "#A6C3E8",
 
-    cta: "#38BDF8",
-    ctaForeground: "#0B1221",
+    cta: "#4DA3FF",
+    ctaForeground: "#04101F",
 
-    secondary: "#94A3B8",
-    secondaryForeground: "#0B1221",
+    secondary: "#93A3BA",
+    secondaryForeground: "#0A0E17",
 
-    muted: "#213052", // reads as a filled chip, not a void
-    mutedForeground: "#94A3B8",
+    muted: "#202A3B", // reads as a filled chip, not a void
+    mutedForeground: "#93A3BA",
 
-    accent: "#20CBD5",
-    accentForeground: "#0B1221",
+    accent: "#2DD4BF",
+    accentForeground: "#032622",
 
-    destructive: "#F87171",
-    destructiveForeground: "#0B1221",
+    destructive: "#FF7070",
+    destructiveForeground: "#1A0505",
 
-    success: "#4ADE80",
-    successForeground: "#0B1221",
+    success: "#3DD68C",
+    successForeground: "#04170D",
 
-    warning: "#FBBF24",
-    warningForeground: "#0B1221",
+    warning: "#F5B544",
+    warningForeground: "#1C1200",
 
-    border: "#2A3A57", // visible against the lifted card
-    input: "#1E2D45",
+    border: "#28344A", // visible against the lifted card
+    input: "#1B2432",
 
-    surface: "#172136", // matches card
-    surfaceSecondary: "#0F1828",
+    surface: "#131A27", // matches card
+    surfaceSecondary: "#0D131E",
 
-    tabBar: "#131C30",
-    header: "#0F1828",
+    tabBar: "#131A27",
+    header: "#0D131E",
 
-    drawerBg: "#0B1221",
-    drawerText: "#F8FAFC",
-    drawerActive: "#38BDF8",
-    drawerHover: "#1C2A42",
+    drawerBg: "#0A0E17",
+    drawerText: "#EAEFF7",
+    drawerActive: "#4DA3FF",
+    drawerHover: "#202A3B",
 
-    accentBlueSoft: "#1C2A42",
-    accentPurpleSoft: "#1E2A42",
-    surfaceGray: "#1C2A42",
-    outline: "#8A9BB4", // ~5.6:1 on the dark background
-    onSurfaceVariant: "#94A3B8",
+    accentBlueSoft: "#17273D",
+    accentPurpleSoft: "#1D2440",
+    surfaceGray: "#202A3B",
+    outline: "#8797AF", // ~5.6:1 on the dark background
+    onSurfaceVariant: "#AEBBCE",
 
-    chartColors: ["#38BDF8", "#20CBD5", "#4ADE80", "#94A3B8", "#64748B"],
+    chartColors: ["#4DA3FF", "#2DD4BF", "#3DD68C", "#F5B544", "#A78BFA"],
 
     // The app-wide header gradient, under white text on eleven screens. It ran
     // from the page colour to almost the page colour, so every header dissolved
     // into the screen behind it — in light mode the same gradient is a solid
     // navy block. A deep brand blue restores the header as a surface: 9.3:1
     // under white, 2.0:1 against the page.
-    gradientPrimary: ["#134A80", "#0B2C4F"] as [string, string],
-    gradientBlue: ["#0284C7", "#0369A1"] as [string, string],
-    gradientTeal: ["#0B1221", "#0369A1"] as [string, string],
+    gradientPrimary: ["#17518C", "#0C2A4A"] as [string, string],
+    gradientBlue: ["#4DA3FF", "#1C5FA6"] as [string, string],
+    gradientTeal: ["#0A0E17", "#1C5FA6"] as [string, string],
     gradientGlass: ["rgba(255,255,255,0.06)", "rgba(255,255,255,0.02)"] as [string, string],
 
     textWhite: "#F8FAFC",
@@ -210,28 +210,28 @@ const colors = {
       elevation: 0,
     },
     sm: {
-      shadowColor: "#0A1120",
+      shadowColor: "#050810",
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.04,
       shadowRadius: 6,
       elevation: 1,
     },
     md: {
-      shadowColor: "#0A1120",
+      shadowColor: "#050810",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.06,
       shadowRadius: 16,
       elevation: 3,
     },
     lg: {
-      shadowColor: "#0A1120",
+      shadowColor: "#050810",
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.07,
       shadowRadius: 32,
       elevation: 6,
     },
     xl: {
-      shadowColor: "#0A1120",
+      shadowColor: "#050810",
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.09,
       shadowRadius: 40,
@@ -245,14 +245,14 @@ const colors = {
       elevation: 8,
     },
     card: {
-      shadowColor: "#0A1120",
+      shadowColor: "#050810",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.05,
       shadowRadius: 14,
       elevation: 3,
     },
     nav: {
-      shadowColor: "#0A1120",
+      shadowColor: "#050810",
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.05,
       shadowRadius: 16,

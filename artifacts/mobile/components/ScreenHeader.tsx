@@ -91,32 +91,32 @@ export function DashboardHeader({
           style,
         ]}
       >
-        <View style={[styles.dashInner, { paddingHorizontal: 16, paddingBottom: 10, marginTop: 4 }]}>
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, marginRight: isRTL ? 0 : 10, marginLeft: isRTL ? 10 : 0 }}>
+        <View style={[styles.dashInner, { paddingHorizontal: 16, paddingBottom: 12, marginTop: 4 }]}>
+          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, marginRight: isRTL ? 0 : 8, marginLeft: isRTL ? 8 : 0 }}>
             <View style={[styles.avatarRing, { borderColor: colors.accent }]}>
               <Image
                 source={require("@/assets/images/figma/user-profile.png")}
-                style={{ width: 38, height: 38, borderRadius: 19 }}
+                style={{ width: 34, height: 34, borderRadius: 17 }}
                 contentFit="cover"
               />
             </View>
             <View style={{ flex: 1 }}>
               <Text
-                style={{ fontFamily: "HankenGrotesk_700Bold", fontSize: 17, color: colors.foreground }}
-                numberOfLines={1}
+                style={{ fontFamily: "Inter_600SemiBold", fontSize: 15, lineHeight: 20, color: colors.foreground }}
+                numberOfLines={2}
                 ellipsizeMode="tail"
               >
                 {orgName ?? userName ?? "Mdmak Tech"}
               </Text>
               {orgType && (
-                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.outline, marginTop: 1 }}>
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 16, color: colors.outline }} numberOfLines={1}>
                   {orgType}
                 </Text>
               )}
             </View>
           </View>
 
-          <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 8, alignItems: "center" }}>
+          <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 6, alignItems: "center" }}>
             {/* Language switcher — 44×44 touch target with flag + code label */}
             <TouchableOpacity
               style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -125,7 +125,7 @@ export function DashboardHeader({
               accessibilityRole="button"
               activeOpacity={0.75}
             >
-              <CurrentFlag width={26} height={17} />
+              <CurrentFlag width={22} height={15} />
               <Text style={[styles.langCode, { color: colors.foreground }]}>
                 {language === "ar" ? "AR" : "EN"}
               </Text>
@@ -338,26 +338,27 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   avatarRing: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
   langBtn: {
-    height: 44,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
+    height: 40,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
   langCode: {
     fontSize: 12,
-    fontFamily: "Inter_700Bold",
+    lineHeight: 20,
+    fontFamily: "Inter_600SemiBold",
   },
   // ── Bottom sheet ──────────────────────────────────────
   modalOuter: {

@@ -105,7 +105,7 @@ const tags = [
   `        overscroll-behavior: none;`,
   `      }`,
   `      @media (prefers-color-scheme: dark) {`,
-  `        html, body { background-color: #0B1221; }`,
+  `        html, body { background-color: #0A0E17; }`,
   `      }`,
   `      #root { min-height: 100dvh; }`,
   `    </style>`,

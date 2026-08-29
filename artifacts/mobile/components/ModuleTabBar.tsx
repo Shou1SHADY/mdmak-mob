@@ -53,7 +53,7 @@ export function moduleTabScreenOptions(colors: ReturnType<typeof useColors>, ins
         paddingBottom: 6,
         paddingTop: 0,
         paddingHorizontal: 4,
-        shadowColor: "#0A1120",
+        shadowColor: "#050810",
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.14,
         shadowRadius: 28,
