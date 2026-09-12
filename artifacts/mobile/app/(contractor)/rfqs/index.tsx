@@ -5,12 +5,9 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   RefreshControl,
   Platform,
   ScrollView,
-  Modal,
-  Pressable,
 } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
@@ -24,8 +21,16 @@ import { db } from "@/lib/firebase";
 import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { RFQ_STATUSES, CATEGORIES, SAUDI_CITIES, displayCity } from "@/constants/data";
+import { Input } from "@/components/ui/Input";
+import { RFQ_STATUSES, CATEGORIES, SAUDI_CITIES, displayCity, displayCategory, statusTone } from "@/constants/data";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { FilterSheet, FilterButton, FilterPill, type FilterSection } from "@/components/FilterSheet";
+import { type, space, radius, toneColors, HIT_SLOP, type Tone } from "@/lib/design";
+
+// The sheet's draft, keyed by section. "all" / "" are the no-filter values the
+// screen has always used for status and for category/city respectively.
+type FilterDraft = { status: string; category: string; city: string };
+const NO_FILTERS: FilterDraft = { status: "all", category: "", city: "" };
 
 export default function MyRFQsScreen() {
   const colors = useColors();
@@ -33,17 +38,18 @@ export default function MyRFQsScreen() {
   const { user } = useAuth();
   const t = useT();
   const { isRTL } = useLanguage();
+  const rowDirection = isRTL ? "row-reverse" : "row";
   const [rfqs, setRfqs] = useState<RFQItem[]>([]);
   const [filtered, setFiltered] = useState<RFQItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
-  const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [draftCategory, setDraftCategory] = useState("");
-  const [draftCity, setDraftCity] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [draft, setDraft] = useState<FilterDraft>(NO_FILTERS);
 
   const stats = {
     total: rfqs.length,
@@ -59,6 +65,7 @@ export default function MyRFQsScreen() {
   const fetchRFQs = async () => {
     const orgId = user?.organizationId;
     if (!orgId) { setLoading(false); return; }
+    setFetchError(null);
     try {
       const q = query(
         collection(db, "rfqs"),
@@ -71,6 +78,7 @@ export default function MyRFQsScreen() {
       applyFilters(items, search, statusFilter, categoryFilter, cityFilter);
     } catch (e: any) {
       console.warn("[RFQs] Query failed:", e.code, e.message);
+      setFetchError(e?.message || t.errors.generic);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -95,26 +103,52 @@ export default function MyRFQsScreen() {
   const isFiltered = search.trim().length > 0 || statusFilter !== "all" || categoryFilter !== "" || cityFilter !== "";
   const clearFilters = () => { setSearch(""); setStatusFilter("all"); setCategoryFilter(""); setCityFilter(""); };
 
-  const openFilterModal = () => {
-    setDraftCategory(categoryFilter);
-    setDraftCity(cityFilter);
-    setFilterModalOpen(true);
+  const openFilterSheet = () => {
+    setDraft({ status: statusFilter, category: categoryFilter, city: cityFilter });
+    setFilterOpen(true);
   };
-  const applyModalFilters = () => {
-    setCategoryFilter(draftCategory);
-    setCityFilter(draftCity);
-    setFilterModalOpen(false);
+  const applySheet = () => {
+    setStatusFilter(draft.status);
+    setCategoryFilter(draft.category);
+    setCityFilter(draft.city);
+    setFilterOpen(false);
   };
-  const resetModalFilters = () => {
-    setDraftCategory("");
-    setDraftCity("");
-  };
-  const hasActiveFilters = categoryFilter !== "" || cityFilter !== "";
+  const resetSheet = () => setDraft(NO_FILTERS);
+  const activeFilterCount =
+    (statusFilter !== "all" ? 1 : 0) + (categoryFilter !== "" ? 1 : 0) + (cityFilter !== "" ? 1 : 0);
 
-  const filterChips = [
-    { id: "all", label: t.common.all, labelAr: t.common.all, color: "#64748b" },
-    ...RFQ_STATUSES,
+  const filterSections: FilterSection[] = [
+    {
+      key: "status",
+      label: t.rfq.status,
+      allValue: "all",
+      options: RFQ_STATUSES.map((s) => ({ value: s.id, label: isRTL ? s.labelAr : s.label, tone: s.tone })),
+    },
+    {
+      key: "category",
+      label: t.rfq.category,
+      allValue: "",
+      options: CATEGORIES.map((c) => ({ value: c.labelAr, label: isRTL ? c.labelAr : c.label })),
+    },
+    {
+      key: "city",
+      label: t.rfq.city,
+      allValue: "",
+      options: SAUDI_CITIES.map((c) => ({ value: c, label: displayCity(c, isRTL) })),
+    },
   ];
+
+  // The quick status row above the list: "all" plus every RFQ status, each
+  // with its count. It mirrors the sheet's status section.
+  const statusChips: { id: string; label: string; tone: Tone }[] = [
+    { id: "all", label: t.common.all, tone: "cta" },
+    ...RFQ_STATUSES.map((s) => ({ id: s.id, label: isRTL ? s.labelAr : s.label, tone: s.tone })),
+  ];
+
+  const statusLabel = (id: string) => {
+    const s = RFQ_STATUSES.find((x) => x.id === id);
+    return s ? (isRTL ? s.labelAr : s.label) : id;
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -122,215 +156,122 @@ export default function MyRFQsScreen() {
 
       {/* Stats Summary */}
       {!loading && rfqs.length > 0 && (
-        <View style={[styles.statsBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View style={[styles.statsBar, { backgroundColor: colors.card, borderBottomColor: colors.border, flexDirection: rowDirection }]}>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-              {stats.total}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.outline }]}>{t.dashboard.totalRfqs}</Text>
+            <Text style={[type.display, { color: colors.foreground }]}>{stats.total}</Text>
+            <Text style={[type.caption, { color: colors.outline }]}>{t.dashboard.totalRfqs}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.primaryText, fontFamily: "Inter_600SemiBold" }]}>
-              {stats.active}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.outline }]}>{t.dashboard.active}</Text>
+            <Text style={[type.display, { color: colors.primaryText }]}>{stats.active}</Text>
+            <Text style={[type.caption, { color: colors.outline }]}>{t.dashboard.active}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.success, fontFamily: "Inter_600SemiBold" }]}>
-              {stats.closed}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.outline }]}>{t.dashboard.closed}</Text>
+            <Text style={[type.display, { color: colors.success }]}>{stats.closed}</Text>
+            <Text style={[type.caption, { color: colors.outline }]}>{t.dashboard.closed}</Text>
           </View>
         </View>
       )}
 
       {/* Filter Bar */}
       <View style={[styles.filterBar, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        {/* Search + Filter button row */}
-        <View style={[styles.searchRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-          <View style={[styles.searchBox, { flex: 1, backgroundColor: colors.surfaceGray, borderColor: colors.border }]}>
-            <Feather name="search" size={15} color={colors.outline} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
-              placeholder={t.rfq.searchPlaceholder}
-              placeholderTextColor={colors.outline}
-              value={search}
-              onChangeText={setSearch}
-            />
-            {search.length > 0 && (
-              <TouchableOpacity
-                onPress={() => setSearch("")}
-                style={{ width: 32, height: 32, alignItems: "center", justifyContent: "center" }}
-                accessibilityLabel={t.common.close}
-              >
-                <View style={[styles.clearIcon, { backgroundColor: colors.outline + "22" }]}>
-                  <Feather name="x" size={12} color={colors.outline} />
-                </View>
-              </TouchableOpacity>
-            )}
-          </View>
-          <TouchableOpacity
-            onPress={openFilterModal}
-            accessibilityLabel={t.rfq.filter}
-            accessibilityRole="button"
-            style={[
-              styles.filterBtn,
-              {
-                backgroundColor: hasActiveFilters ? colors.cta + "18" : colors.surfaceGray,
-                borderColor: hasActiveFilters ? colors.cta + "60" : colors.border,
-              },
-            ]}
-          >
-            <Feather name="sliders" size={16} color={hasActiveFilters ? colors.cta : colors.outline} />
-            {hasActiveFilters && <View style={[styles.filterDot, { backgroundColor: colors.cta }]} />}
-          </TouchableOpacity>
+        {/* Search + filter button row */}
+        <View style={[styles.searchRow, { flexDirection: rowDirection }]}>
+          <Input
+            containerStyle={{ flex: 1 }}
+            leftIcon="search"
+            placeholder={t.rfq.searchPlaceholder}
+            value={search}
+            onChangeText={setSearch}
+            rightIcon={search.length > 0 ? "x" : undefined}
+            onRightIconPress={() => setSearch("")}
+            rightIconLabel={t.common.close}
+            isRTL={isRTL}
+            returnKeyType="search"
+          />
+          <FilterButton activeCount={activeFilterCount} onPress={openFilterSheet} label={t.rfq.filter} />
         </View>
-
-        {/* Filter Modal */}
-        <Modal
-          visible={filterModalOpen}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setFilterModalOpen(false)}
-        >
-          <Pressable style={styles.modalBackdrop} onPress={() => setFilterModalOpen(false)} />
-          <View style={[styles.modalSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[styles.modalHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>{t.rfq.filterTitle}</Text>
-              <TouchableOpacity onPress={() => setFilterModalOpen(false)} accessibilityLabel={t.common.close}>
-                <Feather name="x" size={20} color={colors.outline} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Category */}
-            <Text style={[styles.filterLabel, { color: colors.secondary, textAlign: isRTL ? "right" : "left" }]}>{t.rfq.category}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.optionScroll, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <TouchableOpacity
-                style={[styles.optionChip, { backgroundColor: draftCategory === "" ? colors.primaryText + "18" : colors.muted, borderColor: draftCategory === "" ? colors.primaryText + "60" : colors.border }]}
-                onPress={() => setDraftCategory("")}
-              >
-                <Text style={[styles.optionChipText, { color: draftCategory === "" ? colors.primaryText : colors.mutedForeground }]}>{t.common.all}</Text>
-              </TouchableOpacity>
-              {CATEGORIES.map((cat) => {
-                const active = draftCategory === cat.labelAr;
-                return (
-                  <TouchableOpacity
-                    key={cat.id}
-                    style={[styles.optionChip, { backgroundColor: active ? colors.primaryText + "18" : colors.muted, borderColor: active ? colors.primaryText + "60" : colors.border }]}
-                    onPress={() => setDraftCategory(active ? "" : cat.labelAr)}
-                  >
-                    <Text style={[styles.optionChipText, { color: active ? colors.primaryText : colors.mutedForeground }]}>{isRTL ? cat.labelAr : cat.label}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            {/* City */}
-            <Text style={[styles.filterLabel, { color: colors.secondary, textAlign: isRTL ? "right" : "left", marginTop: 14 }]}>{t.rfq.city}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.optionScroll, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <TouchableOpacity
-                style={[styles.optionChip, { backgroundColor: draftCity === "" ? colors.primaryText + "18" : colors.muted, borderColor: draftCity === "" ? colors.primaryText + "60" : colors.border }]}
-                onPress={() => setDraftCity("")}
-              >
-                <Text style={[styles.optionChipText, { color: draftCity === "" ? colors.primaryText : colors.mutedForeground }]}>{t.common.all}</Text>
-              </TouchableOpacity>
-              {SAUDI_CITIES.map((city) => {
-                const active = draftCity === city;
-                return (
-                  <TouchableOpacity
-                    key={city}
-                    style={[styles.optionChip, { backgroundColor: active ? colors.primaryText + "18" : colors.muted, borderColor: active ? colors.primaryText + "60" : colors.border }]}
-                    onPress={() => setDraftCity(active ? "" : city)}
-                  >
-                    <Text style={[styles.optionChipText, { color: active ? colors.primaryText : colors.mutedForeground }]}>{displayCity(city, isRTL)}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-
-            {/* Actions */}
-            <View style={[styles.modalActions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <TouchableOpacity
-                style={[styles.modalActionBtn, { borderColor: colors.border, backgroundColor: colors.muted }]}
-                onPress={resetModalFilters}
-              >
-                <Text style={[styles.modalActionText, { color: colors.secondary }]}>{t.rfq.resetFilters}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalActionBtn, { flex: 2, backgroundColor: colors.cta, borderColor: colors.cta }]}
-                onPress={applyModalFilters}
-              >
-                <Text style={[styles.modalActionText, { color: "#fff" }]}>{t.rfq.applyFilters}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
 
         {/* Status filter chips — horizontal scroll */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.chipsScroll, { flexDirection: isRTL ? "row-reverse" : "row" }]}
+          style={{ flexGrow: 0, flexShrink: 0 }}
+          contentContainerStyle={[styles.chipsScroll, { flexDirection: rowDirection }]}
         >
-          {filterChips.map((item) => {
+          {statusChips.map((item) => {
             const active = statusFilter === item.id;
             const count = statusCounts[item.id] ?? 0;
-            const chipColor = active ? (item as any).color ?? colors.primaryText : undefined;
+            const c = toneColors(colors, item.tone);
             return (
               <TouchableOpacity
                 key={item.id}
                 style={[
                   styles.chip,
                   {
-                    backgroundColor: active
-                      ? (chipColor ?? colors.primaryText) + "18"
-                      : colors.card,
-                    borderColor: active
-                      ? (chipColor ?? colors.primaryText) + "60"
-                      : colors.border,
+                    flexDirection: rowDirection,
+                    backgroundColor: active ? c.bg : colors.card,
+                    borderColor: active ? c.fg : colors.border,
                   },
                 ]}
                 onPress={() => setStatusFilter(item.id)}
                 accessibilityRole="button"
+                accessibilityLabel={`${item.label} (${count})`}
                 accessibilityState={{ selected: active }}
               >
-                {active && (
-                  <View style={[styles.chipDot, { backgroundColor: chipColor ?? colors.primaryText }]} />
-                )}
-                <Text style={[
-                  styles.chipText,
-                  { color: active ? (chipColor ?? colors.primaryText) : colors.onSurfaceVariant },
-                ]}>
-                  {isRTL && (item as any).labelAr ? (item as any).labelAr : item.label}
+                {active && <View style={[styles.chipDot, { backgroundColor: c.fg }]} />}
+                <Text style={[type.captionStrong, { color: active ? c.fg : colors.onSurfaceVariant }]}>
+                  {item.label}
                 </Text>
-                <View style={[
-                  styles.chipBadge,
-                  {
-                    backgroundColor: active
-                      ? (chipColor ?? colors.primaryText) + "22"
-                      : colors.muted,
-                  },
-                ]}>
-                  <Text style={[styles.chipBadgeText, { color: active ? (chipColor ?? colors.primaryText) : colors.outline }]}>
-                    {count}
-                  </Text>
+                <View style={[styles.chipBadge, { backgroundColor: active ? c.border : colors.muted }]}>
+                  <Text style={[type.captionStrong, { color: active ? c.fg : colors.outline }]}>{count}</Text>
                 </View>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
 
-        {/* Results row */}
+        {/* Results row: count, the applied sheet filters as pills, and reset */}
         {isFiltered && (
-          <View style={[styles.resultsRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-            <Text style={[styles.resultsText, { color: colors.outline }]}>
+          <View style={[styles.resultsRow, { flexDirection: rowDirection }]}>
+            <Text style={[type.caption, { color: colors.outline }]}>
               {filtered.length} / {rfqs.length} {t.tabs.rfqs}
             </Text>
-            <TouchableOpacity onPress={clearFilters} style={styles.clearBtn}>
+            {categoryFilter !== "" && (
+              <FilterPill
+                label={displayCategory(categoryFilter, isRTL)}
+                onRemove={() => setCategoryFilter("")}
+                removeLabel={t.rfq.removeFilter}
+              />
+            )}
+            {cityFilter !== "" && (
+              <FilterPill
+                icon="map-pin"
+                tone="primary"
+                label={displayCity(cityFilter, isRTL)}
+                onRemove={() => setCityFilter("")}
+                removeLabel={t.rfq.removeFilter}
+              />
+            )}
+            {statusFilter !== "all" && (
+              <FilterPill
+                tone={statusTone(statusFilter)}
+                label={statusLabel(statusFilter)}
+                onRemove={() => setStatusFilter("all")}
+                removeLabel={t.rfq.removeFilter}
+              />
+            )}
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity
+              onPress={clearFilters}
+              style={[styles.clearBtn, { flexDirection: rowDirection }]}
+              hitSlop={HIT_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel={t.rfq.resetFilters}
+            >
               <Feather name="x-circle" size={13} color={colors.cta} />
-              <Text style={[styles.clearText, { color: colors.cta }]}>{t.rfq.resetFilters}</Text>
+              <Text style={[type.captionStrong, { color: colors.cta }]}>{t.rfq.resetFilters}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -338,7 +279,7 @@ export default function MyRFQsScreen() {
 
       {/* List */}
       {loading ? (
-        <View style={{ padding: 16 }}>
+        <View style={{ padding: space.lg }} accessibilityLabel={t.common.loading}>
           {[1, 2, 3, 4].map((k) => <CardSkeleton key={k} />)}
         </View>
       ) : (
@@ -360,16 +301,39 @@ export default function MyRFQsScreen() {
             />
           }
           ListEmptyComponent={
-            <EmptyState
-              icon="file-text"
-              title={isFiltered ? t.rfq.noRfqsFound : t.dashboard.noRfqs}
-              subtitle={isFiltered ? t.rfq.tryAdjustingFilters : t.dashboard.noRfqsDesc}
-              actionLabel={!isFiltered ? t.dashboard.createRfq : undefined}
-              onAction={!isFiltered ? () => router.push("/(contractor)/rfqs/create") : undefined}
-            />
+            fetchError ? (
+              <EmptyState
+                variant="error"
+                icon="alert-circle"
+                title={t.rfq.loadFailed}
+                subtitle={fetchError}
+                actionLabel={t.common.retry}
+                onAction={() => { setLoading(true); fetchRFQs(); }}
+              />
+            ) : (
+              <EmptyState
+                icon="file-text"
+                title={isFiltered ? t.rfq.noRfqsFound : t.dashboard.noRfqs}
+                subtitle={isFiltered ? t.rfq.tryAdjustingFilters : t.dashboard.noRfqsDesc}
+                actionLabel={!isFiltered ? t.dashboard.createRfq : undefined}
+                onAction={!isFiltered ? () => router.push("/(contractor)/rfqs/create") : undefined}
+              />
+            )
           }
         />
       )}
+
+      {/* Filter sheet — shared with the supplier's feed */}
+      <FilterSheet
+        visible={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        sections={filterSections}
+        values={draft}
+        onChange={(key, value) => setDraft((d) => ({ ...d, [key]: value }))}
+        onApply={applySheet}
+        onReset={resetSheet}
+        labels={{ title: t.rfq.filterTitle, apply: t.rfq.applyFilters, reset: t.rfq.resetFilters, all: t.common.all }}
+      />
 
       {/* Floating Action Button */}
       <TouchableOpacity
@@ -397,189 +361,68 @@ export default function MyRFQsScreen() {
 
 const styles = StyleSheet.create({
   statsBar: {
-    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: space.md,
+    paddingHorizontal: space.xl,
     borderBottomWidth: 1,
   },
   statItem: {
     flex: 1,
     alignItems: "center",
-    gap: 2,
-  },
-  statValue: {
-    fontSize: 24, lineHeight: 40,
-  },
-  statLabel: {
-    fontSize: 12, lineHeight: 20,
-    fontFamily: "Inter_400Regular",
   },
   statDivider: {
     width: 1,
     height: 32,
-    marginHorizontal: 8,
+    marginHorizontal: space.sm,
   },
   filterBar: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 10,
+    paddingHorizontal: space.lg,
+    paddingTop: space.md,
+    paddingBottom: space.sm,
     borderBottomWidth: 1,
-    gap: 10,
+    gap: space.sm,
   },
   searchRow: {
     alignItems: "center",
-    gap: 8,
-  },
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    paddingHorizontal: 16,
-    height: 44,
-  },
-  filterBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  filterDot: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
-  modalSheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    padding: 20,
-    paddingBottom: 32,
-    gap: 4,
-  },
-  modalHeader: {
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 17, lineHeight: 28,
-    fontFamily: "Inter_600SemiBold",
-  },
-  filterLabel: {
-    fontSize: 12, lineHeight: 20,
-    fontFamily: "Inter_600SemiBold",
-    marginBottom: 8,
-  },
-  optionScroll: {
-    gap: 8,
-    paddingBottom: 4,
-  },
-  optionChip: {
-    borderWidth: 1.5,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  optionChipText: {
-    fontSize: 14, lineHeight: 24,
-    fontFamily: "Inter_400Regular",
-  },
-  modalActions: {
-    gap: 10,
-    marginTop: 20,
-  },
-  modalActionBtn: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalActionText: {
-    fontSize: 14, lineHeight: 24,
-    fontFamily: "Inter_600SemiBold",
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14, lineHeight: 24,
-    fontFamily: "Inter_400Regular",
-  },
-  clearIcon: {
-    width: 22,
-    height: 22,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
+    gap: space.sm,
   },
   chipsScroll: {
-    gap: 8,
-    paddingHorizontal: 2,
+    gap: space.sm,
+    paddingVertical: space.xs,
   },
   chip: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    borderWidth: 1.5,
-    borderRadius: 999,
-    paddingLeft: 12,
-    paddingRight: 8,
-    paddingVertical: 7,
+    gap: space.xs,
+    minHeight: 36,
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: space.md,
   },
   chipDot: {
     width: 6,
     height: 6,
-    borderRadius: 4,
-  },
-  chipText: {
-    fontSize: 12, lineHeight: 20,
-    fontFamily: "Inter_600SemiBold",
+    borderRadius: radius.hairline,
   },
   chipBadge: {
-    borderRadius: 999,
+    borderRadius: radius.pill,
     minWidth: 20,
     height: 20,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 5,
-  },
-  chipBadgeText: {
-    fontSize: 12, lineHeight: 20,
-    fontFamily: "Inter_600SemiBold",
+    paddingHorizontal: space.xs,
   },
   resultsRow: {
     alignItems: "center",
-    justifyContent: "space-between",
-  },
-  resultsText: {
-    fontSize: 12, lineHeight: 20,
-    fontFamily: "Inter_400Regular",
+    flexWrap: "wrap",
+    gap: space.sm,
   },
   clearBtn: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-  },
-  clearText: {
-    fontSize: 12, lineHeight: 20,
-    fontFamily: "Inter_600SemiBold",
+    gap: space.xs,
+    minHeight: 32,
   },
   list: {
-    padding: 16,
+    padding: space.lg,
     gap: 0,
   },
   fab: {

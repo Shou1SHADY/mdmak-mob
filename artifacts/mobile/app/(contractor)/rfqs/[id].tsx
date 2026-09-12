@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform,
-  Modal, Pressable, TextInput, ActivityIndicator,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert,
+  Modal, Pressable, ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, addDoc, writeBatch } from "firebase/firestore";
@@ -18,12 +18,25 @@ import { RFQItem } from "@/components/RFQCard";
 import { OfferItem, OfferCard } from "@/components/OfferCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Skeleton, CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { RFQ_STATUSES, OFFER_STATUS } from "@/constants/data";
+import { RFQ_STATUSES, OFFER_STATUS, statusTone, displayCategory, displayCity } from "@/constants/data";
 import { BOQEditor } from "@/components/BOQEditor";
 import { exportRFQPDF, exportOfferComparisonPDF } from "@/lib/pdf-export";
+import { type, space, radius, MIN_TOUCH } from "@/lib/design";
 
 type SortMode = "price" | "date";
+
+/** One row of the header's "more" sheet. */
+type MoreAction = {
+  key: string;
+  icon: keyof typeof Feather.glyphMap;
+  label: string;
+  onPress: () => void;
+  selected?: boolean;
+};
 
 export default function RFQDetailScreen() {
   const colors = useColors();
@@ -39,6 +52,7 @@ export default function RFQDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortMode>("price");
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const [pdfLoading, setPdfLoading] = useState(false);
 
@@ -47,6 +61,11 @@ export default function RFQDetailScreen() {
   const [targetPrice, setTargetPrice] = useState("");
   const [reductionNote, setReductionNote] = useState("");
   const [isReducing, setIsReducing] = useState(false);
+
+  const rowDirection = isRTL ? "row-reverse" : "row";
+  const textAlign = isRTL ? "right" : "left";
+  const fmtSar = (n: number) =>
+    new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(n);
 
   const handleExportRFQ = async () => {
     if (!rfq) return;
@@ -281,16 +300,42 @@ export default function RFQDetailScreen() {
   };
 
   const statusData = rfq ? RFQ_STATUSES.find((s) => s.id === rfq.status) : null;
-  const statusInfo = statusData
-    ? { label: isRTL ? statusData.labelAr : statusData.label, color: statusData.color }
-    : rfq ? { label: rfq.status, color: colors.outline } : null;
+  const statusLabel = statusData ? (isRTL ? statusData.labelAr : statusData.label) : rfq?.status;
+
+  // The header's "more" sheet: the two PDF exports and the sort choice. They
+  // were three controls scattered down the page next to the per-offer
+  // decisions; here they are one affordance and the page keeps its focus on
+  // the offers.
+  const moreActions: MoreAction[] = [
+    { key: "exportRfq", icon: "file-text", label: t.boq.exportPDF, onPress: handleExportRFQ },
+  ];
+  if (offers.length > 0) {
+    moreActions.push({ key: "exportComparison", icon: "bar-chart-2", label: t.rfq.exportComparison, onPress: handleExportComparison });
+  }
+  if (offers.length > 1) {
+    moreActions.push(
+      { key: "sortPrice", icon: "trending-down", label: t.rfq.sortByPrice, onPress: () => setSortBy("price"), selected: sortBy === "price" },
+      { key: "sortDate", icon: "clock", label: t.rfq.sortByDate, onPress: () => setSortBy("date"), selected: sortBy === "date" },
+    );
+  }
+  const runMoreAction = (action: MoreAction) => {
+    setMoreOpen(false);
+    action.onPress();
+  };
 
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScreenHeader title={t.rfq.detail} showBack />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color={colors.primaryText} />
+        <View style={styles.content} accessibilityLabel={t.common.loading}>
+          <View style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Skeleton width={96} height={20} />
+            <Skeleton height={24} />
+            <Skeleton width="70%" height={16} />
+            <Skeleton width="40%" height={14} />
+          </View>
+          <CardSkeleton />
+          <CardSkeleton />
         </View>
       </View>
     );
@@ -300,52 +345,67 @@ export default function RFQDetailScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScreenHeader title={t.rfq.detail} showBack />
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 32 }}>
-          <Feather name="alert-triangle" size={36} color={colors.destructive} />
-          <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", color: colors.destructive, textAlign: "center" }}>
-            {fetchError}
-          </Text>
-          <TouchableOpacity
-            style={{ paddingHorizontal: 28, paddingVertical: 11, borderRadius: 12, borderWidth: 1.5, borderColor: colors.cta }}
-            onPress={fetchData}
-          >
-            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, lineHeight: 24, color: colors.cta }}>
-              {isRTL ? "إعادة المحاولة" : "Retry"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          variant="error"
+          icon="alert-circle"
+          title={t.rfq.detailLoadFailed}
+          subtitle={fetchError}
+          actionLabel={t.common.retry}
+          onAction={fetchData}
+        />
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScreenHeader title={t.rfq.detail} showBack />
+      <ScreenHeader
+        title={t.rfq.detail}
+        showBack
+        right={
+          rfq ? (
+            <TouchableOpacity
+              onPress={() => setMoreOpen(true)}
+              disabled={pdfLoading}
+              style={styles.moreBtn}
+              accessibilityRole="button"
+              accessibilityLabel={t.rfq.moreActions}
+              accessibilityState={{ busy: pdfLoading, disabled: pdfLoading }}
+            >
+              {pdfLoading
+                ? <ActivityIndicator size="small" color={colors.foreground} />
+                : <Feather name="more-horizontal" size={22} color={colors.foreground} />}
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}>
         {/* RFQ Card */}
         {rfq && (
-          <View style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl }]}>
-            <View style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <Text style={[styles.category, { color: colors.secondary }]}>{rfq.category}</Text>
-              {statusInfo && <StatusBadge label={statusInfo.label} color={statusInfo.color} />}
+          <View style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.row, { flexDirection: rowDirection }]}>
+              <Text style={[type.captionStrong, { color: colors.secondary, flexShrink: 1 }]} numberOfLines={1}>
+                {displayCategory(rfq.category, isRTL)}
+              </Text>
+              {statusLabel ? <StatusBadge label={statusLabel} tone={statusTone(rfq.status)} /> : null}
             </View>
-            <Text style={[styles.rfqTitle, { color: colors.foreground, lineHeight: isRTL ? 30 : 25, textAlign: isRTL ? "right" : "left" }]} numberOfLines={3}>
+            <Text style={[type.title, { color: colors.foreground, textAlign }]} numberOfLines={3}>
               {rfq.title}
             </Text>
             {rfq.description && (
-              <Text style={[styles.desc, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={4}>
+              <Text style={[type.body, { color: colors.mutedForeground, textAlign }]} numberOfLines={4}>
                 {rfq.description}
               </Text>
             )}
-            <View style={[styles.metaGrid, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            <View style={[styles.metaGrid, { flexDirection: rowDirection }]}>
+              <View style={[styles.metaItem, { flexDirection: rowDirection }]}>
                 <Feather name="map-pin" size={13} color={colors.mutedForeground} />
-                <Text style={[styles.metaText, { color: colors.mutedForeground }]}>{rfq.city}</Text>
+                <Text style={[type.body, { color: colors.mutedForeground }]}>{displayCity(rfq.city, isRTL)}</Text>
               </View>
-              <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                <Feather name="tag" size={13} color={colors.accent} />
-                <Text style={[styles.metaText, { color: colors.accent }]}>{offers.length} {t.rfq.offersSuffix}</Text>
+              <View style={[styles.metaItem, { flexDirection: rowDirection }]}>
+                <Feather name="tag" size={13} color={colors.accentText} />
+                <Text style={[type.body, { color: colors.accentText }]}>{offers.length} {t.rfq.offersSuffix}</Text>
               </View>
             </View>
             {(rfq.status === "Closed" || rfq.status === "Awarded") && (
@@ -354,35 +414,11 @@ export default function RFQDetailScreen() {
                 onPress={handleRepublish}
                 size="sm"
                 variant="outline"
-                style={{ alignSelf: isRTL ? "flex-end" : "flex-start", marginTop: 4 }}
+                style={{ alignSelf: isRTL ? "flex-end" : "flex-start", marginTop: space.xs }}
               />
             )}
           </View>
         )}
-
-        {/* PDF Export actions */}
-        <View style={[{ flexDirection: isRTL ? "row-reverse" : "row", gap: 8, flexWrap: "wrap" }]}>
-          <TouchableOpacity
-            style={[styles.exportBtn, { borderColor: colors.border, backgroundColor: colors.card, flexDirection: isRTL ? "row-reverse" : "row" }]}
-            onPress={handleExportRFQ}
-            disabled={pdfLoading}
-            activeOpacity={0.75}
-          >
-            <Feather name="file-text" size={13} color={colors.cta} />
-            <Text style={[styles.exportBtnText, { color: colors.cta }]}>{t.boq.exportPDF}</Text>
-          </TouchableOpacity>
-          {offers.length > 0 && (
-            <TouchableOpacity
-              style={[styles.exportBtn, { borderColor: colors.primaryText + "40", backgroundColor: colors.primaryText + "08", flexDirection: isRTL ? "row-reverse" : "row" }]}
-              onPress={handleExportComparison}
-              disabled={pdfLoading}
-              activeOpacity={0.75}
-            >
-              <Feather name="bar-chart-2" size={13} color={colors.primaryText} />
-              <Text style={[styles.exportBtnText, { color: colors.primaryText }]}>{isRTL ? "تصدير مقارنة العروض" : "Export Comparison"}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
 
         {/* BOQ section — normalised so RFQs published on the website, which
             carry their lines as `products`, render here too. */}
@@ -392,32 +428,24 @@ export default function RFQDetailScreen() {
           </View>
         )}
 
-        {/* Offers header + sort */}
-        <View style={[styles.offersHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+        {/* Offers header — the sort lives in the "more" sheet; this shows which one is on. */}
+        <View style={[styles.offersHeader, { flexDirection: rowDirection }]}>
+          <Text style={[type.title, { color: colors.foreground, flexShrink: 1 }]}>
             {t.rfq.submittedOffers} ({offers.length})
           </Text>
           {offers.length > 1 && (
-            <View style={[styles.sortRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              {(["price", "date"] as SortMode[]).map((mode) => (
-                <TouchableOpacity
-                  key={mode}
-                  style={[
-                    styles.sortChip,
-                    sortBy === mode
-                      ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                      : { backgroundColor: colors.card, borderColor: colors.border },
-                  ]}
-                  onPress={() => setSortBy(mode)}
-                >
-                  <Text style={[styles.sortChipText, { color: sortBy === mode ? "#FFF" : colors.outline }]}>
-                    {mode === "price"
-                      ? (isRTL ? "السعر" : "Price")
-                      : (isRTL ? "التاريخ" : "Date")}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity
+              onPress={() => setMoreOpen(true)}
+              style={[styles.sortHint, { flexDirection: rowDirection }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={t.rfq.moreActions}
+            >
+              <Feather name={sortBy === "price" ? "trending-down" : "clock"} size={13} color={colors.mutedForeground} />
+              <Text style={[type.caption, { color: colors.mutedForeground }]}>
+                {sortBy === "price" ? t.rfq.sortByPrice : t.rfq.sortByDate}
+              </Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -428,22 +456,21 @@ export default function RFQDetailScreen() {
           const lowest = Math.min(...prices);
           const highest = Math.max(...prices);
           const avg = Math.round(prices.reduce((a, b) => a + b, 0) / prices.length);
-          const fmt = (n: number) => new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(n);
           return (
-            <View style={[styles.priceSummary, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl, flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            <View style={[styles.priceSummary, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: rowDirection }]}>
               <View style={styles.priceSumItem}>
-                <Text style={[styles.priceSumLabel, { color: colors.outline }]}>{isRTL ? "الأدنى" : "Lowest"}</Text>
-                <Text style={[styles.priceSumValue, { color: "#12A063", fontFamily: "Inter_600SemiBold" }]}>{fmt(lowest)}</Text>
+                <Text style={[type.caption, { color: colors.outline }]}>{t.rfq.lowest}</Text>
+                <Text style={[type.bodyStrong, styles.tabular, { color: colors.success }]}>{fmtSar(lowest)}</Text>
               </View>
               <View style={[styles.priceSumDivider, { backgroundColor: colors.border }]} />
               <View style={styles.priceSumItem}>
-                <Text style={[styles.priceSumLabel, { color: colors.outline }]}>{isRTL ? "المتوسط" : "Avg"}</Text>
-                <Text style={[styles.priceSumValue, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{fmt(avg)}</Text>
+                <Text style={[type.caption, { color: colors.outline }]}>{t.rfq.average}</Text>
+                <Text style={[type.bodyStrong, styles.tabular, { color: colors.foreground }]}>{fmtSar(avg)}</Text>
               </View>
               <View style={[styles.priceSumDivider, { backgroundColor: colors.border }]} />
               <View style={styles.priceSumItem}>
-                <Text style={[styles.priceSumLabel, { color: colors.outline }]}>{isRTL ? "الأعلى" : "Highest"}</Text>
-                <Text style={[styles.priceSumValue, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold" }]}>{fmt(highest)}</Text>
+                <Text style={[type.caption, { color: colors.outline }]}>{t.rfq.highest}</Text>
+                <Text style={[type.bodyStrong, styles.tabular, { color: colors.mutedForeground }]}>{fmtSar(highest)}</Text>
               </View>
             </View>
           );
@@ -451,43 +478,97 @@ export default function RFQDetailScreen() {
 
         {/* Offer list */}
         {sortedOffers.length === 0 ? (
-          <View style={[styles.emptyOffers, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl }]}>
+          <View style={[styles.emptyOffers, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="inbox" size={28} color={colors.mutedForeground} />
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.rfq.noOffers}</Text>
+            <Text style={[type.body, { color: colors.mutedForeground }]}>{t.rfq.noOffers}</Text>
           </View>
         ) : (
-          sortedOffers.map((offer, idx) => (
-            <OfferCard
-              key={offer.id}
-              offer={offer}
-              rank={sortBy === "price" ? idx + 1 : undefined}
-              actions={
-                offer.status === OFFER_STATUS.UNDER_REVIEW ? (
-                  <View style={[styles.offerActions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                    <Button title={t.rfq.accept} onPress={() => handleAcceptReject(offer, "accept")} size="sm" style={{ flex: 1 }} />
-                    <Button
-                      title={t.rfq.reduce}
-                      onPress={() => { setReduceOffer(offer); setTargetPrice(""); setReductionNote(""); }}
-                      size="sm"
-                      variant="outline"
-                      style={{ flex: 1 }}
-                    />
-                    <Button title={t.rfq.reject} onPress={() => handleAcceptReject(offer, "reject")} size="sm" variant="destructive" style={{ flex: 1 }} />
-                  </View>
-                ) : offer.status === OFFER_STATUS.ACCEPTED ? (
-                  <Button
-                    title={t.chat.title}
-                    onPress={() => router.push(`/chat/${offer.id}`)}
-                    size="sm"
-                    variant="outline"
-                    style={{ alignSelf: isRTL ? "flex-end" : "flex-start" }}
-                  />
-                ) : undefined
-              }
-            />
-          ))
+          sortedOffers.map((offer, idx) => {
+            // The per-offer decisions stay on the card; a share-link offer is
+            // flagged so the contractor knows there is no account behind it.
+            const guestBadge = offer.isGuestOffer
+              ? <StatusBadge label={t.rfq.guestOffer} tone="neutral" size="sm" />
+              : null;
+            const decisionRow = offer.status === OFFER_STATUS.UNDER_REVIEW ? (
+              <View style={[styles.offerActions, { flexDirection: rowDirection }]}>
+                <Button title={t.rfq.accept} onPress={() => handleAcceptReject(offer, "accept")} size="sm" style={{ flex: 1 }} />
+                <Button
+                  title={t.rfq.reduce}
+                  onPress={() => { setReduceOffer(offer); setTargetPrice(""); setReductionNote(""); }}
+                  size="sm"
+                  variant="outline"
+                  style={{ flex: 1 }}
+                />
+                <Button title={t.rfq.reject} onPress={() => handleAcceptReject(offer, "reject")} size="sm" variant="destructive" style={{ flex: 1 }} />
+              </View>
+            ) : offer.status === OFFER_STATUS.ACCEPTED ? (
+              <Button
+                title={t.chat.title}
+                onPress={() => router.push(`/chat/${offer.id}`)}
+                size="sm"
+                variant="outline"
+                style={{ alignSelf: isRTL ? "flex-end" : "flex-start" }}
+              />
+            ) : null;
+            return (
+              <OfferCard
+                key={offer.id}
+                offer={offer}
+                rank={sortBy === "price" ? idx + 1 : undefined}
+                actions={
+                  guestBadge || decisionRow ? (
+                    <View style={styles.offerFooter}>
+                      {guestBadge && <View style={{ flexDirection: rowDirection }}>{guestBadge}</View>}
+                      {decisionRow}
+                    </View>
+                  ) : undefined
+                }
+              />
+            );
+          })
         )}
       </ScrollView>
+
+      {/* ── "More" action sheet: exports + sort ── */}
+      <Modal visible={moreOpen} transparent animationType="fade" onRequestClose={() => setMoreOpen(false)}>
+        <View style={[styles.sheetOuter, { backgroundColor: colors.overlay }]}>
+          <Pressable
+            style={StyleSheet.absoluteFillObject}
+            onPress={() => setMoreOpen(false)}
+            accessibilityRole="button"
+            accessibilityLabel={t.common.close}
+          />
+          <View style={[styles.actionSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + space.sm }]}>
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+            {moreActions.map((action) => (
+              <TouchableOpacity
+                key={action.key}
+                onPress={() => runMoreAction(action)}
+                activeOpacity={0.7}
+                style={[styles.actionRow, { flexDirection: rowDirection }]}
+                accessibilityRole="button"
+                accessibilityLabel={action.label}
+                accessibilityState={{ selected: !!action.selected }}
+              >
+                <Feather name={action.icon} size={18} color={action.selected ? colors.cta : colors.foreground} />
+                <Text style={[type.body, { color: colors.foreground, flex: 1, textAlign }]}>{action.label}</Text>
+                {action.selected ? <Feather name="check" size={16} color={colors.cta} /> : null}
+              </TouchableOpacity>
+            ))}
+            <View style={[styles.actionDivider, { backgroundColor: colors.border }]} />
+            <TouchableOpacity
+              onPress={() => setMoreOpen(false)}
+              activeOpacity={0.7}
+              style={[styles.actionRow, { flexDirection: rowDirection }]}
+              accessibilityRole="button"
+              accessibilityLabel={t.common.cancel}
+            >
+              <Feather name="x" size={18} color={colors.mutedForeground} />
+              <Text style={[type.body, { color: colors.mutedForeground, flex: 1, textAlign }]}>{t.common.cancel}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* ── Reduce Price Modal ── */}
       <Modal
@@ -496,65 +577,53 @@ export default function RFQDetailScreen() {
         animationType="slide"
         onRequestClose={() => setReduceOffer(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setReduceOffer(null)}>
+        <Pressable style={[styles.modalOverlay, { backgroundColor: colors.overlay }]} onPress={() => setReduceOffer(null)}>
           <Pressable
-            style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
+            style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + space.lg }]}
             onPress={(e) => e.stopPropagation()}
           >
-            {/* Handle */}
-            <View style={{ alignItems: "center", paddingBottom: 8 }}>
-              <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            </View>
+            <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-            <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+            <Text style={[type.title, { color: colors.foreground, textAlign }]}>
               {isRTL ? "طلب تخفيض السعر" : "Request Price Reduction"}
             </Text>
 
             {/* Current price */}
             {reduceOffer?.price && (
-              <View style={[styles.currentPriceRow, { backgroundColor: colors.muted, borderColor: colors.border, flexDirection: isRTL ? "row-reverse" : "row" }]}>
+              <View style={[styles.currentPriceRow, { backgroundColor: colors.muted, borderColor: colors.border, flexDirection: rowDirection }]}>
                 <Feather name="tag" size={14} color={colors.outline} />
-                <Text style={[styles.currentPriceText, { color: colors.outline }]}>
+                <Text style={[type.body, { color: colors.outline }]}>
                   {isRTL ? "السعر الحالي:" : "Current price:"}
                   {"  "}
-                  <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
-                    {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(parseFloat(reduceOffer.price))}
+                  <Text style={[type.bodyStrong, { color: colors.foreground }]}>
+                    {fmtSar(parseFloat(reduceOffer.price))}
                   </Text>
                 </Text>
               </View>
             )}
 
-            <Text style={[styles.fieldLabel, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-              {isRTL ? "السعر المستهدف (ر.س) *" : "Target Price (SAR) *"}
-            </Text>
-            <TextInput
-              style={[styles.priceInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border, textAlign: isRTL ? "right" : "left" }]}
+            <Input
+              label={isRTL ? "السعر المستهدف (ر.س)" : "Target Price (SAR)"}
+              required
               value={targetPrice}
               onChangeText={setTargetPrice}
               keyboardType="numeric"
               placeholder={isRTL ? "السعر المطلوب" : "Desired price"}
-              placeholderTextColor={colors.outline}
               autoFocus
+              isRTL={isRTL}
             />
 
-            <Text style={[styles.fieldLabel, { color: colors.foreground, textAlign: isRTL ? "right" : "left", marginTop: 4 }]}>
-              {isRTL ? "ملاحظة للمورد (اختياري)" : "Note to supplier (optional)"}
-            </Text>
-            <TextInput
-              style={[
-                styles.noteInput,
-                { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border, textAlign: isRTL ? "right" : "left" },
-              ]}
+            <Input
+              label={isRTL ? "ملاحظة للمورد (اختياري)" : "Note to supplier (optional)"}
               value={reductionNote}
               onChangeText={setReductionNote}
               multiline
               numberOfLines={3}
               placeholder={isRTL ? "اشرح سبب طلب التخفيض..." : "Explain why you need a lower price..."}
-              placeholderTextColor={colors.outline}
-              textAlignVertical="top"
+              isRTL={isRTL}
             />
 
-            <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 10, marginTop: 12 }}>
+            <View style={{ flexDirection: rowDirection, gap: space.sm, marginTop: space.xs }}>
               <Button
                 title={t.common.cancel}
                 variant="outline"
@@ -577,78 +646,53 @@ export default function RFQDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, gap: 14 },
-  rfqCard: { padding: 18, borderWidth: 1, gap: 8 },
-  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  category: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", },
-  rfqTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
-  desc: { fontSize: 14, lineHeight: 24 },
-  metaGrid: { flexDirection: "row", gap: 16, marginTop: 4 },
-  metaItem: { flexDirection: "row", alignItems: "center", gap: 5 },
-  metaText: { fontSize: 14, lineHeight: 24 },
+  content: { padding: space.lg, gap: space.md },
+  rfqCard: { padding: space.lg, borderWidth: 1, borderRadius: radius.card, gap: space.sm },
+  row: { justifyContent: "space-between", alignItems: "center", gap: space.sm },
+  metaGrid: { gap: space.lg, marginTop: space.xs, flexWrap: "wrap" },
+  metaItem: { alignItems: "center", gap: space.xs },
 
-  offersHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  sectionTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
-  sortRow: { flexDirection: "row", gap: 6 },
-  sortChip: { borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
-  sortChipText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  offersHeader: { alignItems: "center", justifyContent: "space-between", gap: space.sm },
+  sortHint: { alignItems: "center", gap: space.xs, minHeight: 28 },
 
-  emptyOffers: { borderWidth: 1, padding: 32, alignItems: "center", gap: 8 },
-  emptyText: { fontSize: 14, lineHeight: 24 },
-  offerActions: { gap: 7, marginTop: 4, flexWrap: "wrap", alignItems: "center" },
+  emptyOffers: { borderWidth: 1, borderRadius: radius.card, padding: space.xxl, alignItems: "center", gap: space.sm },
+  offerFooter: { width: "100%", gap: space.sm },
+  offerActions: { gap: space.sm, flexWrap: "wrap", alignItems: "center" },
 
-  priceSummary: { flexDirection: "row", borderWidth: 1, paddingVertical: 14, paddingHorizontal: 8 },
-  priceSumItem: { flex: 1, alignItems: "center", gap: 3 },
-  priceSumLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", },
-  priceSumValue: { fontSize: 14, lineHeight: 24 },
-  priceSumDivider: { width: 1, alignSelf: "stretch", marginVertical: 4 },
+  priceSummary: { borderWidth: 1, borderRadius: radius.card, paddingVertical: space.md, paddingHorizontal: space.sm },
+  priceSumItem: { flex: 1, alignItems: "center", gap: 2 },
+  priceSumDivider: { width: 1, alignSelf: "stretch", marginVertical: space.xs },
+  tabular: { fontVariant: ["tabular-nums"] },
 
-  exportBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
-  exportBtnText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
-  boqSection: { borderRadius: 16, borderWidth: 1, padding: 16 },
+  boqSection: { borderRadius: radius.card, borderWidth: 1, padding: space.lg },
 
-  // Modal
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
+  moreBtn: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: "center", justifyContent: "center", borderRadius: radius.control },
+
+  // "More" action sheet
+  sheetOuter: { flex: 1, justifyContent: "flex-end" },
+  actionSheet: {
+    borderTopLeftRadius: radius.card,
+    borderTopRightRadius: radius.card,
+    paddingHorizontal: space.sm,
+    paddingTop: space.sm,
+  },
+  handle: { width: 40, height: 4, borderRadius: radius.hairline, alignSelf: "center", marginBottom: space.sm },
+  actionRow: { minHeight: 48, alignItems: "center", gap: space.md, paddingHorizontal: space.md, borderRadius: radius.control },
+  actionDivider: { height: 1, marginVertical: space.xs, marginHorizontal: space.md },
+
+  // Reduce-price sheet
+  modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalSheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 20,
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 24,
+    borderTopLeftRadius: radius.card,
+    borderTopRightRadius: radius.card,
+    padding: space.lg,
+    gap: space.md,
   },
-  handle: { width: 40, height: 4, borderRadius: 4 },
-  modalTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
-
   currentPriceRow: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: space.sm,
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-  },
-  currentPriceText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
-
-  fieldLabel: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
-  priceInput: {
-    height: 52,
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    fontSize: 17, lineHeight: 28,
-    fontFamily: "Inter_600SemiBold",
-  },
-  noteInput: {
-    minHeight: 80,
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    fontSize: 14, lineHeight: 24,
-    fontFamily: "Inter_400Regular",
+    borderRadius: radius.control,
+    padding: space.md,
   },
 });
