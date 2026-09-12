@@ -20,7 +20,8 @@
     "eas:preview": "npx eas build --platform all --profile preview",
     "eas:prod": "npx eas build --platform all --profile production",
     "serve:lan": "node scripts/serve-lan.mjs",
-    "build:web:uat": "node scripts/build-web.mjs .env.uat"
+    "build:web:uat": "node scripts/build-web.mjs .env.uat",
+    "build:web:prod": "node scripts/build-web.mjs .env.prod"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

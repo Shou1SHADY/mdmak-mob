@@ -50,6 +50,7 @@ yarn-error.*
 .env*
 !.env.example
 !.env.uat
+!.env.prod
 
 # typescript
 *.tsbuildinfo

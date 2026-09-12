@@ -1,6 +1,23 @@
 {
   "projects": {
     "default": "mdmaktech-uat",
-    "uat": "mdmaktech-uat"
+    "uat": "mdmaktech-uat",
+    "prod": "studio-2889504658-6ee2a"
+  },
+  "targets": {
+    "mdmaktech-uat": {
+      "hosting": {
+        "uat": [
+          "mdmak-mobile-uat"
+        ]
+      }
+    },
+    "studio-2889504658-6ee2a": {
+      "hosting": {
+        "prod": [
+          "mdmak-mobile"
+        ]
+      }
+    }
   }
 }

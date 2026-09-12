@@ -65,6 +65,27 @@ pnpm run eas:prod         # store builds (production profile)
 pnpm run build:web        # static web export (dist/) if needed
 ```
 
+## Web (PWA) hosting — UAT and production
+
+Two Firebase Hosting sites, one build output. Build `dist/` for the target
+first, then deploy only that target — the env file baked into `dist/` must
+match the site it lands on:
+
+```bash
+cd artifacts/mobile
+npm run build:web:uat            # .env.uat  → mdmaktech-uat
+cd ../.. && firebase deploy --only hosting:uat --project uat     # mdmak-mobile-uat.web.app
+
+cd artifacts/mobile
+npm run build:web:prod           # .env.prod → studio-2889504658-6ee2a
+cd ../.. && firebase deploy --only hosting:prod --project prod   # mdmak-mobile.web.app
+```
+
+Where the CLI cannot log in, point it at a service account instead:
+`GOOGLE_APPLICATION_CREDENTIALS=<key.json> npx firebase-tools deploy ...`.
+Both PWA origins are allow-listed on the website's API (`src/lib/cors.ts`) and
+must be in each Firebase project's Auth → Authorized domains for Google sign-in.
+
 ## Store submission checklist
 
 - [ ] `eas init` done, `extra.eas.projectId` present in `app.json`
