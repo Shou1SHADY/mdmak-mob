@@ -16,6 +16,7 @@ import { notifyFavoritesOfPublish } from "@/lib/site-api";
 import { buildRfqDoc } from "@/lib/contracts";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Input } from "@/components/ui/Input";
+import { DateField } from "@/components/ui/DateField";
 import { Button } from "@/components/ui/Button";
 import { CATEGORIES, SAUDI_CITIES, CITIES_DISTRICTS, displayCity } from "@/constants/data";
 import { ProfileIncompleteGate, useProfileGate } from "@/components/ProfileIncompleteGate";
@@ -398,14 +399,7 @@ export default function CreateRFQScreen() {
               </View>
             )}
 
-            <Input
-              label={t.rfq.deadlineOptional}
-              value={deadline}
-              onChangeText={setDeadline}
-              placeholder={t.rfq.deadlinePlaceholder}
-              leftIcon="calendar"
-              isRTL={isRTL}
-            />
+            <DateField label={t.rfq.deadlineOptional} value={deadline} onChange={setDeadline} isRTL={isRTL} />
 
             <Button
               title={t.common.next}

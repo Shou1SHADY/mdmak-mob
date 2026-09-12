@@ -7,6 +7,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Feather } from "@expo/vector-icons";
 import { storage } from "@/lib/firebase";
 import { useColors } from "@/hooks/useColors";
+import { DateField } from "@/components/ui/DateField";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import type { LegalDoc } from "@/context/AuthContext";
 
@@ -141,14 +142,13 @@ export function DocumentUploadRow({ docType, label, required, doc, orgId, onUpda
               {t.profile.expiryDate}
             </Text>
             <Text style={[styles.modalSub, { color: colors.outline }]}>{label}</Text>
-            <TextInput
-              style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.muted }]}
+            <DateField
+              label={t.profile.expiryDate}
               value={expiryInput}
-              onChangeText={setExpiryInput}
-              placeholder="MM/YYYY"
-              placeholderTextColor={colors.outline}
-              keyboardType="numeric"
-              maxLength={7}
+              onChange={setExpiryInput}
+              granularity="month"
+              isRTL={isRTL}
+              containerStyle={{ marginBottom: 12 }}
             />
             <View style={styles.modalActions}>
               <TouchableOpacity

@@ -20,6 +20,7 @@ import { useToast } from "@/context/ToastContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { Input } from "@/components/ui/Input";
+import { DateField } from "@/components/ui/DateField";
 import { CrmSheet } from "@/components/crm/CrmSheet";
 import { CrmChoice } from "@/components/crm/CrmChoice";
 import { useCrmData } from "@/hooks/useCrmData";
@@ -436,13 +437,7 @@ export default function CrmLeadDetailScreen() {
           required
         />
         <Input label={t.crm.logActivity} value={activityTitle} onChangeText={setActivityTitle} required isRTL={isRTL} />
-        <Input
-          label={`${t.crm.dueDate} (${t.crm.optional})`}
-          value={activityDue}
-          onChangeText={setActivityDue}
-          placeholder="YYYY-MM-DD"
-          isRTL={isRTL}
-        />
+        <DateField label={`${t.crm.dueDate} (${t.crm.optional})`} value={activityDue} onChange={setActivityDue} isRTL={isRTL} />
         <Input
           label={`${t.crm.notes} (${t.crm.optional})`}
           value={activityNotes}
@@ -476,13 +471,7 @@ export default function CrmLeadDetailScreen() {
           keyboardType="numeric"
           isRTL={isRTL}
         />
-        <Input
-          label={`${t.crm.expectedClose} (${t.crm.optional})`}
-          value={dealClose}
-          onChangeText={setDealClose}
-          placeholder="YYYY-MM-DD"
-          isRTL={isRTL}
-        />
+        <DateField label={`${t.crm.expectedClose} (${t.crm.optional})`} value={dealClose} onChange={setDealClose} isRTL={isRTL} />
       </CrmSheet>
     </View>
   );

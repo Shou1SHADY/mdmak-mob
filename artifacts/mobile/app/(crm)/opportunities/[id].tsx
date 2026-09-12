@@ -21,6 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { Input } from "@/components/ui/Input";
+import { DateField } from "@/components/ui/DateField";
 import { Button } from "@/components/ui/Button";
 import { CrmSheet } from "@/components/crm/CrmSheet";
 import { CrmChoice } from "@/components/crm/CrmChoice";
@@ -449,7 +450,7 @@ export default function CrmOpportunityDetailScreen() {
         <Input label={t.crm.newOpportunity} value={editTitle} onChangeText={setEditTitle} required isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
         <Input label={t.crm.value} value={editValue} onChangeText={setEditValue} keyboardType="numeric" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
         <Input label={t.crm.probability} value={editProbability} onChangeText={setEditProbability} keyboardType="numeric" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
-        <Input label={`${t.crm.expectedClose} (${t.crm.optional})`} value={editClose} onChangeText={setEditClose} placeholder="YYYY-MM-DD" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <DateField label={`${t.crm.expectedClose} (${t.crm.optional})`} value={editClose} onChange={setEditClose} isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
         <Input label={`${t.crm.notes} (${t.crm.optional})`} value={editNotes} onChangeText={setEditNotes} multiline isRTL={isRTL} />
       </CrmSheet>
 
@@ -470,13 +471,7 @@ export default function CrmOpportunityDetailScreen() {
           required
         />
         <Input label={t.crm.logActivity} value={activityTitle} onChangeText={setActivityTitle} required isRTL={isRTL} />
-        <Input
-          label={`${t.crm.dueDate} (${t.crm.optional})`}
-          value={activityDue}
-          onChangeText={setActivityDue}
-          placeholder="YYYY-MM-DD"
-          isRTL={isRTL}
-        />
+        <DateField label={`${t.crm.dueDate} (${t.crm.optional})`} value={activityDue} onChange={setActivityDue} isRTL={isRTL} />
       </CrmSheet>
     </View>
   );

@@ -23,6 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useToast } from "@/context/ToastContext";
 import { Input } from "@/components/ui/Input";
+import { DateField } from "@/components/ui/DateField";
 import { CrmSheet } from "@/components/crm/CrmSheet";
 import { CrmChoice } from "@/components/crm/CrmChoice";
 import { MIN_TOUCH, radius } from "@/lib/design";
@@ -393,7 +394,7 @@ export default function CrmActivitiesScreen() {
           required
         />
         <Input label={t.crm.logActivity} value={formTitle} onChangeText={setFormTitle} required isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
-        <Input label={`${t.crm.dueDate} (${t.crm.optional})`} value={formDue} onChangeText={setFormDue} placeholder="YYYY-MM-DD" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <DateField label={`${t.crm.dueDate} (${t.crm.optional})`} value={formDue} onChange={setFormDue} isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
         <Input label={`${t.crm.notes} (${t.crm.optional})`} value={formNotes} onChangeText={setFormNotes} multiline isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
         {editing && (
           <TouchableOpacity onPress={removeActivity} accessibilityRole="button" style={styles.deleteRow}>
