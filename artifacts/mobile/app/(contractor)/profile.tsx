@@ -242,7 +242,7 @@ export default function ContractorProfileScreen() {
         <View style={styles.avatarSection}>
           <View style={[styles.avatarRing, { borderColor: "rgba(255,255,255,0.3)" }]}>
             <View style={[styles.avatar, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
-              <Text style={[styles.avatarText, { fontFamily: "HankenGrotesk_700Bold" }]}>{initial}</Text>
+              <Text style={[styles.avatarText, { fontFamily: "Inter_600SemiBold" }]}>{initial}</Text>
             </View>
           </View>
           <Text style={[styles.name, { color: "#FFFFFF" }]} numberOfLines={1} ellipsizeMode="tail">
@@ -506,7 +506,7 @@ export default function ContractorProfileScreen() {
           <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowActions(false)} />
           <View style={[styles.actionSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[styles.actionHandle, { backgroundColor: colors.border }]} />
-            <Text style={[styles.actionTitle, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+            <Text style={[styles.actionTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
               {isRTL ? "الإعدادات" : "Settings"}
             </Text>
 
@@ -586,13 +586,13 @@ const styles = StyleSheet.create({
   // Header
   header: { paddingHorizontal: 16, paddingBottom: 24 },
   headerTop: { alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
-  headerTitle: { fontSize: 17, fontFamily: "HankenGrotesk_600SemiBold" },
+  headerTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
   settingsBtn: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   avatarSection: { alignItems: "center", gap: 8 },
   avatarRing: { width: 96, height: 96, borderRadius: 28, borderWidth: 3, alignItems: "center", justifyContent: "center" },
   avatar: { width: 86, height: 86, borderRadius: 25, alignItems: "center", justifyContent: "center" },
   avatarText: { fontSize: 36, color: "#FFFFFF" },
-  name: { fontSize: 20, fontFamily: "HankenGrotesk_700Bold", textAlign: "center", marginTop: 4 },
+  name: { fontSize: 20, fontFamily: "Inter_600SemiBold", textAlign: "center", marginTop: 4 },
   email: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
   roleBadge: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5, borderWidth: 1, marginTop: 4 },
   roleText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
   compIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   compTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1, marginHorizontal: 10 },
   compSubtitle: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
-  compPct: { fontSize: 18, fontFamily: "HankenGrotesk_700Bold" },
+  compPct: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
   compBar: { height: 5, borderRadius: 3, overflow: "hidden", marginTop: 4 },
   compFill: { height: "100%", borderRadius: 3 },
   compMissing: { alignItems: "center", gap: 6, marginTop: 8 },
@@ -626,14 +626,14 @@ const styles = StyleSheet.create({
   // Organization
   cardHeader: { alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   cardHeaderIcon: { width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  cardTitle: { fontSize: 15, fontFamily: "HankenGrotesk_600SemiBold" },
+  cardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   editBtn: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   editActions: { flexDirection: "row", gap: 10, marginTop: 4 },
   infoRow: { alignItems: "center", gap: 12, paddingVertical: 10, paddingHorizontal: 4, borderRadius: 10, borderWidth: 0 },
   infoRowEmpty: { borderWidth: 1, borderStyle: "dashed" as const, paddingHorizontal: 10, borderRadius: 10 },
   infoIcon: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const },
-  infoValue: { fontSize: 15, fontFamily: "Inter_500Medium" },
+  infoValue: { fontSize: 15, fontFamily: "Inter_400Regular" },
   infoEmpty: { fontSize: 14, fontFamily: "Inter_400Regular" },
   infoSep: { height: StyleSheet.hairlineWidth, marginLeft: 54 },
 

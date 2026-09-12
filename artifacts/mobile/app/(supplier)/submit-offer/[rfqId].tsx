@@ -184,13 +184,13 @@ export default function SubmitOfferScreen() {
             <Text style={{ fontSize: 11, fontFamily: "Inter_600SemiBold", color: colors.outline, textTransform: "uppercase" }}>
               {isRTL ? "المناقصة" : "Tender"}
             </Text>
-            <Text style={{ fontSize: 15, fontFamily: "HankenGrotesk_700Bold", color: colors.foreground }} numberOfLines={2}>
+            <Text style={{ fontSize: 15, fontFamily: "Inter_600SemiBold", color: colors.foreground }} numberOfLines={2}>
               {rfqTitle}
             </Text>
           </View>
         ) : (
           <View style={{ borderRadius: 16, padding: 16, borderWidth: 1, gap: 6, backgroundColor: colors.card, borderColor: colors.border }}>
-            <Text style={{ fontSize: 18, fontWeight: "700", color: colors.foreground }}>{t.rfq.offerDetails}</Text>
+            <Text style={{ fontSize: 18, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{t.rfq.offerDetails}</Text>
             <Text style={{ fontSize: 14, lineHeight: 21, color: colors.outline }}>{t.rfq.offerSubmitInfo}</Text>
           </View>
         )}
@@ -253,7 +253,7 @@ export default function SubmitOfferScreen() {
                 }}
                 activeOpacity={0.75}
               >
-                <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.foreground }}>{unitLabel}</Text>
+                <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.foreground }}>{unitLabel}</Text>
                 <Feather name="chevron-down" size={14} color={colors.outline} />
               </TouchableOpacity>
             </View>
@@ -291,7 +291,7 @@ export default function SubmitOfferScreen() {
                   <Feather name="list" size={14} color={colors.cta} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 14, fontFamily: "HankenGrotesk_600SemiBold", color: colors.foreground }}>{t.boq.pricingTitle}</Text>
+                  <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{t.boq.pricingTitle}</Text>
                   <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.outline, marginTop: 2 }}>{t.boq.pricingDesc}</Text>
                 </View>
               </View>
@@ -299,7 +299,7 @@ export default function SubmitOfferScreen() {
                 <View key={item.id} style={{ gap: 6 }}>
                   <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 8 }}>
                     <View style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: colors.primaryText + "12", alignItems: "center", justifyContent: "center" }}>
-                      <Text style={{ fontSize: 10, fontFamily: "Inter_700Bold", color: colors.primaryText }}>{idx + 1}</Text>
+                      <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: colors.primaryText }}>{idx + 1}</Text>
                     </View>
                     <Text style={{ fontSize: 13, fontFamily: "Inter_600SemiBold", color: colors.foreground, flex: 1, textAlign: isRTL ? "right" : "left" }} numberOfLines={2}>
                       {item.description}
@@ -313,7 +313,7 @@ export default function SubmitOfferScreen() {
                       style={{
                         flex: 1, height: 44, borderWidth: 1.5, borderRadius: 10,
                         borderColor: boqPricing[item.id] ? colors.cta : colors.border,
-                        paddingHorizontal: 12, fontSize: 14, fontFamily: "Inter_500Medium",
+                        paddingHorizontal: 12, fontSize: 14, fontFamily: "Inter_400Regular",
                         color: colors.foreground, backgroundColor: colors.background,
                         textAlign: isRTL ? "right" : "left",
                       }}
@@ -326,7 +326,7 @@ export default function SubmitOfferScreen() {
                     />
                   </View>
                   {boqPricing[item.id] && parseFloat(boqPricing[item.id]) > 0 && (
-                    <Text style={{ fontSize: 11, fontFamily: "Inter_500Medium", color: colors.success, textAlign: isRTL ? "right" : "left" }}>
+                    <Text style={{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.success, textAlign: isRTL ? "right" : "left" }}>
                       {t.boq.totalPrice}: {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(parseFloat(boqPricing[item.id]) * item.quantity)}
                     </Text>
                   )}

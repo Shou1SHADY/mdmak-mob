@@ -229,17 +229,17 @@ export default function MyOffersScreen() {
       {!loading && offers.length > 0 && (
         <View style={[styles.statsBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.warning, fontFamily: "HankenGrotesk_700Bold" }]}>{pendingCount}</Text>
+            <Text style={[styles.statValue, { color: colors.warning, fontFamily: "Inter_600SemiBold" }]}>{pendingCount}</Text>
             <Text style={[styles.statLabel, { color: colors.outline }]}>{isRTL ? "قيد المراجعة" : "Pending"}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.success, fontFamily: "HankenGrotesk_700Bold" }]}>{acceptedCount}</Text>
+            <Text style={[styles.statValue, { color: colors.success, fontFamily: "Inter_600SemiBold" }]}>{acceptedCount}</Text>
             <Text style={[styles.statLabel, { color: colors.outline }]}>{isRTL ? "مقبول" : "Accepted"}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.destructive, fontFamily: "HankenGrotesk_700Bold" }]}>{rejectedCount}</Text>
+            <Text style={[styles.statValue, { color: colors.destructive, fontFamily: "Inter_600SemiBold" }]}>{rejectedCount}</Text>
             <Text style={[styles.statLabel, { color: colors.outline }]}>{isRTL ? "مرفوض" : "Rejected"}</Text>
           </View>
         </View>
@@ -384,7 +384,7 @@ export default function MyOffersScreen() {
             <Text style={[styles.currentLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
               {isRTL ? "سعرك الحالي:" : "Your current price:"}
               {"  "}
-              <Text style={{ color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }}>
+              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
                 {updatePriceOffer?.price ? `${Number(updatePriceOffer.price).toLocaleString(isRTL ? "ar-SA" : "en-SA")} ر.س` : "-"}
               </Text>
             </Text>
@@ -481,11 +481,11 @@ export default function MyOffersScreen() {
 
 const styles = StyleSheet.create({
   countBadge: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 3 },
-  countText: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  countText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 
   // Error state
   errorCenter: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 },
-  errorMsg: { fontSize: 14, fontFamily: "Inter_500Medium", textAlign: "center" },
+  errorMsg: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center" },
   retryBtn: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, marginTop: 4 },
   retryBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
 
@@ -499,16 +499,16 @@ const styles = StyleSheet.create({
   },
   statItem: { flex: 1, alignItems: "center", gap: 2 },
   statValue: { fontSize: 20 },
-  statLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" },
+  statLabel: { fontSize: 10, fontFamily: "Inter_400Regular", textTransform: "uppercase" },
   statDivider: { width: 1, height: 28, marginHorizontal: 8 },
 
   // Filter
   filterBar: { paddingVertical: 10, borderBottomWidth: 1 },
   chipsScroll: { paddingHorizontal: 16, gap: 8 },
   chip: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
-  chipText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  chipText: { fontSize: 12, fontFamily: "Inter_400Regular" },
   chipCount: { borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1, minWidth: 18, alignItems: "center" },
-  chipCountText: { fontSize: 10, fontFamily: "Inter_700Bold" },
+  chipCountText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
 
   list: { padding: 16 },
 
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     elevation: 24,
   },
   handle: { width: 40, height: 4, borderRadius: 2 },
-  modalTitle: { fontSize: 18, fontFamily: "HankenGrotesk_700Bold" },
+  modalTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
 
   targetPriceBox: {
     flexDirection: "row",
@@ -536,8 +536,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
   },
-  targetLabel: { fontSize: 11, fontFamily: "Inter_500Medium", textTransform: "uppercase" },
-  targetValue: { fontSize: 18, fontFamily: "HankenGrotesk_700Bold", marginTop: 2 },
+  targetLabel: { fontSize: 11, fontFamily: "Inter_400Regular", textTransform: "uppercase" },
+  targetValue: { fontSize: 18, fontFamily: "Inter_600SemiBold", marginTop: 2 },
 
   noteBox: {
     flexDirection: "row",
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   },
   noteText: { flex: 1, fontSize: 13, lineHeight: 19, fontFamily: "Inter_400Regular" },
 
-  currentLabel: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  currentLabel: { fontSize: 13, fontFamily: "Inter_400Regular" },
   newPriceLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginTop: 4 },
   priceInput: {
     height: 52,
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16,
     fontSize: 18,
-    fontFamily: "HankenGrotesk_700Bold",
+    fontFamily: "Inter_600SemiBold",
   },
 
   // Withdraw modal
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
     elevation: 24,
   },
   withdrawIcon: { width: 60, height: 60, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  withdrawTitle: { fontSize: 18, fontFamily: "HankenGrotesk_700Bold", textAlign: "center" },
+  withdrawTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold", textAlign: "center" },
   withdrawDesc: { fontSize: 14, lineHeight: 21, textAlign: "center", fontFamily: "Inter_400Regular" },
-  withdrawRfqTitle: { fontSize: 13, fontFamily: "Inter_500Medium", textAlign: "center" },
+  withdrawRfqTitle: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
 });

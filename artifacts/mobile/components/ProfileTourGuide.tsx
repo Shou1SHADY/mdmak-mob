@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     fontSize: 19,
-    fontFamily: "HankenGrotesk_700Bold",
+    fontFamily: "Inter_600SemiBold",
     lineHeight: 28,
   },
   stepDesc: {
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   skipBtnText: {
     fontSize: 14,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
   },
   prevBtn: {
     flex: 1,
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   },
   nextBtnText: {
     fontSize: 15,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
     color: "#fff",
   },
 });

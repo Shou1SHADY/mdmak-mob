@@ -1,4 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useToast } from "@/context/ToastContext";
 import {
   View,
   Text,
@@ -21,7 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { CrmSheet } from "@/components/crm/CrmSheet";
 import { CrmChoice } from "@/components/crm/CrmChoice";
 import { useCrmData } from "@/hooks/useCrmData";
-import { advanceOpportunityStage, logActivity } from "@/lib/crm-writes";
+import { advanceOpportunityStage, logActivity, updateOpportunity } from "@/lib/crm-writes";
 import {
   ACTIVITY_TYPES,
   OPEN_OPPORTUNITY_STAGES,
@@ -33,6 +37,8 @@ import {
   stageMoveBlock,
   type ActivityType,
   type OpportunityStage,
+  type CrmOrgProfile,
+  type GateContext,
 } from "@/lib/crm";
 import { labelFor } from "@/lib/labels";
 import { activityIcon, formatSar, stageColor } from "@/lib/crm-display";
@@ -68,7 +74,32 @@ export default function CrmOpportunityDetailScreen() {
     [activities, id]
   );
 
+  const { can } = usePermissions();
+  const { showToast } = useToast();
+  const canManage = can("crm.manage");
   const [busy, setBusy] = useState(false);
+
+  // The org's CRM profile is what the `fit` gate reads. Without it lib/crm.ts
+  // treats the gate as passed, so this screen would let a deal past a gate the
+  // website blocks; load it once so both apps judge the same way.
+  const [profile, setProfile] = useState<CrmOrgProfile | null | undefined>(undefined);
+  useEffect(() => {
+    if (!orgId) return;
+    let cancelled = false;
+    getDoc(doc(db, "crmOrgProfile", orgId))
+      .then((snap) => { if (!cancelled) setProfile(snap.exists() ? ({ id: snap.id, ...snap.data() } as CrmOrgProfile) : null); })
+      .catch(() => { if (!cancelled) setProfile(null); });
+    return () => { cancelled = true; };
+  }, [orgId]);
+  const gateCtx: GateContext = { profile: profile ?? null };
+
+  const [editSheet, setEditSheet] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editValue, setEditValue] = useState("");
+  const [editClose, setEditClose] = useState("");
+  const [editProbability, setEditProbability] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+
   const [activitySheet, setActivitySheet] = useState(false);
   const [activityType, setActivityType] = useState<ActivityType>("call");
   const [activityTitle, setActivityTitle] = useState("");
@@ -99,12 +130,39 @@ export default function CrmOpportunityDetailScreen() {
   const tint = stageColor(opp.stage, colors);
   const state = opportunityState(opp);
   const target = nextStage(opp);
-  // Gate context is the org's CRM profile, which only the website edits. Without
-  // it the `fit` gates read as incomplete — which is the safe direction: this
-  // screen refuses a move the website might have allowed, rather than allowing
-  // one it would have blocked.
-  const remaining = gatesRemaining(opp);
-  const block = target ? stageMoveBlock(opp, target) : "closed";
+  const remaining = gatesRemaining(opp, gateCtx);
+  const block = target ? stageMoveBlock(opp, target, gateCtx) : "closed";
+
+  const openEdit = () => {
+    setEditTitle(opp.title ?? "");
+    setEditValue(opp.value ? String(opp.value) : "");
+    setEditClose(opp.expectedCloseDate ?? "");
+    setEditProbability(opp.probability != null ? String(opp.probability) : "");
+    setEditNotes(opp.notes ?? "");
+    setEditSheet(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim()) { Alert.alert(t.common.error, t.crm.titleRequired); return; }
+    const value = parseFloat(editValue.replace(/,/g, ""));
+    const probability = editProbability.trim() ? Math.min(100, Math.max(0, parseFloat(editProbability) || 0)) : null;
+    setBusy(true);
+    try {
+      await updateOpportunity(opp.id, {
+        title: editTitle,
+        value: Number.isFinite(value) ? Math.max(0, value) : 0,
+        expectedCloseDate: editClose || null,
+        probability,
+        notes: editNotes || null,
+      });
+      showToast(t.crm.saved, "success");
+      setEditSheet(false);
+    } catch {
+      Alert.alert(t.common.error, t.crm.saveFailed);
+    } finally {
+      setBusy(false);
+    }
+  };
   const history = stageHistory(opp);
 
   // Stage events reuse the stage labels; the handover events have no phone-side
@@ -130,6 +188,7 @@ export default function CrmOpportunityDetailScreen() {
   };
 
   const handleAdvance = async () => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (!target) return;
     if (target === "won" || target === "lost") {
       Alert.alert(t.crm.cannotAdvance, t.crm.blockedTerminal);
@@ -187,7 +246,16 @@ export default function CrmOpportunityDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScreenHeader title={opp.title} subtitle={opp.contactName ?? t.crm.opportunities} showBack />
+      <ScreenHeader
+        title={opp.title}
+        subtitle={opp.contactName ?? t.crm.opportunities}
+        showBack
+        right={canManage ? (
+          <TouchableOpacity onPress={openEdit} style={styles.headerBtn} accessibilityRole="button" accessibilityLabel={t.crm.editOpportunity}>
+            <Feather name="edit-2" size={18} color={colors.cta} />
+          </TouchableOpacity>
+        ) : undefined}
+      />
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
         showsVerticalScrollIndicator={false}
@@ -371,6 +439,21 @@ export default function CrmOpportunityDetailScreen() {
       </ScrollView>
 
       <CrmSheet
+        visible={editSheet}
+        title={t.crm.editOpportunity}
+        onClose={() => setEditSheet(false)}
+        onSubmit={handleSaveEdit}
+        submitLabel={t.common.save}
+        submitting={busy}
+      >
+        <Input label={t.crm.newOpportunity} value={editTitle} onChangeText={setEditTitle} required isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={t.crm.value} value={editValue} onChangeText={setEditValue} keyboardType="numeric" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={t.crm.probability} value={editProbability} onChangeText={setEditProbability} keyboardType="numeric" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={`${t.crm.expectedClose} (${t.crm.optional})`} value={editClose} onChangeText={setEditClose} placeholder="YYYY-MM-DD" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={`${t.crm.notes} (${t.crm.optional})`} value={editNotes} onChangeText={setEditNotes} multiline isRTL={isRTL} />
+      </CrmSheet>
+
+      <CrmSheet
         visible={activitySheet}
         title={t.crm.logActivity}
         onClose={() => setActivitySheet(false)}
@@ -400,6 +483,7 @@ export default function CrmOpportunityDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 12 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
   panel: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12 },
   panelHead: { alignItems: "center", justifyContent: "space-between", marginBottom: 8 },

@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   footerText: {
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
     fontSize: 11,
     color: "rgba(255,255,255,0.45)",
   },

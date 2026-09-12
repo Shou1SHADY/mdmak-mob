@@ -101,7 +101,7 @@ export default function SupplierChatsScreen() {
       >
         <View style={{ width: 44 }} />
         <View style={{ flex: 1, alignItems: "center" }}>
-          <Text style={[styles.headerTitle, { fontFamily: "HankenGrotesk_700Bold" }]}>
+          <Text style={[styles.headerTitle, { fontFamily: "Inter_600SemiBold" }]}>
             {t.tabs.messages}
           </Text>
           {totalUnread > 0 && (
@@ -152,7 +152,7 @@ export default function SupplierChatsScreen() {
               <View style={[styles.content, { marginLeft: isRTL ? 0 : 12, marginRight: isRTL ? 12 : 0 }]}>
                 <View style={[styles.topRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
                   <Text
-                    style={[styles.chatTitle, { color: colors.foreground, fontFamily: hasUnread ? "Inter_700Bold" : "Inter_600SemiBold" }]}
+                    style={[styles.chatTitle, { color: colors.foreground, fontFamily: hasUnread ? "Inter_600SemiBold" : "Inter_600SemiBold" }]}
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
@@ -168,7 +168,7 @@ export default function SupplierChatsScreen() {
                     style={[
                       styles.lastMsg,
                       { color: hasUnread ? colors.foreground : colors.outline },
-                      hasUnread && { fontFamily: "Inter_500Medium" },
+                      hasUnread && { fontFamily: "Inter_400Regular" },
                     ]}
                     numberOfLines={1}
                     ellipsizeMode="tail"
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1.5,
   },
-  avatarText: { fontSize: 17, fontFamily: "HankenGrotesk_700Bold" },
+  avatarText: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
   unreadDot: {
     position: "absolute",
     top: -3,
@@ -272,5 +272,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 6,
   },
-  badgeText: { color: "#fff", fontSize: 10, fontFamily: "Inter_700Bold" },
+  badgeText: { color: "#fff", fontSize: 10, fontFamily: "Inter_600SemiBold" },
 });

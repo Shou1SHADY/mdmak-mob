@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 3,
   },
-  countText: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  countText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
 
   // Search row
   searchRow: {
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  filterBadgeText: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#FFF" },
+  filterBadgeText: { fontSize: 9, fontFamily: "Inter_600SemiBold", color: "#FFF" },
 
   // Active pills bar
   activePills: {
@@ -706,7 +706,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  modalTitle: { fontSize: 17, fontFamily: "HankenGrotesk_700Bold" },
+  modalTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
   closeBtn: {
     width: 44,
     height: 44,
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
   filterSection: { gap: 12, paddingVertical: 14 },
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
   sectionDot: { width: 6, height: 6, borderRadius: 3 },
-  sectionTitle: { fontSize: 13, fontFamily: "Inter_700Bold", textTransform: "uppercase" },
+  sectionTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" },
 
   // Category chips
   chipsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -733,7 +733,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     maxWidth: 150,
   },
-  filterChipText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  filterChipText: { fontSize: 12, fontFamily: "Inter_400Regular" },
 
   // City chips
   cityScroll: { gap: 8, paddingRight: 4 },

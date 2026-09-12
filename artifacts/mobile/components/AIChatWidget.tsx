@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
   },
   promptChipText: {
     fontSize: 12,
-    fontFamily: 'Inter_500Medium',
+    fontFamily: 'Inter_400Regular',
   },
   msgRow: {
     flexDirection: 'row',
@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
   },
   navChipText: {
     fontSize: 11,
-    fontFamily: 'Inter_500Medium',
+    fontFamily: 'Inter_400Regular',
   },
   actionCard: {
     marginTop: 8,
@@ -856,7 +856,7 @@ const styles = StyleSheet.create({
   },
   dismissBtnText: {
     fontSize: 12,
-    fontFamily: 'Inter_500Medium',
+    fontFamily: 'Inter_400Regular',
   },
   actionDone: {
     flexDirection: 'row',
@@ -869,7 +869,7 @@ const styles = StyleSheet.create({
   },
   actionDoneText: {
     fontSize: 11,
-    fontFamily: 'Inter_500Medium',
+    fontFamily: 'Inter_400Regular',
   },
   actionError: {
     textAlign: 'center',

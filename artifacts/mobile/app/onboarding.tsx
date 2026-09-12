@@ -69,7 +69,7 @@ function CityPickerModal({
 
             {/* Header */}
             <View style={styles.sheetHeader}>
-              <Text style={[styles.sheetTitle, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+              <Text style={[styles.sheetTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
                 {isRTL ? "اختر المدينة" : "Select City"}
               </Text>
               <TouchableOpacity
@@ -236,7 +236,7 @@ export default function OnboardingScreen() {
             contentFit="contain"
           />
         </View>
-        <Text style={[styles.appName, { fontFamily: "HankenGrotesk_700Bold" }]}>
+        <Text style={[styles.appName, { fontFamily: "Inter_600SemiBold" }]}>
           {isRTL ? t.common.appNameAr : t.common.appName}
         </Text>
         <Text style={styles.tagline}>{t.common.tagline}</Text>
@@ -257,7 +257,7 @@ export default function OnboardingScreen() {
             },
           ]}
         >
-          <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+          <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
             {t.onboarding.title}
           </Text>
           <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 20 },
   cardSub: { fontFamily: "Inter_400Regular", fontSize: 14, marginBottom: 12 },
   form: { gap: 14 },
-  label: { fontFamily: "Inter_500Medium", fontSize: 13, marginBottom: 6 },
+  label: { fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 6 },
 
   /* City selector field */
   citySelector: {
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   cityRowEn: { fontFamily: "Inter_400Regular", fontSize: 12 },
   checkBadge: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
   emptyState: { alignItems: "center", gap: 8, paddingVertical: 48 },
-  emptyText: { fontFamily: "Inter_500Medium", fontSize: 15 },
+  emptyText: { fontFamily: "Inter_400Regular", fontSize: 15 },
   emptyHint: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", paddingHorizontal: 32 },
 
   roleDisplay: {

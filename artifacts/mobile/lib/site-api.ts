@@ -110,3 +110,27 @@ export async function notifyFavoritesOfPublish(idToken: string, rfqIds: string[]
     /* best effort */
   }
 }
+
+/** POST /api/invitations/send — the owner invites a teammate by email; the
+ * website emails the link and creates the invitation record. */
+export async function sendTeamInvitation(params: {
+  idToken: string;
+  email: string;
+  name?: string;
+  groupId?: string;
+}): Promise<ApiResult<Record<string, unknown>>> {
+  try {
+    const res = await fetch(`${SITE_URL}/api/invitations/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${params.idToken}` },
+      body: JSON.stringify({ email: params.email, type: "team_invite", name: params.name, groupId: params.groupId }),
+    });
+    const json = await readJson(res);
+    if (!res.ok || !json?.success) {
+      return { ok: false, code: json?.code || "SEND_FAILED", message: json?.message, status: res.status };
+    }
+    return { ok: true, data: json.data ?? {} };
+  } catch {
+    return { ok: false, code: "NETWORK" };
+  }
+}

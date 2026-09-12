@@ -18,15 +18,21 @@ import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { CrmSheet } from "@/components/crm/CrmSheet";
+import { CrmChoice } from "@/components/crm/CrmChoice";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useToast } from "@/context/ToastContext";
+import { type, space, radius, MIN_TOUCH } from "@/lib/design";
 import { db } from "@/lib/firebase";
 import { labelFor } from "@/lib/labels";
 import {
   useWarehouses,
   useWarehouseRequests,
+  useInventoryItems,
   type WarehouseRequest,
 } from "@/hooks/useInventory";
 import {
   confirmWarehouseRequestReceipt,
+  createWarehouseRequest,
   releaseWarehouseRequest,
 } from "@/lib/warehouse-requests";
 
@@ -50,8 +56,19 @@ export default function WarehouseRequestsScreen() {
   const { user } = useAuth();
   const { warehouses, central, isLoading: whLoading } = useWarehouses();
   const { requests, isLoading } = useWarehouseRequests(central?.id);
+  const { can } = usePermissions();
+  const { showToast } = useToast();
+  const canManage = can("warehouses.manage");
 
   const [busy, setBusy] = useState(false);
+  // Raising a request: pick where from, what, how much, where to.
+  const [newOpen, setNewOpen] = useState(false);
+  const [fromId, setFromId] = useState<string | null>(null);
+  const [toId, setToId] = useState<string | null>(null);
+  const [itemId, setItemId] = useState<string | null>(null);
+  const [qty, setQty] = useState("");
+  const [receiver, setReceiver] = useState("");
+  const { items: sourceItems } = useInventoryItems(fromId);
   const [releaseTarget, setReleaseTarget] = useState<WarehouseRequest | null>(null);
   const [releaseQty, setReleaseQty] = useState("");
   const [confirmTarget, setConfirmTarget] = useState<WarehouseRequest | null>(null);
@@ -91,6 +108,39 @@ export default function WarehouseRequestsScreen() {
       });
       setReleaseTarget(null);
       setReleaseQty("");
+    } catch (e: any) {
+      Alert.alert(t.common.error, explain(e?.message ?? ""));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doCreate = async () => {
+    if (!central || !user || !fromId || !toId || !itemId) { Alert.alert(t.common.error, t.inventory.requestItem); return; }
+    const source = sourceItems.find((i) => i.id === itemId);
+    const quantity = parseFloat(qty);
+    if (!source || !Number.isFinite(quantity) || quantity <= 0) { Alert.alert(t.common.error, t.inventory.requestQuantity); return; }
+    const to = warehouses.find((w) => w.id === toId);
+    setBusy(true);
+    try {
+      await createWarehouseRequest({
+        firestore: db,
+        centralWarehouseId: central.id,
+        fromWarehouseId: fromId,
+        toWarehouseId: toId,
+        itemId,
+        sourceItem: { quantity: source.quantity, trackingMode: source.trackingMode ?? null },
+        quantity,
+        organizationId: user.organizationId,
+        byUserId: user.uid,
+        byUserName: user.displayName || user.email,
+        expectedReceiverName: receiver.trim() || user.displayName || user.email,
+        toProjectId: to?.projectId ?? null,
+        toProjectName: to?.projectName ?? null,
+      });
+      showToast(t.inventory.requestCreated, "success");
+      setNewOpen(false);
+      setItemId(null); setQty(""); setReceiver("");
     } catch (e: any) {
       Alert.alert(t.common.error, explain(e?.message ?? ""));
     } finally {
@@ -147,7 +197,21 @@ export default function WarehouseRequestsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScreenHeader title={t.inventory.requests} subtitle={central.name} showBack />
+      <ScreenHeader
+        title={t.inventory.requests}
+        subtitle={central.name}
+        showBack
+        right={canManage ? (
+          <TouchableOpacity
+            onPress={() => { setFromId(central.id); setToId(null); setNewOpen(true); }}
+            style={[styles.headerBtn, { backgroundColor: colors.ctaSoft }]}
+            accessibilityRole="button"
+            accessibilityLabel={t.inventory.newRequest}
+          >
+            <Feather name="plus" size={18} color={colors.cta} />
+          </TouchableOpacity>
+        ) : undefined}
+      />
 
       <SectionList
         sections={sections}
@@ -244,9 +308,43 @@ export default function WarehouseRequestsScreen() {
             icon="clipboard"
             title={t.inventory.noRequests}
             subtitle={t.inventory.noRequestsHint}
+            actionLabel={canManage ? t.inventory.newRequest : undefined}
+            onAction={canManage ? () => { setFromId(central.id); setNewOpen(true); } : undefined}
           />
         }
       />
+
+      <CrmSheet visible={newOpen} title={t.inventory.requestTitle} onClose={() => setNewOpen(false)} onSubmit={doCreate} submitLabel={t.inventory.newRequest} submitting={busy}>
+        <CrmChoice
+          label={t.inventory.requestFrom}
+          options={warehouses.map((w) => ({ value: w.id, label: w.name }))}
+          value={fromId}
+          onChange={(v) => { setFromId(v); setItemId(null); }}
+          scroll
+          required
+        />
+        <CrmChoice
+          label={t.inventory.requestItem}
+          options={sourceItems.filter((i) => i.trackingMode !== "unit").map((i) => ({ value: i.id, label: `${i.name} · ${i.quantity} ${i.unit}` }))}
+          value={itemId}
+          onChange={setItemId}
+          scroll
+          required
+        />
+        {fromId && sourceItems.length === 0 ? (
+          <Text style={[type.caption, { color: colors.warning, textAlign: isRTL ? "right" : "left", marginBottom: space.md }]}>{t.inventory.noSourceItems}</Text>
+        ) : null}
+        <Input label={t.inventory.requestQuantity} value={qty} onChangeText={setQty} keyboardType="numeric" required isRTL={isRTL} containerStyle={{ marginBottom: space.md }} />
+        <CrmChoice
+          label={t.inventory.requestTo}
+          options={warehouses.filter((w) => w.id !== fromId).map((w) => ({ value: w.id, label: w.projectName ? `${w.name} · ${w.projectName}` : w.name }))}
+          value={toId}
+          onChange={setToId}
+          scroll
+          required
+        />
+        <Input label={`${t.inventory.receiverName} (${t.common.optional})`} value={receiver} onChangeText={setReceiver} isRTL={isRTL} />
+      </CrmSheet>
 
       <CrmSheet
         visible={!!releaseTarget}
@@ -295,6 +393,7 @@ export default function WarehouseRequestsScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  headerBtn: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radius.control, alignItems: "center", justifyContent: "center" },
   sectionHeader: {
     fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",

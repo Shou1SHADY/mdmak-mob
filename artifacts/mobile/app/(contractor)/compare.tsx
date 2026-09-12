@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   headerTitle: {
-    fontFamily: "HankenGrotesk_700Bold",
+    fontFamily: "Inter_600SemiBold",
     fontSize: 20,
   },
   headerSub: {
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
     textAlign: "center",
   },
   retryBtn: {
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   rankText: {
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
     fontSize: 11.5,
   },
   statusPill: {
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
   },
   supplierName: {
-    fontFamily: "HankenGrotesk_700Bold",
+    fontFamily: "Inter_600SemiBold",
     fontSize: 16,
   },
   metricsRow: {
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   metricValue: {
-    fontFamily: "HankenGrotesk_700Bold",
+    fontFamily: "Inter_600SemiBold",
     fontSize: 16,
   },
   metricLabel: {
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   acceptText: {
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
     fontSize: 14,
     color: "#fff",
   },

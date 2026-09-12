@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
-import {
-  View, Text, ScrollView, StyleSheet, RefreshControl,
-  TouchableOpacity, Platform,
-} from "react-native";
+import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path, Circle, Text as SvgText } from "react-native-svg";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { tabScreenBottomPadding } from "@/lib/layout";
+import { type, space, radius, toneColors, MIN_TOUCH, type Tone } from "@/lib/design";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { isPreview, PREVIEW_CONTRACTOR_RFQS, PREVIEW_CONTRACTOR_STATS } from "@/lib/preview";
@@ -18,24 +16,31 @@ import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Card } from "@/components/ui/Card";
 import { DashboardHeader, WelcomeHeroCard, QuickActionCard } from "@/components/ScreenHeader";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNotifications } from "@/hooks/useNotifications";
 import { RFQ_STATUSES } from "@/constants/data";
 import { AIChatWidget } from "@/components/AIChatWidget";
 
-// ── Donut chart ───────────────────────────────────────────────────────────────
-interface DonutSlice { value: number; color: string; }
+/**
+ * The contractor's home. Every number appears once: the hero says what needs
+ * attention (open tenders, offers waiting), the ring shows how the tenders
+ * split by status, and the list below is the work itself. The strip and
+ * footer that repeated the same three figures are gone.
+ */
+
+// ── Donut ring ───────────────────────────────────────────────────────────────
+interface DonutSlice { value: number; color: string }
 
 function polarXY(cx: number, cy: number, r: number, deg: number) {
   const rad = ((deg - 90) * Math.PI) / 180;
   return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
 
+const SLICE_GAP = 3;
 function slicePath(cx: number, cy: number, oR: number, iR: number, sDeg: number, eDeg: number) {
-  const gap = slicePath.GAP / 2;
-  const s = sDeg + gap;
-  const e = eDeg - gap;
+  const s = sDeg + SLICE_GAP / 2;
+  const e = eDeg - SLICE_GAP / 2;
   if (e - s <= 0) return "";
   const large = e - s > 180 ? 1 : 0;
   const o1 = polarXY(cx, cy, oR, s);
@@ -44,14 +49,15 @@ function slicePath(cx: number, cy: number, oR: number, iR: number, sDeg: number,
   const i2 = polarXY(cx, cy, iR, s);
   return `M${o1.x} ${o1.y} A${oR} ${oR} 0 ${large} 1 ${o2.x} ${o2.y} L${i1.x} ${i1.y} A${iR} ${iR} 0 ${large} 0 ${i2.x} ${i2.y} Z`;
 }
-slicePath.GAP = 3;
 
-function DonutChart({ slices, total, size = 150, textColor = "#0F172A", label = "RFQs" }: { slices: DonutSlice[]; total: number; size?: number; textColor?: string; label?: string }) {
-  const cx = size / 2;
-  const cy = size / 2;
+function DonutChart({
+  slices, total, size = 150, textColor, mutedColor, trackColor, label,
+}: {
+  slices: DonutSlice[]; total: number; size?: number; textColor: string; mutedColor: string; trackColor: string; label: string;
+}) {
+  const cx = size / 2, cy = size / 2;
   const oR = size / 2 - 4;
-  const iR = oR * 0.58;
-
+  const iR = oR * 0.62;
   let cursor = 0;
   const paths = slices
     .filter((s) => s.value > 0)
@@ -62,38 +68,30 @@ function DonutChart({ slices, total, size = 150, textColor = "#0F172A", label = 
       return { d, color: s.color };
     });
 
-  if (paths.length === 0) {
-    return (
-      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <Circle cx={cx} cy={cy} r={oR} fill="none" stroke="#E2E8F0" strokeWidth={oR - iR} />
-        <SvgText x={cx} y={cy - 4} textAnchor="middle" fontSize={16} fontWeight="700" fill="#94a3b8" fontFamily="HankenGrotesk_700Bold">0</SvgText>
-        <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize={10} fill="#94a3b8" fontFamily="Inter_500Medium">{label}</SvgText>
-      </Svg>
-    );
-  }
-
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {paths.map((p, i) => <Path key={i} d={p.d} fill={p.color} />)}
-      <Circle cx={cx} cy={cy} r={iR - 2} fill="none" />
-      <SvgText x={cx} y={cy - 6} textAnchor="middle" fontSize={22} fontWeight="700" fill={textColor} fontFamily="HankenGrotesk_700Bold">{total}</SvgText>
-      <SvgText x={cx} y={cy + 14} textAnchor="middle" fontSize={10} fill="#94a3b8" fontFamily="Inter_500Medium">{label}</SvgText>
+      {paths.length === 0 ? (
+        <Circle cx={cx} cy={cy} r={(oR + iR) / 2} fill="none" stroke={trackColor} strokeWidth={oR - iR} />
+      ) : (
+        paths.map((p, i) => <Path key={i} d={p.d} fill={p.color} />)
+      )}
+      <SvgText x={cx} y={cy - 4} textAnchor="middle" fontSize={24} fill={paths.length ? textColor : mutedColor} fontFamily="Inter_600SemiBold">
+        {total}
+      </SvgText>
+      <SvgText x={cx} y={cy + 16} textAnchor="middle" fontSize={12} fill={mutedColor} fontFamily="Inter_400Regular">
+        {label}
+      </SvgText>
     </Svg>
   );
 }
 
-// ── Status types ──
+// ── Screen ───────────────────────────────────────────────────────────────────
 interface RFQStats {
-  total: number;
-  draft: number;
-  newRfqs: number;
-  active: number;
-  underReview: number;
-  awarded: number;
-  closed: number;
-  inProgress: number;
-  offers: number;
+  total: number; draft: number; newRfqs: number; active: number; underReview: number;
+  awarded: number; closed: number; inProgress: number; offers: number;
 }
+
+const EMPTY_STATS: RFQStats = { total: 0, draft: 0, newRfqs: 0, active: 0, underReview: 0, awarded: 0, closed: 0, inProgress: 0, offers: 0 };
 
 export default function ContractorDashboard() {
   const colors = useColors();
@@ -102,18 +100,14 @@ export default function ContractorDashboard() {
   const { isRTL } = useLanguage();
   const { user, organization } = useAuth();
   const [rfqs, setRfqs] = useState<RFQItem[]>([]);
-  const [stats, setStats] = useState<RFQStats>({
-    total: 0, draft: 0, newRfqs: 0, active: 0, underReview: 0,
-    awarded: 0, closed: 0, inProgress: 0, offers: 0,
-  });
+  const [stats, setStats] = useState<RFQStats>(EMPTY_STATS);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState(false);
   const { unreadCount } = useNotifications();
+  const row = isRTL ? "row-reverse" : "row";
 
   const fetchData = async () => {
-    // Design preview: serve fixtures so the tab bar, the AI widget and the
-    // chart area below the fold can be reviewed without an account.
     if (isPreview()) {
       setRfqs(PREVIEW_CONTRACTOR_RFQS as RFQItem[]);
       setStats(PREVIEW_CONTRACTOR_STATS);
@@ -125,51 +119,30 @@ export default function ContractorDashboard() {
     if (!orgId) { setLoading(false); return; }
     setFetchError(false);
     try {
-      // ⚠️ No orderBy here — avoids Firestore composite index requirement.
-      // We sort client-side below.
-      const snap = await getDocs(query(
-        collection(db, "rfqs"),
-        where("organizationId", "==", orgId)
-      ));
-
+      // No orderBy — avoids a composite index; sorted client-side.
+      const snap = await getDocs(query(collection(db, "rfqs"), where("organizationId", "==", orgId)));
       const items: RFQItem[] = snap.docs
         .map((d) => ({ id: d.id, ...d.data() } as RFQItem))
         .sort((a, b) => {
           const ta = typeof a.createdAt?.toDate === "function" ? a.createdAt.toDate().getTime() : new Date(a.createdAt || 0).getTime();
           const tb = typeof b.createdAt?.toDate === "function" ? b.createdAt.toDate().getTime() : new Date(b.createdAt || 0).getTime();
-          return tb - ta; // newest first
+          return tb - ta;
         });
-
-      // Use offersCount field already stored on each RFQ document (incremented on submit)
-      // No per-RFQ query needed — eliminates N+1
       let totalOffers = 0;
       for (const rfq of items) {
-        const count = typeof rfq.offersCount === "number" ? rfq.offersCount : 0;
-        rfq.offersCount = count;
-        totalOffers += count;
+        rfq.offersCount = typeof rfq.offersCount === "number" ? rfq.offersCount : 0;
+        totalOffers += rfq.offersCount;
       }
       setRfqs(items);
-
-      const draft        = items.filter((r) => r.status === "Draft").length;
-      const newRfqs      = items.filter((r) => r.status === "New").length;
-      const active       = items.filter((r) => r.status === "Active").length;
-      const underReview  = items.filter((r) => r.status === "Under Review").length;
-      const awarded      = items.filter((r) => r.status === "Awarded").length;
-      const closed       = items.filter((r) => r.status === "Closed").length;
-
+      const count = (status: string) => items.filter((r) => r.status === status).length;
+      const draft = count("Draft"), newRfqs = count("New"), active = count("Active");
+      const underReview = count("Under Review"), awarded = count("Awarded"), closed = count("Closed");
       setStats({
-        total: items.length,
-        draft,
-        newRfqs,
-        active,
-        underReview,
-        awarded,
-        closed,
+        total: items.length, draft, newRfqs, active, underReview, awarded, closed,
         inProgress: newRfqs + active + underReview + awarded,
         offers: totalOffers,
       });
-    } catch (e: any) {
-      console.warn("[Dashboard] fetchData error:", e.message);
+    } catch {
       setFetchError(true);
     } finally {
       setLoading(false);
@@ -179,286 +152,169 @@ export default function ContractorDashboard() {
 
   useEffect(() => { fetchData(); }, [user?.organizationId]);
 
-  const statusRows = [
-    { id: "Draft",        count: stats.draft,       color: "#94a3b8", labelAr: "مسودة",         labelEn: "Draft"        },
-    { id: "New",          count: stats.newRfqs,     color: "#3b82f6", labelAr: "جديد",          labelEn: "New"          },
-    { id: "Active",       count: stats.active,      color: "#06b6d4", labelAr: "نشط",           labelEn: "Active"       },
-    { id: "Under Review", count: stats.underReview, color: "#f59e0b", labelAr: "قيد المراجعة",  labelEn: "Under Review" },
-    { id: "Awarded",      count: stats.awarded,     color: "#12A063", labelAr: "تم الترسية",    labelEn: "Awarded"      },
-    { id: "Closed",       count: stats.closed,      color: "#22c55e", labelAr: "مغلق",          labelEn: "Closed"       },
-  ];
+  const countFor: Record<string, number> = {
+    Draft: stats.draft, New: stats.newRfqs, Active: stats.active,
+    "Under Review": stats.underReview, Awarded: stats.awarded, Closed: stats.closed,
+  };
+  const statusRows = RFQ_STATUSES.map((s) => ({
+    id: s.id,
+    label: isRTL ? s.labelAr : s.label,
+    tone: s.tone as Tone,
+    count: countFor[s.id] ?? 0,
+  }));
+  const slices: DonutSlice[] = statusRows.filter((s) => s.count > 0).map((s) => ({ value: s.count, color: toneColors(colors, s.tone).fg }));
 
-  const donutSlices: DonutSlice[] = statusRows
-    .filter((s) => s.count > 0)
-    .map((s) => ({ value: s.count, color: s.color }));
-
-  const pct = (n: number) => stats.total > 0 ? Math.round((n / stats.total) * 100) : 0;
-
-  if (fetchError && !loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: "center", justifyContent: "center", gap: 16, padding: 32 }}>
-        <Feather name="wifi-off" size={40} color={colors.outline} />
-        <Text style={{ fontSize: 16, fontFamily: "HankenGrotesk_700Bold", color: colors.foreground, textAlign: "center" }}>
-          {isRTL ? "تعذر تحميل البيانات" : "Failed to load data"}
-        </Text>
-        <Text style={{ fontSize: 13, color: colors.outline, textAlign: "center" }}>
-          {isRTL ? "تحقق من اتصالك بالإنترنت وحاول مجدداً" : "Check your connection and try again"}
-        </Text>
-        <TouchableOpacity
-          onPress={() => { setLoading(true); fetchData(); }}
-          style={{ backgroundColor: colors.cta, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 14 }}
-        >
-          <Text style={{ color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 14 }}>
-            {isRTL ? "إعادة المحاولة" : "Retry"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const headerRight = (
+    <View style={{ flexDirection: row, alignItems: "center", gap: space.sm }}>
+      <TouchableOpacity
+        style={[styles.iconBtn, { backgroundColor: colors.ctaSoft }]}
+        onPress={() => router.push("/apps")}
+        accessibilityRole="button"
+        accessibilityLabel={t.modules.launcherTitle}
+      >
+        <Feather name="grid" size={18} color={colors.cta} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.iconBtn, { backgroundColor: colors.ctaSoft }]}
+        onPress={() => router.push("/(contractor)/notifications")}
+        accessibilityRole="button"
+        accessibilityLabel={t.profile.notifications}
+      >
+        <Feather name="bell" size={18} color={colors.cta} />
+        {unreadCount > 0 && (
+          <View style={[styles.badge, { backgroundColor: colors.destructive, borderColor: colors.surface }]}>
+            <Text style={[type.captionStrong, { color: colors.destructiveForeground, fontSize: 10, lineHeight: 14 }]}>
+              {unreadCount > 99 ? "99+" : String(unreadCount)}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <DashboardHeader
-        orgName={organization?.name}
-        userName={user?.displayName}
-        right={
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          {/* The app switcher. Every module the member may open lives behind
-              it, mirroring the website's launcher rather than competing with
-              the five role tabs below. */}
-          <TouchableOpacity
-            style={[styles.bellBtn, { backgroundColor: colors.accentBlueSoft }]}
-            onPress={() => router.push("/apps")}
-            accessibilityRole="button"
-            accessibilityLabel={t.modules.launcherTitle}
-          >
-            <Feather name="grid" size={18} color={colors.cta} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.bellBtn, { backgroundColor: colors.accentBlueSoft }]}
-            onPress={() => router.push("/(contractor)/notifications")}
-          >
-            <Feather name="bell" size={18} color={colors.cta} />
-            {unreadCount > 0 && (
-              <View style={[styles.badge, { backgroundColor: colors.destructive, borderColor: colors.surface }]}>
-                <Text style={styles.badgeText}>{unreadCount > 99 ? "99+" : String(unreadCount)}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          </View>
-        }
-      />
+      <DashboardHeader orgName={organization?.name} userName={user?.displayName} right={headerRight} />
 
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primaryText} />}
-        showsVerticalScrollIndicator={false}
-      >
-        <WelcomeHeroCard
-          userName={user?.displayName}
-          activeRfqs={stats.inProgress}
-          totalOffers={stats.offers}
-          onAction={() => router.push("/(contractor)/rfqs")}
-          actionLabel={t.dashboard.viewAll}
+      {fetchError && !loading ? (
+        <EmptyState
+          variant="error"
+          icon="wifi-off"
+          title={t.errors.somethingWentWrong}
+          actionLabel={t.errors.tryAgain}
+          onAction={() => { setLoading(true); fetchData(); }}
         />
-
-        {/* Quick Actions */}
-        <View style={styles.quickRow}>
-          <QuickActionCard
-            title={t.dashboard.createRfq}
-            icon="file-plus"
-            bgColor={colors.accentBlueSoft}
-            iconColor={colors.cta}
-            onPress={() => router.push("/(contractor)/rfqs/create")}
+      ) : (
+        <ScrollView
+          contentContainerStyle={[styles.scroll, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.cta} />}
+          showsVerticalScrollIndicator={false}
+        >
+          <WelcomeHeroCard
+            userName={user?.displayName}
+            activeRfqs={stats.inProgress}
+            totalOffers={stats.offers}
+            onAction={() => router.push("/(contractor)/rfqs")}
+            actionLabel={t.dashboard.viewAll}
           />
-          <QuickActionCard
-            title={t.dashboard.myMessages}
-            icon="message-circle"
-            bgColor={colors.accentPurpleSoft}
-            iconColor={colors.purpleAccent}
-            onPress={() => router.push("/(contractor)/chats")}
-          />
-        </View>
 
-        {/* Stats strip */}
-        <View style={[styles.statsStrip, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {[
-            { label: t.dashboard.totalRfqs, value: stats.total,      color: colors.primaryText, icon: "file-text"    },
-            { label: t.dashboard.active,     value: stats.inProgress,  color: colors.cta,     icon: "activity"     },
-            { label: t.dashboard.offersIn,   value: stats.offers,      color: colors.success, icon: "tag"          },
-            { label: t.dashboard.closed,     value: stats.closed,      color: "#22c55e",      icon: "check-circle" },
-          ].map((item, i, arr) => (
-            <React.Fragment key={item.label}>
-              <View style={styles.statItem}>
-                <View style={[styles.statIconWrap, { backgroundColor: item.color + "18" }]}>
-                  <Feather name={item.icon as any} size={14} color={item.color} />
-                </View>
-                <Text style={[styles.statValue, { color: item.color, fontFamily: "HankenGrotesk_700Bold" }]}>
-                  {item.value}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.outline }]} numberOfLines={1}>{item.label}</Text>
-              </View>
-              {i < arr.length - 1 && <View style={[styles.statDivider, { backgroundColor: colors.border }]} />}
-            </React.Fragment>
-          ))}
-        </View>
-
-        {/* ── Donut Chart Overview ───────────────────────────── */}
-        <View style={[styles.overviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-
-          {/* Header */}
-          <View style={[styles.cardHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-            <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 8 }}>
-              <View style={[styles.cardHeaderIcon, { backgroundColor: colors.cta + "14" }]}>
-                <Feather name="pie-chart" size={14} color={colors.cta} />
-              </View>
-              <Text style={[styles.cardTitle, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
-                {t.dashboard.rfqOverview}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.viewAllPill, { flexDirection: isRTL ? "row-reverse" : "row", backgroundColor: colors.accentBlueSoft }]}
-              onPress={() => router.push("/(contractor)/rfqs")}
-            >
-              <Text style={[styles.viewAllPillText, { color: colors.cta }]}>{t.dashboard.viewAll}</Text>
-              <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={12} color={colors.cta} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Donut — centered */}
-          <View style={styles.chartCenter}>
-            <DonutChart
-              slices={donutSlices}
-              total={stats.total}
-              size={160}
-              textColor={colors.foreground}
-              label={t.dashboard.rfqsShort}
+          <View style={[styles.quickRow, { flexDirection: row }]}>
+            <QuickActionCard
+              title={t.dashboard.createRfq}
+              icon="file-plus"
+              bgColor={colors.ctaSoft}
+              iconColor={colors.cta}
+              onPress={() => router.push("/(contractor)/rfqs/create")}
+            />
+            <QuickActionCard
+              title={t.dashboard.myMessages}
+              icon="message-circle"
+              bgColor={colors.purpleSoft}
+              iconColor={colors.purple}
+              onPress={() => router.push("/(contractor)/chats")}
             />
           </View>
 
-          {/* Legend — 2-column grid, only non-zero statuses */}
-          {stats.total > 0 && (
-            <View style={styles.legendGrid}>
-              {statusRows.filter((s) => s.count > 0).map((s) => (
-                <View
-                  key={s.id}
-                  style={[
-                    styles.legendItem,
-                    { flexDirection: isRTL ? "row-reverse" : "row", borderColor: s.color + "28", backgroundColor: s.color + "0C" },
-                  ]}
-                >
-                  <View style={[styles.legendDot, { backgroundColor: s.color }]} />
-                  <Text style={[styles.legendLabel, { color: colors.outline }]} numberOfLines={1}>
-                    {isRTL ? s.labelAr : s.labelEn}
-                  </Text>
-                  <Text style={[styles.legendCount, { color: s.color }]}>{s.count}</Text>
+          {/* Tenders by status */}
+          <Card>
+            <View style={[styles.cardHeader, { flexDirection: row }]}>
+              <View style={[styles.cardHeaderTitle, { flexDirection: row }]}>
+                <View style={[styles.cardHeaderIcon, { backgroundColor: colors.ctaSoft }]}>
+                  <Feather name="pie-chart" size={14} color={colors.cta} />
                 </View>
-              ))}
-            </View>
-          )}
-
-          {/* Footer stats */}
-          <View style={[styles.overviewFooter, { borderTopColor: colors.border, flexDirection: isRTL ? "row-reverse" : "row" }]}>
-            <View style={styles.footerStat}>
-              <View style={[styles.footerIconWrap, { backgroundColor: colors.primaryText + "14" }]}>
-                <Feather name="file-text" size={13} color={colors.primaryText} />
+                <Text style={[type.title, { color: colors.foreground }]}>{t.dashboard.rfqOverview}</Text>
               </View>
-              <Text style={[styles.footerValue, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>{stats.total}</Text>
-              <Text style={[styles.footerLabel, { color: colors.outline }]}>{t.dashboard.totalRfqs}</Text>
+              <TouchableOpacity
+                style={[styles.linkPill, { flexDirection: row, backgroundColor: colors.ctaSoft }]}
+                onPress={() => router.push("/(contractor)/rfqs")}
+                accessibilityRole="button"
+              >
+                <Text style={[type.captionStrong, { color: colors.cta }]}>{t.dashboard.viewAll}</Text>
+                <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={12} color={colors.cta} />
+              </TouchableOpacity>
             </View>
-            <View style={[styles.footerDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.footerStat}>
-              <View style={[styles.footerIconWrap, { backgroundColor: colors.warning + "14" }]}>
-                <Feather name="tag" size={13} color={colors.warning} />
-              </View>
-              <Text style={[styles.footerValue, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>{stats.offers}</Text>
-              <Text style={[styles.footerLabel, { color: colors.outline }]}>{t.dashboard.offersIn}</Text>
-            </View>
-            <View style={[styles.footerDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.footerStat}>
-              <View style={[styles.footerIconWrap, { backgroundColor: colors.cta + "14" }]}>
-                <Feather name="activity" size={13} color={colors.cta} />
-              </View>
-              <Text style={[styles.footerValue, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>{stats.inProgress}</Text>
-              <Text style={[styles.footerLabel, { color: colors.outline }]}>{t.dashboard.active}</Text>
-            </View>
-          </View>
-        </View>
 
-        <SectionHeader
-          title={t.dashboard.recentRfqs}
-          actionLabel={t.dashboard.viewAll}
-          onAction={() => router.push("/(contractor)/rfqs")}
-        />
+            <View style={styles.chartCenter}>
+              <DonutChart
+                slices={slices}
+                total={stats.total}
+                size={160}
+                textColor={colors.foreground}
+                mutedColor={colors.mutedForeground}
+                trackColor={colors.muted}
+                label={t.dashboard.rfqsShort}
+              />
+            </View>
 
-        {loading
-          ? [1, 2, 3].map((k) => <CardSkeleton key={k} />)
-          : rfqs.length === 0
-          ? <EmptyState icon="file-text" title={t.dashboard.noRfqs} subtitle={t.dashboard.noRfqsDesc} actionLabel={t.dashboard.createRfq} onAction={() => router.push("/(contractor)/rfqs/create")} />
-          : rfqs.slice(0, 5).map((rfq) => (
-            <RFQCard key={rfq.id} rfq={rfq} onPress={() => router.push(`/(contractor)/rfqs/${rfq.id}`)} showOffers />
-          ))}
-      </ScrollView>
-      {/* The assistant floats here only: on the list screens it sat on top of
-          the primary action button. */}
+            {stats.total > 0 && (
+              <View style={[styles.legendGrid, { flexDirection: row }]}>
+                {statusRows.filter((s) => s.count > 0).map((s) => {
+                  const tc = toneColors(colors, s.tone);
+                  return (
+                    <View key={s.id} style={[styles.legendItem, { flexDirection: row, backgroundColor: tc.bg }]}>
+                      <View style={[styles.legendDot, { backgroundColor: tc.fg }]} />
+                      <Text style={[type.caption, { flex: 1, color: colors.foreground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={1}>
+                        {s.label}
+                      </Text>
+                      <Text style={[type.captionStrong, { color: tc.fg }]}>{s.count}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </Card>
+
+          <SectionHeader title={t.dashboard.recentRfqs} actionLabel={t.dashboard.viewAll} onAction={() => router.push("/(contractor)/rfqs")} />
+          {loading
+            ? [1, 2, 3].map((k) => <CardSkeleton key={k} />)
+            : rfqs.length === 0
+            ? <EmptyState icon="file-text" title={t.dashboard.noRfqs} subtitle={t.dashboard.noRfqsDesc} actionLabel={t.dashboard.createRfq} onAction={() => router.push("/(contractor)/rfqs/create")} />
+            : rfqs.slice(0, 5).map((rfq) => (
+              <RFQCard key={rfq.id} rfq={rfq} onPress={() => router.push(`/(contractor)/rfqs/${rfq.id}`)} showOffers />
+            ))}
+        </ScrollView>
+      )}
+      {/* The assistant floats here only: on the list screens it sat on top of the primary action. */}
       <AIChatWidget userRole="Contractor" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { padding: 16, gap: 14 },
-  bellBtn: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  scroll: { padding: space.lg, gap: space.lg },
+  iconBtn: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radius.control, alignItems: "center", justifyContent: "center" },
   badge: {
-    position: "absolute", top: -3, right: -3,
-    minWidth: 16, height: 16, borderRadius: 8, borderWidth: 1.5,
-    alignItems: "center", justifyContent: "center", paddingHorizontal: 3,
+    position: "absolute", top: -4, right: -4,
+    minWidth: 18, height: 18, borderRadius: radius.pill, borderWidth: 1.5,
+    alignItems: "center", justifyContent: "center", paddingHorizontal: 4,
   },
-  badgeText: { color: "#fff", fontSize: 10, fontFamily: "Inter_700Bold", lineHeight: 13 },
-  quickRow: { flexDirection: "row", gap: 12 },
-
-  // Stats strip
-  statsStrip: {
-    flexDirection: "row", borderRadius: 14, borderWidth: 1,
-    paddingVertical: 14, paddingHorizontal: 6, alignItems: "center",
-  },
-  statItem: { flex: 1, alignItems: "center", gap: 4 },
-  statIconWrap: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", marginBottom: 2 },
-  statValue: { fontSize: 20 },
-  statLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textTransform: "uppercase", textAlign: "center" },
-  statDivider: { width: 1, height: 36, marginHorizontal: 2 },
-
-  // Overview card
-  overviewCard: { borderRadius: 14, borderWidth: 1, padding: 16, gap: 14 },
-  cardHeader: { alignItems: "center", justifyContent: "space-between" },
-  cardHeaderIcon: { width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  cardTitle: { fontSize: 15 },
-  viewAllPill: { alignItems: "center", gap: 3, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  viewAllPillText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-
-  // Donut + legend
-  chartCenter: { alignItems: "center", justifyContent: "center", paddingVertical: 4 },
-  legendGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  legendItem: {
-    width: "47%",
-    flexGrow: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  legendDot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-  legendLabel: { flex: 1, fontSize: 11, fontFamily: "Inter_500Medium" },
-  legendCount: { fontSize: 13, fontFamily: "Inter_700Bold", flexShrink: 0 },
-
-  // Footer
-  overviewFooter: { paddingTop: 14, borderTopWidth: 1, alignItems: "center" },
-  footerStat: { flex: 1, alignItems: "center", gap: 4 },
-  footerIconWrap: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center", marginBottom: 2 },
-  footerValue: { fontSize: 18 },
-  footerLabel: { fontSize: 9, fontFamily: "Inter_500Medium", textTransform: "uppercase", textAlign: "center" },
-  footerDivider: { width: 1, height: 32, marginHorizontal: 6 },
+  quickRow: { gap: space.md },
+  cardHeader: { alignItems: "center", justifyContent: "space-between", marginBottom: space.md, gap: space.sm },
+  cardHeaderTitle: { alignItems: "center", gap: space.sm, flex: 1 },
+  cardHeaderIcon: { width: 28, height: 28, borderRadius: radius.pill, alignItems: "center", justifyContent: "center" },
+  linkPill: { alignItems: "center", gap: 2, paddingHorizontal: space.md, minHeight: 36, borderRadius: radius.pill },
+  chartCenter: { alignItems: "center", justifyContent: "center", paddingVertical: space.xs },
+  legendGrid: { flexWrap: "wrap", gap: space.sm, marginTop: space.md },
+  legendItem: { width: "48%", flexGrow: 1, alignItems: "center", gap: 6, borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.sm },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
 });

@@ -104,7 +104,7 @@ function NotifCard({
               style={[
                 styles.notifTitle,
                 { color: colors.foreground, textAlign: isRTL ? "right" : "left" },
-                !item.read && { fontFamily: "Inter_700Bold" },
+                !item.read && { fontFamily: "Inter_600SemiBold" },
               ]}
               numberOfLines={2}
             >
@@ -182,7 +182,7 @@ export default function ContractorNotificationsScreen() {
         </TouchableOpacity>
 
         <View style={{ flex: 1, alignItems: "center" }}>
-          <Text style={[styles.headerTitle, { fontFamily: "HankenGrotesk_700Bold" }]}>
+          <Text style={[styles.headerTitle, { fontFamily: "Inter_600SemiBold" }]}>
             {t.tabs.notifications}
           </Text>
           {unreadCount > 0 && (
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
   },
-  errorText: { fontSize: 13, fontFamily: "Inter_500Medium", flex: 1 },
+  errorText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
 
   loadingRow: {
     flexDirection: "row",
@@ -340,5 +340,5 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 20,
   },
-  unreadPillText: { fontSize: 10, fontFamily: "Inter_700Bold" },
+  unreadPillText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
 });

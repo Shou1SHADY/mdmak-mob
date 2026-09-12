@@ -15,13 +15,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useToast } from "@/context/ToastContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { Input } from "@/components/ui/Input";
 import { CrmSheet } from "@/components/crm/CrmSheet";
 import { CrmChoice } from "@/components/crm/CrmChoice";
 import { useCrmData } from "@/hooks/useCrmData";
-import { createOpportunity, logActivity, setLeadStatus } from "@/lib/crm-writes";
+import { createOpportunity, logActivity, setLeadStatus, updateContact } from "@/lib/crm-writes";
 import {
   ACTIVITY_TYPES,
   LEAD_STATUSES,
@@ -74,7 +76,18 @@ export default function CrmLeadDetailScreen() {
     [activities, id]
   );
 
+  const { can } = usePermissions();
+  const { showToast } = useToast();
+  const canManage = can("crm.manage");
   const [busy, setBusy] = useState(false);
+
+  const [editSheet, setEditSheet] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editCompany, setEditCompany] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editCity, setEditCity] = useState("");
+  const [editNotes, setEditNotes] = useState("");
 
   const [activitySheet, setActivitySheet] = useState(false);
   const [activityType, setActivityType] = useState<ActivityType>("call");
@@ -120,7 +133,35 @@ export default function CrmLeadDetailScreen() {
     Linking.openURL(`tel:${contact.phone}`);
   };
 
+  const openEdit = () => {
+    setEditName(contact.name ?? "");
+    setEditCompany(contact.company ?? "");
+    setEditPhone(contact.phone ?? "");
+    setEditEmail(contact.email ?? "");
+    setEditCity(contact.city ?? "");
+    setEditNotes(contact.notes ?? "");
+    setEditSheet(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editName.trim()) { Alert.alert(t.common.error, t.crm.titleRequired); return; }
+    if (!orgId) return;
+    setBusy(true);
+    try {
+      await updateContact(contact.id, contact.name, {
+        orgId, name: editName, company: editCompany, phone: editPhone, email: editEmail, city: editCity, notes: editNotes,
+      });
+      showToast(t.crm.saved, "success");
+      setEditSheet(false);
+    } catch {
+      Alert.alert(t.common.error, t.crm.saveFailed);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleStatus = async (status: LeadStatus) => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (status === contact.status || busy) return;
     setBusy(true);
     try {
@@ -201,7 +242,16 @@ export default function CrmLeadDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScreenHeader title={contact.name} subtitle={t.crm.leads} showBack />
+      <ScreenHeader
+        title={contact.name}
+        subtitle={t.crm.leads}
+        showBack
+        right={canManage ? (
+          <TouchableOpacity onPress={openEdit} style={styles.headerBtn} accessibilityRole="button" accessibilityLabel={t.crm.editLead}>
+            <Feather name="edit-2" size={18} color={colors.cta} />
+          </TouchableOpacity>
+        ) : undefined}
+      />
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
         showsVerticalScrollIndicator={false}
@@ -247,14 +297,14 @@ export default function CrmLeadDetailScreen() {
               <Feather name="phone" size={16} color={colors.ctaForeground} />
               <Text style={[styles.actionText, { color: colors.ctaForeground }]}>{t.crm.call}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
+            {canManage && <TouchableOpacity
               onPress={() => setActivitySheet(true)}
               accessibilityRole="button"
               style={[styles.action, { backgroundColor: colors.muted, flexDirection: isRTL ? "row-reverse" : "row" }]}
             >
               <Feather name="clipboard" size={16} color={colors.foreground} />
               <Text style={[styles.actionText, { color: colors.foreground }]}>{t.crm.logActivity}</Text>
-            </TouchableOpacity>
+            </TouchableOpacity>}
           </View>
         </View>
 
@@ -273,14 +323,14 @@ export default function CrmLeadDetailScreen() {
         <View style={[styles.panel, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.panelHead, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <Text style={[styles.panelTitle, { color: colors.foreground }]}>{t.crm.opportunities}</Text>
-            <TouchableOpacity
+            {canManage && <TouchableOpacity
               onPress={() => setDealSheet(true)}
               accessibilityRole="button"
               accessibilityLabel={t.crm.newOpportunity}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.headerBtn}
             >
               <Feather name="plus-circle" size={20} color={colors.cta} />
-            </TouchableOpacity>
+            </TouchableOpacity>}
           </View>
           {deals.length === 0 ? (
             <Text style={[styles.emptyLine, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
@@ -350,6 +400,23 @@ export default function CrmLeadDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Edit lead */}
+      <CrmSheet
+        visible={editSheet}
+        title={t.crm.editLead}
+        onClose={() => setEditSheet(false)}
+        onSubmit={handleSaveEdit}
+        submitLabel={t.common.save}
+        submitting={busy}
+      >
+        <Input label={t.crm.selectContact} value={editName} onChangeText={setEditName} required isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={t.profile.companyName} value={editCompany} onChangeText={setEditCompany} isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={t.profile.phone} value={editPhone} onChangeText={setEditPhone} keyboardType="phone-pad" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={t.crm.email} value={editEmail} onChangeText={setEditEmail} keyboardType="email-address" autoCapitalize="none" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={t.profile.city} value={editCity} onChangeText={setEditCity} isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={`${t.crm.notes} (${t.crm.optional})`} value={editNotes} onChangeText={setEditNotes} multiline isRTL={isRTL} />
+      </CrmSheet>
 
       {/* Log activity */}
       <CrmSheet
@@ -423,6 +490,7 @@ export default function CrmLeadDetailScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
+  headerBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 12 },
   panel: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12 },
   panelHead: { alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
   panelTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold", marginBottom: 8 },

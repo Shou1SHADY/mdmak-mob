@@ -1,4 +1,7 @@
-import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import {
+  addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, updateDoc, where, writeBatch,
+  type DocumentReference,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
   CRM_ACTIVITIES,
@@ -210,4 +213,104 @@ export async function setActivityDone(activityId: string, done: boolean): Promis
     done,
     updatedAt: serverTimestamp(),
   });
+}
+
+// ---------------------------------------------------------------------------
+// Edits — the phone owns the fields worth correcting on a doorstep
+// ---------------------------------------------------------------------------
+
+export interface UpdateContactInput {
+  orgId: string;
+  name: string;
+  company?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  city?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * Corrects a lead's identity fields. Mirrors CrmContactDialog.tsx's edit path,
+ * including the rename propagation: the org-wide lists render the
+ * denormalised `contactName` on opportunities, quotations and activities, so
+ * a rename that stopped at the contact would leave the pipeline showing the
+ * old name. Propagation is best-effort — a stale label is cosmetic and must
+ * not turn a successful save into a failure.
+ */
+export async function updateContact(contactId: string, previousName: string, input: UpdateContactInput): Promise<void> {
+  const name = input.name.trim();
+  await updateDoc(doc(db, CRM_CONTACTS, contactId), {
+    name,
+    company: input.company?.trim() || null,
+    phone: input.phone?.trim() || null,
+    email: input.email?.trim() || null,
+    city: input.city?.trim() || null,
+    notes: input.notes?.trim() || null,
+    updatedAt: serverTimestamp(),
+  });
+  if (name !== previousName) await renameContactReferences(contactId, input.orgId, name);
+}
+
+async function renameContactReferences(contactId: string, orgId: string, newName: string): Promise<void> {
+  try {
+    const refs: DocumentReference[] = [];
+    for (const col of [CRM_OPPORTUNITIES, "crmQuotations", CRM_ACTIVITIES]) {
+      const snap = await getDocs(
+        query(collection(db, col), where("organizationId", "==", orgId), where("contactId", "==", contactId))
+      );
+      snap.docs.forEach((d) => refs.push(d.ref));
+    }
+    // Firestore batches cap at 500 writes.
+    for (let i = 0; i < refs.length; i += 450) {
+      const batch = writeBatch(db);
+      refs.slice(i, i + 450).forEach((ref) => batch.update(ref, { contactName: newName }));
+      await batch.commit();
+    }
+  } catch (e) {
+    if (__DEV__) console.warn("[crm] rename propagation failed:", e);
+  }
+}
+
+export interface UpdateOpportunityInput {
+  title: string;
+  value: number;
+  expectedCloseDate?: string | null;
+  probability?: number | null;
+  notes?: string | null;
+}
+
+/** Corrects a deal's basics. Stage, state and gates are untouched — moving
+ * a deal goes through advanceOpportunityStage, closing it stays on the web. */
+export async function updateOpportunity(opportunityId: string, input: UpdateOpportunityInput): Promise<void> {
+  await updateDoc(doc(db, CRM_OPPORTUNITIES, opportunityId), {
+    title: input.title.trim(),
+    value: input.value,
+    expectedCloseDate: input.expectedCloseDate || null,
+    probability: input.probability ?? null,
+    notes: input.notes?.trim() || null,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export interface UpdateActivityInput {
+  type: ActivityType;
+  title: string;
+  dueDate?: string | null;
+  notes?: string | null;
+}
+
+/** Corrects a logged activity (CrmActivityDialog.tsx's edit path). */
+export async function updateActivity(activityId: string, input: UpdateActivityInput): Promise<void> {
+  await updateDoc(doc(db, CRM_ACTIVITIES, activityId), {
+    type: input.type,
+    title: input.title.trim(),
+    dueDate: input.dueDate || null,
+    notes: input.notes?.trim() || null,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/** Removes an activity — a mis-logged call, not history. */
+export async function deleteActivity(activityId: string): Promise<void> {
+  await deleteDoc(doc(db, CRM_ACTIVITIES, activityId));
 }

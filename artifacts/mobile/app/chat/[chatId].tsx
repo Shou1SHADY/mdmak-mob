@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.12)",
   },
   headerInfo: { flex: 1, gap: 2 },
-  headerTitle: { fontSize: 15, fontFamily: "HankenGrotesk_700Bold", color: "#FFFFFF" },
+  headerTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
   headerSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)" },
   headerStatusDot: { width: 8, height: 8, borderRadius: 4 },
 
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
   },
-  errorText: { fontSize: 13, fontFamily: "Inter_500Medium", flex: 1 },
+  errorText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
 
   messagesArea: { flex: 1, overflow: "hidden" },
   chatBg: { opacity: 1 },
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
-  dateText: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  dateText: { fontSize: 11, fontFamily: "Inter_400Regular" },
 
   emptyChat: { alignItems: "center", gap: 10, paddingVertical: 60 },
   emptyChatIcon: {

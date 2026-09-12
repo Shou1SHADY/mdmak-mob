@@ -124,21 +124,21 @@ export default function MyRFQsScreen() {
       {!loading && rfqs.length > 0 && (
         <View style={[styles.statsBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+            <Text style={[styles.statValue, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
               {stats.total}
             </Text>
             <Text style={[styles.statLabel, { color: colors.outline }]}>{t.dashboard.totalRfqs}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.primaryText, fontFamily: "HankenGrotesk_700Bold" }]}>
+            <Text style={[styles.statValue, { color: colors.primaryText, fontFamily: "Inter_600SemiBold" }]}>
               {stats.active}
             </Text>
             <Text style={[styles.statLabel, { color: colors.outline }]}>{t.dashboard.active}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.success, fontFamily: "HankenGrotesk_700Bold" }]}>
+            <Text style={[styles.statValue, { color: colors.success, fontFamily: "Inter_600SemiBold" }]}>
               {stats.closed}
             </Text>
             <Text style={[styles.statLabel, { color: colors.outline }]}>{t.dashboard.closed}</Text>
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 10,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
     textTransform: "uppercase",
   },
   statDivider: {
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 17,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
   },
   filterLabel: {
     fontSize: 12,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
   },
   optionChipText: {
     fontSize: 13,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
   },
   modalActions: {
     gap: 10,
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   },
   chipBadgeText: {
     fontSize: 10,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
   },
   resultsRow: {
     alignItems: "center",
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   },
   resultsText: {
     fontSize: 11,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
   },
   clearBtn: {
     flexDirection: "row",

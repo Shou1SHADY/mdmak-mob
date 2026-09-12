@@ -18,7 +18,14 @@ import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { useCrmData } from "@/hooks/useCrmData";
-import { setActivityDone } from "@/lib/crm-writes";
+import { deleteActivity, logActivity, setActivityDone, updateActivity } from "@/lib/crm-writes";
+import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useToast } from "@/context/ToastContext";
+import { Input } from "@/components/ui/Input";
+import { CrmSheet } from "@/components/crm/CrmSheet";
+import { CrmChoice } from "@/components/crm/CrmChoice";
+import { MIN_TOUCH, radius } from "@/lib/design";
 import { ACTIVITY_TYPES, type ActivityType, type CrmActivity } from "@/lib/crm";
 import { activityIcon, daysUntil } from "@/lib/crm-display";
 
@@ -37,11 +44,70 @@ export default function CrmActivitiesScreen() {
   const t = useT();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { activities, isLoading } = useCrmData({ activities: true });
+  const { activities, contacts, orgId, isLoading } = useCrmData({ activities: true });
+  const { user } = useAuth();
+  const { can } = usePermissions();
+  const { showToast } = useToast();
+  const canManage = can("crm.manage");
 
   const [typeFilter, setTypeFilter] = useState<ActivityType | "all">("all");
   const [showDone, setShowDone] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  // One sheet for new and edit; `editing` is the record being corrected.
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editing, setEditing] = useState<CrmActivity | null>(null);
+  const [formType, setFormType] = useState<ActivityType>("call");
+  const [formTitle, setFormTitle] = useState("");
+  const [formDue, setFormDue] = useState("");
+  const [formNotes, setFormNotes] = useState("");
+  const [formContact, setFormContact] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const openNew = () => {
+    setEditing(null);
+    setFormType("call"); setFormTitle(""); setFormDue(""); setFormNotes("");
+    setFormContact(contacts[0]?.id ?? null);
+    setSheetOpen(true);
+  };
+  const openEdit = (a: CrmActivity) => {
+    setEditing(a);
+    setFormType(a.type); setFormTitle(a.title); setFormDue(a.dueDate ?? ""); setFormNotes(a.notes ?? "");
+    setFormContact(a.contactId ?? null);
+    setSheetOpen(true);
+  };
+  const saveSheet = async () => {
+    if (!formTitle.trim()) { Alert.alert(t.common.error, t.crm.titleRequired); return; }
+    setSaving(true);
+    try {
+      if (editing) {
+        await updateActivity(editing.id, { type: formType, title: formTitle, dueDate: formDue || null, notes: formNotes || null });
+      } else {
+        const contact = contacts.find((c) => c.id === formContact);
+        if (!orgId || !contact) { Alert.alert(t.common.error, t.crm.selectContact); return; }
+        await logActivity({
+          orgId, type: formType, title: formTitle, contactId: contact.id, contactName: contact.name,
+          dueDate: formDue || null, notes: formNotes || null, ownerId: user?.uid ?? null, ownerName: user?.displayName ?? null,
+        });
+      }
+      showToast(t.crm.saved, "success");
+      setSheetOpen(false);
+    } catch {
+      Alert.alert(t.common.error, t.crm.saveFailed);
+    } finally {
+      setSaving(false);
+    }
+  };
+  const removeActivity = () => {
+    if (!editing) return;
+    Alert.alert(t.crm.deleteActivity, t.crm.deleteActivityConfirm, [
+      { text: t.common.cancel, style: "cancel" },
+      { text: t.crm.deleteActivity, style: "destructive", onPress: async () => {
+        try { await deleteActivity(editing.id); showToast(t.crm.deleted, "success"); setSheetOpen(false); }
+        catch { Alert.alert(t.common.error, t.crm.saveFailed); }
+      } },
+    ]);
+  };
 
   const sections = useMemo(() => {
     const filtered = activities.filter((a) => {
@@ -89,6 +155,7 @@ export default function CrmActivitiesScreen() {
   }, [activities, typeFilter, showDone, t]);
 
   const toggleDone = async (activity: CrmActivity) => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     setBusyId(activity.id);
     try {
       await setActivityDone(activity.id, !activity.done);
@@ -112,22 +179,27 @@ export default function CrmActivitiesScreen() {
         subtitle={t.crm.title}
         showBack
         right={
-          <TouchableOpacity
-            onPress={() => setShowDone((v) => !v)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: showDone }}
-            accessibilityLabel={showDone ? t.crm.markNotDone : t.crm.markDone}
-            style={[
-              styles.toggle,
-              { backgroundColor: showDone ? colors.cta : colors.muted },
-            ]}
-          >
-            <Feather
-              name="check-circle"
-              size={18}
-              color={showDone ? colors.ctaForeground : colors.mutedForeground}
-            />
-          </TouchableOpacity>
+          <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 4 }}>
+            <TouchableOpacity
+              onPress={() => setShowDone((v) => !v)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: showDone }}
+              accessibilityLabel={showDone ? t.crm.markNotDone : t.crm.markDone}
+              style={[styles.toggle, { backgroundColor: showDone ? colors.cta : colors.muted }]}
+            >
+              <Feather name="check-circle" size={18} color={showDone ? colors.ctaForeground : colors.mutedForeground} />
+            </TouchableOpacity>
+            {canManage && (
+              <TouchableOpacity
+                onPress={openNew}
+                accessibilityRole="button"
+                accessibilityLabel={t.crm.newActivity}
+                style={[styles.toggle, { backgroundColor: colors.ctaSoft }]}
+              >
+                <Feather name="plus" size={18} color={colors.cta} />
+              </TouchableOpacity>
+            )}
+          </View>
         }
       />
 
@@ -233,10 +305,13 @@ export default function CrmActivitiesScreen() {
 
                 <TouchableOpacity
                   style={styles.rowBody}
-                  activeOpacity={item.contactId ? 0.7 : 1}
+                  activeOpacity={0.7}
                   accessibilityRole="button"
+                  accessibilityLabel={canManage ? `${item.title}: ${t.crm.editActivity}` : item.title}
                   onPress={() =>
-                    item.contactId && router.push(`/(crm)/leads/${item.contactId}` as never)
+                    canManage
+                      ? openEdit(item)
+                      : item.contactId && router.push(`/(crm)/leads/${item.contactId}` as never)
                   }
                 >
                   <View style={[styles.rowTop, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
@@ -284,24 +359,63 @@ export default function CrmActivitiesScreen() {
               icon="clipboard"
               title={t.crm.noActivities}
               subtitle={t.crm.noActivitiesHint}
-              actionLabel={t.crm.leads}
-              onAction={() => router.push("/(crm)/leads")}
+              actionLabel={canManage ? t.crm.newActivity : t.crm.leads}
+              onAction={canManage ? openNew : () => router.push("/(crm)/leads")}
             />
           }
         />
       )}
+
+      <CrmSheet
+        visible={sheetOpen}
+        title={editing ? t.crm.editActivity : t.crm.newActivity}
+        onClose={() => setSheetOpen(false)}
+        onSubmit={saveSheet}
+        submitLabel={t.common.save}
+        submitting={saving}
+      >
+        {!editing && (
+          <CrmChoice
+            label={t.crm.selectContact}
+            options={contacts.map((c) => ({ value: c.id, label: c.name }))}
+            value={formContact}
+            onChange={setFormContact}
+            scroll
+            required
+          />
+        )}
+        <CrmChoice
+          label={t.crm.activityType}
+          options={ACTIVITY_TYPES.map((a) => ({ value: a, label: t.crm.activityTypes[a] }))}
+          value={formType}
+          onChange={setFormType}
+          scroll
+          required
+        />
+        <Input label={t.crm.logActivity} value={formTitle} onChangeText={setFormTitle} required isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={`${t.crm.dueDate} (${t.crm.optional})`} value={formDue} onChangeText={setFormDue} placeholder="YYYY-MM-DD" isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        <Input label={`${t.crm.notes} (${t.crm.optional})`} value={formNotes} onChangeText={setFormNotes} multiline isRTL={isRTL} containerStyle={{ marginBottom: 12 }} />
+        {editing && (
+          <TouchableOpacity onPress={removeActivity} accessibilityRole="button" style={styles.deleteRow}>
+            <Feather name="trash-2" size={16} color={colors.destructive} />
+            <Text style={[styles.deleteText, { color: colors.destructive }]}>{t.crm.deleteActivity}</Text>
+          </TouchableOpacity>
+        )}
+      </CrmSheet>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   toggle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: MIN_TOUCH,
+    height: MIN_TOUCH,
+    borderRadius: radius.control,
     alignItems: "center",
     justifyContent: "center",
   },
+  deleteRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: MIN_TOUCH },
+  deleteText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   chipRow: { alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   filterChip: {
     // 44px minimum touch target, per the project accessibility rule.

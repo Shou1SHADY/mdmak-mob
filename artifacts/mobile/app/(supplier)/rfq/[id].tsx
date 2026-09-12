@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 22,
-    fontFamily: "HankenGrotesk_700Bold",
+    fontFamily: "Inter_600SemiBold",
     color: "#FFFFFF",
     lineHeight: 30,
   },
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontFamily: "HankenGrotesk_600SemiBold",
+    fontFamily: "Inter_600SemiBold",
   },
   desc: {
     fontSize: 14,
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 10,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
     textTransform: "uppercase",
     marginBottom: 2,
   },
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   },
   closedText: {
     fontSize: 13,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
     textAlign: "center",
     flex: 1,
   },

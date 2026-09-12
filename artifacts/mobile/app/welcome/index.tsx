@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   ctaBtnText: {
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
     fontSize: 16,
     color: "#FFFFFF",
   },
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   skipText: {
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
     fontSize: 14,
   },
 });

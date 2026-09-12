@@ -466,8 +466,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "700" as const,
-    fontFamily: "HankenGrotesk_700Bold",
+    fontFamily: "Inter_600SemiBold",
   },
   stepLabel: {
     fontSize: 14,
@@ -488,8 +487,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: "700" as const,
-    fontFamily: "HankenGrotesk_700Bold",
+    fontFamily: "Inter_600SemiBold",
     marginBottom: 4,
   },
 
@@ -504,13 +502,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: "600" as const,
     fontFamily: "Inter_600SemiBold",
     textTransform: "uppercase" as const,
   },
   required: {
     fontSize: 14,
-    fontWeight: "700" as const,
+    fontFamily: "Inter_600SemiBold",
   },
   selectedChip: {
     flexDirection: "row",
@@ -549,7 +546,7 @@ const styles = StyleSheet.create({
   },
   catCardText: {
     fontSize: 12,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
     textAlign: "center",
     lineHeight: 16,
   },
@@ -581,7 +578,7 @@ const styles = StyleSheet.create({
   },
   cityCardText: {
     fontSize: 13,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
   },
 
   btnRow: {

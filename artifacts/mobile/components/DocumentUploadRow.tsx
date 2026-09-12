@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 14,
   },
-  modalTitle: { fontSize: 16, fontFamily: "HankenGrotesk_700Bold" },
+  modalTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
   modalSub: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: -6 },
   modalInput: {
     borderWidth: 1.5,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_400Regular",
     textAlign: "center",
   },
   modalActions: { flexDirection: "row", gap: 10 },

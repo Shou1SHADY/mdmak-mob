@@ -88,7 +88,7 @@ function ItemForm({ item, onChange, isRTL, colors, t }: ItemFormProps) {
             onPress={() => setUnitModal(true)}
             activeOpacity={0.75}
           >
-            <Text style={{ fontSize: 14, fontFamily: "Inter_500Medium", color: colors.foreground }}>
+            <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.foreground }}>
               {isRTL ? selectedUnit.labelAr : selectedUnit.labelEn}
             </Text>
             <Feather name="chevron-down" size={14} color={colors.outline} />
@@ -319,7 +319,7 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
 const styles = StyleSheet.create({
   sectionHeader: { alignItems: "center", justifyContent: "space-between" },
   headerIcon: { width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  sectionTitle: { fontSize: 15, fontFamily: "HankenGrotesk_600SemiBold" },
+  sectionTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   sectionSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
   addBtn: {
     flexDirection: "row", alignItems: "center", gap: 5,
@@ -335,13 +335,13 @@ const styles = StyleSheet.create({
   itemCard: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 10 },
   itemHeader: { alignItems: "flex-start", gap: 10 },
   indexBadge: { width: 26, height: 26, borderRadius: 7, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 },
-  indexText: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  indexText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   itemDesc: { fontSize: 14, fontFamily: "Inter_600SemiBold", lineHeight: 20 },
   itemActions: { gap: 8, flexShrink: 0 },
   iconBtn: { width: 28, height: 28, alignItems: "center", justifyContent: "center" },
   itemMeta: { gap: 6, flexWrap: "wrap" },
   metaChip: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4 },
-  metaChipText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  metaChipText: { fontSize: 12, fontFamily: "Inter_400Regular" },
 
   // Form fields
   fieldLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" },
@@ -352,14 +352,14 @@ const styles = StyleSheet.create({
   // Unit picker modal
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 32 },
   unitPickerCard: { width: "100%", borderRadius: 20, borderWidth: 1, overflow: "hidden" },
-  unitPickerTitle: { fontSize: 15, fontFamily: "HankenGrotesk_600SemiBold", padding: 16, paddingBottom: 8 },
+  unitPickerTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", padding: 16, paddingBottom: 8 },
   unitRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 14, paddingHorizontal: 16 },
 
   // Bottom sheet
   sheetOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
   sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 16, maxHeight: "90%" },
   handle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 4 },
-  sheetTitle: { fontSize: 18, fontFamily: "HankenGrotesk_700Bold" },
+  sheetTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
   sheetActions: { gap: 10, marginTop: 8 },
   sheetBtn: { flex: 1, height: 50, borderRadius: 14, alignItems: "center", justifyContent: "center" },
 });

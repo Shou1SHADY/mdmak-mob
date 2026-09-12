@@ -302,7 +302,7 @@ export default function RFQDetailScreen() {
         <ScreenHeader title={t.rfq.detail} showBack />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 32 }}>
           <Feather name="alert-triangle" size={36} color={colors.destructive} />
-          <Text style={{ fontSize: 15, fontFamily: "Inter_500Medium", color: colors.destructive, textAlign: "center" }}>
+          <Text style={{ fontSize: 15, fontFamily: "Inter_400Regular", color: colors.destructive, textAlign: "center" }}>
             {fetchError}
           </Text>
           <TouchableOpacity
@@ -433,17 +433,17 @@ export default function RFQDetailScreen() {
             <View style={[styles.priceSummary, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radiusXl, flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <View style={styles.priceSumItem}>
                 <Text style={[styles.priceSumLabel, { color: colors.outline }]}>{isRTL ? "الأدنى" : "Lowest"}</Text>
-                <Text style={[styles.priceSumValue, { color: "#12A063", fontFamily: "HankenGrotesk_700Bold" }]}>{fmt(lowest)}</Text>
+                <Text style={[styles.priceSumValue, { color: "#12A063", fontFamily: "Inter_600SemiBold" }]}>{fmt(lowest)}</Text>
               </View>
               <View style={[styles.priceSumDivider, { backgroundColor: colors.border }]} />
               <View style={styles.priceSumItem}>
                 <Text style={[styles.priceSumLabel, { color: colors.outline }]}>{isRTL ? "المتوسط" : "Avg"}</Text>
-                <Text style={[styles.priceSumValue, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>{fmt(avg)}</Text>
+                <Text style={[styles.priceSumValue, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>{fmt(avg)}</Text>
               </View>
               <View style={[styles.priceSumDivider, { backgroundColor: colors.border }]} />
               <View style={styles.priceSumItem}>
                 <Text style={[styles.priceSumLabel, { color: colors.outline }]}>{isRTL ? "الأعلى" : "Highest"}</Text>
-                <Text style={[styles.priceSumValue, { color: colors.mutedForeground, fontFamily: "HankenGrotesk_700Bold" }]}>{fmt(highest)}</Text>
+                <Text style={[styles.priceSumValue, { color: colors.mutedForeground, fontFamily: "Inter_600SemiBold" }]}>{fmt(highest)}</Text>
               </View>
             </View>
           );
@@ -517,7 +517,7 @@ export default function RFQDetailScreen() {
                 <Text style={[styles.currentPriceText, { color: colors.outline }]}>
                   {isRTL ? "السعر الحالي:" : "Current price:"}
                   {"  "}
-                  <Text style={{ color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }}>
+                  <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
                     {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(parseFloat(reduceOffer.price))}
                   </Text>
                 </Text>
@@ -580,15 +580,15 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 14 },
   rfqCard: { padding: 18, borderWidth: 1, gap: 8 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  category: { fontSize: 11, fontWeight: "700" as const, textTransform: "uppercase" },
-  rfqTitle: { fontSize: 18, fontWeight: "700" as const },
+  category: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" },
+  rfqTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
   desc: { fontSize: 14, lineHeight: 21 },
   metaGrid: { flexDirection: "row", gap: 16, marginTop: 4 },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 5 },
   metaText: { fontSize: 13 },
 
   offersHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  sectionTitle: { fontSize: 17, fontWeight: "700" as const },
+  sectionTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
   sortRow: { flexDirection: "row", gap: 6 },
   sortChip: { borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
   sortChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
 
   priceSummary: { flexDirection: "row", borderWidth: 1, paddingVertical: 14, paddingHorizontal: 8 },
   priceSumItem: { flex: 1, alignItems: "center", gap: 3 },
-  priceSumLabel: { fontSize: 10, fontFamily: "Inter_500Medium", textTransform: "uppercase" },
+  priceSumLabel: { fontSize: 10, fontFamily: "Inter_400Regular", textTransform: "uppercase" },
   priceSumValue: { fontSize: 15 },
   priceSumDivider: { width: 1, alignSelf: "stretch", marginVertical: 4 },
 
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
     elevation: 24,
   },
   handle: { width: 40, height: 4, borderRadius: 2 },
-  modalTitle: { fontSize: 18, fontFamily: "HankenGrotesk_700Bold" },
+  modalTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
 
   currentPriceRow: {
     flexDirection: "row",
@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
   },
-  currentPriceText: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  currentPriceText: { fontSize: 13, fontFamily: "Inter_400Regular" },
 
   fieldLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   priceInput: {
@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16,
     fontSize: 20,
-    fontFamily: "HankenGrotesk_700Bold",
+    fontFamily: "Inter_600SemiBold",
   },
   noteInput: {
     minHeight: 80,

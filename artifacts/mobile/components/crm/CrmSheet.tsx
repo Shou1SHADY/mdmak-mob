@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/Button";
+import { type, space, radius } from "@/lib/design";
 
 interface CrmSheetProps {
   visible: boolean;
@@ -55,7 +56,7 @@ export function CrmSheet({
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Pressable style={styles.backdrop} onPress={onClose} />
+        <Pressable style={[styles.backdrop, { backgroundColor: colors.overlay }]} onPress={onClose} />
         <View
           style={[
             styles.sheet,
@@ -72,16 +73,16 @@ export function CrmSheet({
 
           <View style={[styles.header, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <Text
-              style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
+              style={[type.title, styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
               numberOfLines={1}
             >
               {title}
             </Text>
             <TouchableOpacity
               onPress={onClose}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.close}
               accessibilityRole="button"
-              accessibilityLabel={t.common.cancel}
+              accessibilityLabel={t.common.close}
             >
               <Feather name="x" size={22} color={colors.mutedForeground} />
             </TouchableOpacity>
@@ -111,23 +112,24 @@ export function CrmSheet({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(2,6,23,0.45)" },
+  backdrop: { flex: 1 },
   sheet: {
     maxHeight: "88%",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: radius.card,
+    borderTopRightRadius: radius.card,
     borderTopWidth: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: space.lg,
   },
-  grabber: { alignItems: "center", paddingTop: 8, paddingBottom: 4 },
-  grabberBar: { width: 40, height: 4, borderRadius: 4 },
+  grabber: { alignItems: "center", paddingTop: space.sm, paddingBottom: space.xs },
+  grabberBar: { width: 40, height: 4, borderRadius: radius.hairline },
   header: {
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
-    gap: 12,
+    paddingVertical: space.sm,
+    gap: space.md,
   },
-  title: { flex: 1, fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
+  title: { flex: 1 },
+  close: { width: 44, height: 44, alignItems: "center", justifyContent: "center", marginHorizontal: -10 },
   body: { flexGrow: 0 },
-  footer: { paddingTop: 12 },
+  footer: { paddingTop: space.md },
 });

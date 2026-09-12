@@ -46,23 +46,12 @@ export default function CrmLayout() {
 
   if (!user) return <Redirect href="/auth/login" />;
 
-  // Mirrors the website, where every CRM nav item requires `crm.manage`. The
-  // Firestore rules scope the collections by organization but do not gate CRM
-  // reads on this permission, so this check is the whole enforcement of "the
-  // sales module is not your job" — it must run before any screen mounts.
-  if (!can("crm.manage")) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background, padding: 32 }]}>
-        <Feather name="lock" size={32} color={colors.outline} />
-        <Text style={[styles.deniedTitle, { color: colors.foreground }]}>
-          {t.errors.noPermissionTitle}
-        </Text>
-        <Text style={[styles.deniedBody, { color: colors.mutedForeground }]}>
-          {t.errors.noPermission}
-        </Text>
-      </View>
-    );
-  }
+  // Reading the CRM needs only org membership — the same as firestore.rules
+  // and as the website's pages when reached by URL, which render read-only for
+  // a member without `crm.manage`. Each screen gates its write controls on
+  // that permission itself, so a member sees the pipeline, can ring a contact
+  // and tick their own tasks, and cannot change a record.
+  void can;
 
   return (
     <Tabs screenOptions={tabOptions}>

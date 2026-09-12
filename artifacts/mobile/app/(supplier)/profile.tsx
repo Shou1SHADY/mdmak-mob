@@ -298,7 +298,7 @@ export default function SupplierProfileScreen() {
         <View style={styles.avatarSection}>
           <View style={[styles.avatarRing, { borderColor: "rgba(255,255,255,0.3)" }]}>
             <View style={[styles.avatar, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
-              <Text style={[styles.avatarText, { fontFamily: "HankenGrotesk_700Bold" }]}>{initial}</Text>
+              <Text style={[styles.avatarText, { fontFamily: "Inter_600SemiBold" }]}>{initial}</Text>
             </View>
           </View>
           <Text style={[styles.name, { color: "#FFFFFF" }]} numberOfLines={1} ellipsizeMode="tail">
@@ -696,13 +696,13 @@ const styles = StyleSheet.create({
   // Header
   header: { paddingHorizontal: 16, paddingBottom: 24 },
   headerTop: { alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
-  headerTitle: { fontSize: 17, fontFamily: "HankenGrotesk_600SemiBold" },
+  headerTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
   settingsBtn: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   avatarSection: { alignItems: "center", gap: 8 },
   avatarRing: { width: 96, height: 96, borderRadius: 28, borderWidth: 3, alignItems: "center", justifyContent: "center" },
   avatar: { width: 86, height: 86, borderRadius: 25, alignItems: "center", justifyContent: "center" },
   avatarText: { fontSize: 36, color: "#FFFFFF" },
-  name: { fontSize: 20, fontFamily: "HankenGrotesk_700Bold", textAlign: "center", marginTop: 4 },
+  name: { fontSize: 20, fontFamily: "Inter_600SemiBold", textAlign: "center", marginTop: 4 },
   email: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
   badges: { flexDirection: "row", gap: 8, marginTop: 4 },
   roleBadge: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5, borderWidth: 1 },
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   compIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   compTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1, marginHorizontal: 10 },
   compSubtitle: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
-  compPct: { fontSize: 18, fontFamily: "HankenGrotesk_700Bold" },
+  compPct: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
   compBar: { height: 5, borderRadius: 3, overflow: "hidden", marginTop: 4 },
   compFill: { height: "100%", borderRadius: 3 },
   compMissing: { alignItems: "center", gap: 6, marginTop: 8 },
@@ -729,7 +729,7 @@ const styles = StyleSheet.create({
   compChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
   compChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   requiredBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
-  requiredBadgeText: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  requiredBadgeText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
 
   // Stats grid
   statsGrid: { flexDirection: "row", gap: 8 },
@@ -741,7 +741,7 @@ const styles = StyleSheet.create({
   // Cards
   cardHeader: { alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   cardHeaderIcon: { width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  cardTitle: { fontSize: 15, fontFamily: "HankenGrotesk_600SemiBold" },
+  cardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   editBtn: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   editActions: { flexDirection: "row", gap: 10, marginTop: 4 },
 
@@ -749,18 +749,18 @@ const styles = StyleSheet.create({
   infoRow: { alignItems: "center", gap: 12, paddingVertical: 8 },
   infoIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, marginBottom: 2 },
-  infoValue: { fontSize: 15, fontFamily: "Inter_500Medium" },
+  infoValue: { fontSize: 15, fontFamily: "Inter_400Regular" },
 
   // Specializations
-  label: { fontSize: 13, fontFamily: "Inter_500Medium" },
+  label: { fontSize: 13, fontFamily: "Inter_400Regular" },
   subLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const },
   chipsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { borderRadius: 8, borderWidth: 1.5, paddingHorizontal: 10, paddingVertical: 6, maxWidth: 140 },
-  chipText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  chipText: { fontSize: 12, fontFamily: "Inter_400Regular" },
   areaChip: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  areaChipText: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  areaChipText: { fontSize: 11, fontFamily: "Inter_400Regular" },
   emptyState: { alignItems: "center", gap: 8, padding: 20, borderRadius: 12 },
-  emptyText: { fontSize: 14, fontFamily: "Inter_500Medium" },
+  emptyText: { fontSize: 14, fontFamily: "Inter_400Regular" },
   emptyAction: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   pendingBox: { borderRadius: 12, borderWidth: 1, padding: 12, gap: 8 },
   pendingHead: { alignItems: "center", gap: 6 },

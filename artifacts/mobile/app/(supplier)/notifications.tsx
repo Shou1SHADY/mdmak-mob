@@ -123,7 +123,7 @@ export default function SupplierNotificationsScreen() {
                       style={[
                         styles.notifTitle,
                         { color: colors.foreground, textAlign: isRTL ? "right" : "left" },
-                        !item.read && { fontFamily: "Inter_700Bold" },
+                        !item.read && { fontFamily: "Inter_600SemiBold" },
                       ]}
                       numberOfLines={2}
                     >
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   unreadBadgeText: {
     fontSize: 11,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Inter_600SemiBold",
     color: "#FFFFFF",
   },
   list: {
