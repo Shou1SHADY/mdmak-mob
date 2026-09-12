@@ -1,5 +1,12 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, FlatList, TextInput, StyleSheet } from "react-native";
+import { View, Text, FlatList, TextInput, StyleSheet, Alert } from "react-native";
+import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useToast } from "@/context/ToastContext";
+import { Button } from "@/components/ui/Button";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { type Tone } from "@/lib/design";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
@@ -33,7 +40,9 @@ interface Invoice {
 }
 
 /**
- * Invoices, read-only.
+ * Invoices. One write — marking an invoice paid, the website's
+ * handleStatusChange(inv, "paid") — behind `invoices.manage`; drafting and
+ * editing an invoice stay on the desktop.
  *
  * Totals are computed with the mirrored `invoice-utils` — the same VAT rounding
  * the website applies — rather than a local sum, so a figure read on a phone can
@@ -50,8 +59,33 @@ export default function InvoicesScreen() {
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const { items: invoices, isLoading } = useOrgCollection<Invoice>("invoices");
+  const { can } = usePermissions();
+  const { showToast } = useToast();
+  const canManage = can("invoices.manage");
 
   const [search, setSearch] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const markPaid = (inv: Invoice) => {
+    Alert.alert(t.finance.markPaid, t.finance.markPaidConfirm.replace("{number}", inv.invoiceNumber), [
+      { text: t.common.cancel, style: "cancel" },
+      {
+        text: t.finance.markPaid,
+        onPress: async () => {
+          setBusyId(inv.id);
+          try {
+            // The website's write, field for field.
+            await updateDoc(doc(db, "invoices", inv.id), { status: "paid", updatedAt: serverTimestamp() });
+            showToast(t.finance.markedPaid, "success");
+          } catch {
+            Alert.alert(t.common.error, t.finance.saveFailed);
+          } finally {
+            setBusyId(null);
+          }
+        },
+      },
+    ]);
+  };
 
   const withTotals = useMemo(
     () =>
@@ -88,18 +122,8 @@ export default function InvoicesScreen() {
       .sort((a, b) => (b.issueDate ?? "").localeCompare(a.issueDate ?? ""));
   }, [withTotals, search]);
 
-  const statusColor = (status: InvoiceStatus): string => {
-    switch (status) {
-      case "paid":
-        return colors.success;
-      case "overdue":
-        return colors.destructive;
-      case "sent":
-        return colors.cta;
-      default:
-        return colors.mutedForeground;
-    }
-  };
+  const statusTone = (status: InvoiceStatus): Tone =>
+    status === "paid" ? "success" : status === "overdue" ? "destructive" : status === "sent" ? "cta" : "neutral";
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -148,7 +172,7 @@ export default function InvoicesScreen() {
                     title={t.finance.outstanding}
                     value={formatSarCompact(summary.outstanding, isRTL)}
                     icon="clock"
-                    color={colors.warning}
+                    tone="warning"
                   />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -156,14 +180,14 @@ export default function InvoicesScreen() {
                     title={t.finance.overdue}
                     value={formatSarCompact(summary.overdue, isRTL)}
                     icon="alert-circle"
-                    color={colors.destructive}
+                    tone="destructive"
                   />
                 </View>
               </View>
             ) : null
           }
           renderItem={({ item }) => {
-            const tint = statusColor(item.status);
+            const payable = canManage && (item.status === "sent" || item.status === "overdue");
             return (
               <View
                 style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -186,17 +210,24 @@ export default function InvoicesScreen() {
                   {item.clientName || "—"}
                 </Text>
                 <View style={[styles.metaRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <View style={[styles.pill, { backgroundColor: tint + "18", borderColor: tint + "30" }]}>
-                    <Text style={[styles.pillText, { color: tint }]}>
-                      {labelFor(t.finance.invoiceStatuses, item.status)}
-                    </Text>
-                  </View>
+                  <StatusBadge label={labelFor(t.finance.invoiceStatuses, item.status)} tone={statusTone(item.status)} size="sm" />
                   {item.dueDate ? (
                     <Text style={[styles.due, { color: colors.outline }]}>
                       {t.finance.dueDate} {item.dueDate}
                     </Text>
                   ) : null}
                 </View>
+                {payable && (
+                  <View style={[styles.actions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                    <Button
+                      title={t.finance.markPaid}
+                      size="sm"
+                      variant="secondary"
+                      loading={busyId === item.id}
+                      onPress={() => markPaid(item)}
+                    />
+                  </View>
+                )}
               </View>
             );
           }}
@@ -231,7 +262,6 @@ const styles = StyleSheet.create({
   amount: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   client: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   metaRow: { alignItems: "center", gap: 8, marginTop: 4 },
-  pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
-  pillText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  actions: { gap: 8, marginTop: 4 },
   due: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 });

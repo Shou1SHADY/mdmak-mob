@@ -40,6 +40,10 @@ track orders. Shares the website's Firebase backend; there is no separate mobile
   finance), each holding `en` and `ar` side by side with `ar` typed from
   `en`. `en.ts`/`ar.ts` only assemble them and `Translations` is
   `typeof en` — add strings in the module file, never in the assemblers.
+- `artifacts/mobile/components/ui/DateField.tsx` — every date is picked, never
+  typed: the system dialog on Android, a spinner sheet on iOS, the browser's
+  input on the web build. It stores the string shape the record already uses
+  (ISO day, or MM/YYYY for a document expiry via `granularity="month"`).
 - `artifacts/mobile/lib/design.ts` — **the design system.** Four type sizes
   (`type.caption/body/title/display`, two Inter weights, 1.6x line heights),
   `space` on the 4pt grid, four `radius` values, and `toneColors()`: a badge,
