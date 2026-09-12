@@ -74,3 +74,47 @@ export const cardPadding = {
   row: space.lg,
   panel: space.lg,
 } as const;
+
+// --- tones -----------------------------------------------------------------
+//
+// A badge, chip or callout is coloured by MEANING, never by a hex picked on the
+// screen: the tone resolves to a text colour and a soft ground from the palette,
+// so it reads the same on a card, on the page, and in both themes.
+
+export type Tone = "neutral" | "primary" | "cta" | "accent" | "success" | "warning" | "destructive" | "purple";
+
+type Palette = {
+  muted: string; mutedForeground: string; border: string;
+  primaryText: string; accentBlueSoft: string;
+  cta: string; ctaSoft: string;
+  accent: string; accentSoft: string; accentForeground: string;
+  success: string; successSoft: string;
+  warning: string; warningSoft: string;
+  destructive: string; destructiveSoft: string;
+  purple: string; purpleSoft: string;
+};
+
+export function toneColors(colors: Palette, tone: Tone): { fg: string; bg: string; border: string } {
+  switch (tone) {
+    case "primary": return { fg: colors.primaryText, bg: colors.accentBlueSoft, border: colors.accentBlueSoft };
+    case "cta": return { fg: colors.cta, bg: colors.ctaSoft, border: colors.ctaSoft };
+    case "accent": return { fg: colors.accentForeground, bg: colors.accentSoft, border: colors.accentSoft };
+    case "success": return { fg: colors.success, bg: colors.successSoft, border: colors.successSoft };
+    case "warning": return { fg: colors.warning, bg: colors.warningSoft, border: colors.warningSoft };
+    case "destructive": return { fg: colors.destructive, bg: colors.destructiveSoft, border: colors.destructiveSoft };
+    case "purple": return { fg: colors.purple, bg: colors.purpleSoft, border: colors.purpleSoft };
+    default: return { fg: colors.mutedForeground, bg: colors.muted, border: colors.border };
+  }
+}
+
+/** The solid colour of a tone — for icons, stripes and progress bars. */
+export function toneColor(colors: Palette, tone: Tone): string {
+  return toneColors(colors, tone).fg;
+}
+
+// --- touch -----------------------------------------------------------------
+
+/** Minimum touch target on a phone. */
+export const MIN_TOUCH = 44;
+/** Extends a small control (a 24px icon button) to the minimum target. */
+export const HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 } as const;

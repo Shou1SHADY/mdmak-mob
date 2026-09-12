@@ -5,6 +5,7 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { OFFER_STATUSES } from "@/constants/data";
+import { type, space, radius, toneColors, type Tone } from "@/lib/design";
 
 export interface OfferItem {
   /** Share-link offer with no account behind it: nobody to chat with or notify in-app. */
@@ -45,12 +46,13 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
   const { isRTL } = useLanguage();
 
   const statusData = OFFER_STATUSES.find((s) => s.id === offer.status);
-  const statusInfo = statusData
-    ? { label: isRTL ? statusData.labelAr : statusData.label, color: statusData.color }
-    : { label: offer.status, color: "#747688" };
-
-  const accentColor = statusInfo.color;
-  const rankColor = rank === 1 ? "#12A063" : rank === 2 ? "#f59e0b" : rank === 3 ? "#06b6d4" : undefined;
+  const tone: Tone = statusData?.tone ?? "neutral";
+  const statusInfo = { label: statusData ? (isRTL ? statusData.labelAr : statusData.label) : offer.status };
+  const accentColor = toneColors(colors, tone).fg;
+  // Rank is coloured by meaning too: the lowest price is the good news.
+  const rankTone: Tone | undefined = rank === 1 ? "success" : rank === 2 ? "warning" : rank === 3 ? "accent" : undefined;
+  const rankC = rankTone ? toneColors(colors, rankTone) : undefined;
+  const rankColor = rankC?.fg;
   const rankLabel = rank === 1
     ? (isRTL ? "الأدنى سعراً" : "Lowest")
     : rank === 2
@@ -73,9 +75,11 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
-          borderRadius: colors.radiusXl,
-          borderStartWidth: 4,
-          borderStartColor: accentColor,
+          borderRadius: radius.card,
+          // Physical, not logical: RTL is handled by hand in this app, so a
+          // start-edge border would land on the wrong side in Arabic.
+          [isRTL ? "borderRightWidth" : "borderLeftWidth"]: 4,
+          [isRTL ? "borderRightColor" : "borderLeftColor"]: accentColor,
           ...colors.shadow.sm,
         },
       ]}
@@ -87,13 +91,13 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
       {/* Rank + status row */}
       <View style={[styles.topRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         {rankLabel && rankColor ? (
-          <View style={[styles.rankBadge, { backgroundColor: rankColor + "18", borderColor: rankColor + "40" }]}>
+          <View style={[styles.rankBadge, { backgroundColor: rankC!.bg, borderColor: rankC!.border }]}>
             {rank === 1 && <Feather name="trending-down" size={11} color={rankColor} />}
             <Text style={[styles.rankText, { color: rankColor }]}>{rankLabel}</Text>
           </View>
         ) : <View />}
         <View style={[styles.badgeRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-          <StatusBadge label={statusInfo.label} color={accentColor} />
+          <StatusBadge label={statusInfo.label} tone={tone} />
           {onPress && (
             <Feather
               name={isRTL ? "chevron-left" : "chevron-right"}
@@ -109,7 +113,7 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
         <Text style={[styles.priceLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
           {t.rfq.quotedPrice}
         </Text>
-        <Text style={[styles.price, { color: rankColor ?? colors.foreground, fontFamily: "HankenGrotesk_700Bold", textAlign: isRTL ? "right" : "left" }]}>
+        <Text style={[styles.price, { color: rankColor ?? colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
           {formatCurrency(offer.price)}
         </Text>
       </View>
@@ -144,7 +148,7 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
         <View
           style={[
             styles.notesRow,
-            { backgroundColor: colors.surfaceGray, borderRadius: colors.radiusMd, flexDirection: isRTL ? "row-reverse" : "row" },
+            { backgroundColor: colors.surfaceGray, borderRadius: radius.control, flexDirection: isRTL ? "row-reverse" : "row" },
           ]}
         >
           <Feather name="message-square" size={12} color={colors.outline} style={{ marginTop: 1 }} />
@@ -159,7 +163,7 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
 
       {/* Price reduction info — shown when contractor has set a target price */}
       {offer.status === "مطلوب تخفيض" && (offer.targetPrice || offer.reductionNote) && (
-        <View style={[styles.reductionBox, { backgroundColor: colors.warning + "10", borderColor: colors.warning + "35" }]}>
+        <View style={[styles.reductionBox, { backgroundColor: colors.warningSoft, borderColor: colors.warningSoft }]}>
           {offer.targetPrice ? (
             <View style={[styles.reductionRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <Feather name="trending-down" size={12} color={colors.warning} />
@@ -192,9 +196,9 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    padding: 16,
-    gap: 10,
-    marginBottom: 12,
+    padding: space.lg,
+    gap: space.sm,
+    marginBottom: space.md,
   },
   topRow: {
     flexDirection: "row",
@@ -213,47 +217,38 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     borderWidth: 1,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 2,
     alignSelf: "flex-start",
   },
   rankText: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
+    ...type.captionStrong,
   },
   priceLabel: {
-    fontSize: 10,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    marginBottom: 3,
-    fontFamily: "Inter_600SemiBold",
+    ...type.caption,
   },
   price: {
-    fontSize: 24,
-    lineHeight: 30,
+    ...type.display,
+    fontVariant: ["tabular-nums"],
   },
   metaItem: {
     alignItems: "center",
     gap: 6,
   },
   metaText: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
+    ...type.body,
   },
   rfqTitle: {
-    fontSize: 13,
-    fontFamily: "Inter_500Medium",
+    ...type.caption,
   },
   notesRow: {
     gap: 6,
-    padding: 10,
+    padding: space.md,
     alignItems: "flex-start",
   },
   notesText: {
-    fontSize: 13,
-    lineHeight: 19,
-    fontFamily: "Inter_400Regular",
+    ...type.caption,
   },
   actions: {
     flexDirection: "row",
@@ -263,8 +258,8 @@ const styles = StyleSheet.create({
   },
   reductionBox: {
     borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: radius.control,
+    padding: space.md,
     gap: 6,
   },
   reductionRow: {
@@ -272,16 +267,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   reductionLabel: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
+    ...type.captionStrong,
   },
   reductionValue: {
-    fontFamily: "HankenGrotesk_700Bold",
-    fontSize: 14,
+    ...type.bodyStrong,
   },
   reductionNote: {
-    fontSize: 12,
-    lineHeight: 18,
-    fontFamily: "Inter_400Regular",
+    ...type.caption,
   },
 });

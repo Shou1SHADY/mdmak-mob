@@ -1,13 +1,15 @@
 const colors = {
   light: {
-    text: "#020617",
+    text: "#0B1220",
     tint: "#0369A1",
 
-    background: "#F8FAFC",
-    foreground: "#020617",
+    // A cool, slightly deeper ground than the website's slate-50, so a white
+    // card reads as a lifted object rather than a faint outline.
+    background: "#F3F5F9",
+    foreground: "#0B1220",
 
     card: "#FFFFFF",
-    cardForeground: "#020617",
+    cardForeground: "#0B1220",
 
     // primary is a FILL: a solid brand surface with primaryForeground on it.
     // primaryText is the same brand as INK on the page. They were one token,
@@ -40,14 +42,27 @@ const colors = {
     warning: "#A16207", // 5.0:1 both ways — was #F59E0B at 2.2:1
     warningForeground: "#FFFFFF",
 
-    border: "#E2E8F0",
-    input: "#E2E8F0",
+    border: "#E1E6EE",
+    input: "#E1E6EE",
 
     surface: "#FFFFFF",
-    surfaceSecondary: "#F8FAFC",
+    surfaceSecondary: "#F3F5F9",
 
     tabBar: "#FFFFFF",
-    header: "#F8FAFC",
+    header: "#F3F5F9",
+
+    // Soft tints: the ground of a badge, chip or callout in its tone. Solid
+    // colours, not alpha, so they look the same over a card and over the page
+    // and can be tuned per theme instead of inverting into mud.
+    ctaSoft: "#E4F0F9",
+    accentSoft: "#DCF5F7",
+    successSoft: "#E2F3EA",
+    warningSoft: "#FBF0D9",
+    destructiveSoft: "#FCE7E7",
+    purple: "#5B5BD6",
+    purpleSoft: "#ECEBFB",
+    /** Modal / sheet backdrop. */
+    overlay: "rgba(8, 15, 30, 0.45)",
 
     drawerBg: "#0F172A",
     drawerText: "#F8FAFC",
@@ -135,6 +150,18 @@ const colors = {
     tabBar: "#131A27",
     header: "#0D131E",
 
+    // Soft tints for dark: deep, desaturated grounds that keep the tone's hue
+    // legible under its text colour (4.5:1 or better for every pair).
+    ctaSoft: "#15304F",
+    accentSoft: "#0F3336",
+    successSoft: "#12321F",
+    warningSoft: "#3A2C0F",
+    destructiveSoft: "#3B1717",
+    purple: "#A78BFA",
+    purpleSoft: "#26224A",
+    /** Modal / sheet backdrop. */
+    overlay: "rgba(2, 6, 14, 0.6)",
+
     drawerBg: "#0A0E17",
     drawerText: "#EAEFF7",
     drawerActive: "#4DA3FF",
@@ -178,15 +205,19 @@ const colors = {
     glowTeal: "rgba(32, 203, 213, 0.12)",
   },
 
+  // The four radii of lib/design.ts (hairline 4, pill 8, control 12, card 16),
+  // under the names older screens already use. Anything larger collapsed onto
+  // the card radius — 20 and 24 were what made cards, sheets and inputs look
+  // like three different products.
   radius: {
     xs: 4,
-    sm: 6,
-    md: 8,
+    sm: 8,
+    md: 12,
     lg: 12,
     xl: 16,
-    "2xl": 20,
-    "3xl": 24,
-    full: 9999,
+    "2xl": 16,
+    "3xl": 16,
+    full: 999,
   },
 
   spacing: {
@@ -267,20 +298,22 @@ const colors = {
     },
   },
 
+  // The same four sizes and two weights as lib/design.ts, under the role names
+  // older screens use. Every line height is >= 1.6x for Arabic.
   typography: {
-    display: { fontSize: 32, fontWeight: "700" as const, lineHeight: 40 },
-    h1: { fontSize: 26, fontWeight: "700" as const, lineHeight: 32 },
-    h2: { fontSize: 24, fontWeight: "600" as const, lineHeight: 32 },
-    h3: { fontSize: 20, fontWeight: "600" as const, lineHeight: 28 },
-    h4: { fontSize: 18, fontWeight: "600" as const, lineHeight: 26 },
-    body: { fontSize: 16, fontWeight: "400" as const, lineHeight: 24 },
-    bodySm: { fontSize: 14, fontWeight: "400" as const, lineHeight: 20 },
-    caption: { fontSize: 12, fontWeight: "400" as const, lineHeight: 16 },
-    label: { fontSize: 12, fontWeight: "600" as const, lineHeight: 16 },
-    button: { fontSize: 16, fontWeight: "600" as const, lineHeight: 24 },
-    buttonSm: { fontSize: 12, fontWeight: "600" as const, lineHeight: 16 },
-    overline: { fontSize: 11, fontWeight: "500" as const, lineHeight: 14 },
-    stat: { fontSize: 11, fontWeight: "700" as const, lineHeight: 14 },
+    display: { fontSize: 24, lineHeight: 40, fontFamily: "Inter_600SemiBold" as const },
+    h1: { fontSize: 24, lineHeight: 40, fontFamily: "Inter_600SemiBold" as const },
+    h2: { fontSize: 24, lineHeight: 40, fontFamily: "Inter_600SemiBold" as const },
+    h3: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" as const },
+    h4: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" as const },
+    body: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" as const },
+    bodySm: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" as const },
+    caption: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" as const },
+    label: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" as const },
+    button: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" as const },
+    buttonSm: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" as const },
+    overline: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" as const },
+    stat: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" as const },
   },
 };
 

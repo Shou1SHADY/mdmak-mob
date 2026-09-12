@@ -87,13 +87,17 @@ export const CITIES_DISTRICTS: Record<string, string[]> = {
   "نجران": ["الفيصلية", "الخالدية", "الفهد", "جميع نجران"],
 };
 
-export const RFQ_STATUSES = [
-  { id: "Draft",        label: "Draft",         labelAr: "مسودة",           color: "#94a3b8" },
-  { id: "New",          label: "New",            labelAr: "جديد",            color: "#3b82f6" },
-  { id: "Active",       label: "Active",         labelAr: "نشط",             color: "#06b6d4" },
-  { id: "Under Review", label: "Under Review",   labelAr: "قيد المراجعة",   color: "#f59e0b" },
-  { id: "Awarded",      label: "Awarded",        labelAr: "تم الترسية",     color: "#12A063" },
-  { id: "Closed",       label: "Closed",         labelAr: "مغلق",            color: "#22c55e" },
+import type { Tone } from "@/lib/design";
+
+// `tone` is what the UI colours by (see lib/design.ts toneColors); `color` is
+// the legacy hex a few older screens still read and will lose.
+export const RFQ_STATUSES: { id: string; label: string; labelAr: string; color: string; tone: Tone }[] = [
+  { id: "Draft",        label: "Draft",         labelAr: "مسودة",           color: "#94a3b8", tone: "neutral" },
+  { id: "New",          label: "New",            labelAr: "جديد",            color: "#3b82f6", tone: "cta" },
+  { id: "Active",       label: "Active",         labelAr: "نشط",             color: "#06b6d4", tone: "accent" },
+  { id: "Under Review", label: "Under Review",   labelAr: "قيد المراجعة",   color: "#f59e0b", tone: "warning" },
+  { id: "Awarded",      label: "Awarded",        labelAr: "تم الترسية",     color: "#12A063", tone: "success" },
+  { id: "Closed",       label: "Closed",         labelAr: "مغلق",            color: "#22c55e", tone: "neutral" },
 ];
 
 export const OFFER_STATUS = {
@@ -106,14 +110,14 @@ export const OFFER_STATUS = {
   IN_PREPARATION:   "قيد التجهيز",
 } as const;
 
-export const OFFER_STATUSES = [
-  { id: "قيد المراجعة",    label: "Under Review",   labelAr: "قيد المراجعة",   color: "#f59e0b" },
-  { id: "مقبول",           label: "Accepted",        labelAr: "مقبول",           color: "#22c55e" },
-  { id: "مرفوض",           label: "Rejected",        labelAr: "مرفوض",           color: "#ef4444" },
-  { id: "مطلوب تخفيض",    label: "Price Reduction", labelAr: "مطلوب تخفيض",    color: "#8b5cf6" },
-  { id: "تم التسليم",      label: "Delivered",       labelAr: "تم التسليم",      color: "#06b6d4" },
-  { id: "جاري التوصيل",   label: "In Transit",      labelAr: "جاري التوصيل",   color: "#3b82f6" },
-  { id: "قيد التجهيز",    label: "In Preparation",  labelAr: "قيد التجهيز",    color: "#a855f7" },
+export const OFFER_STATUSES: { id: string; label: string; labelAr: string; color: string; tone: Tone }[] = [
+  { id: "قيد المراجعة",    label: "Under Review",   labelAr: "قيد المراجعة",   color: "#f59e0b", tone: "warning" },
+  { id: "مقبول",           label: "Accepted",        labelAr: "مقبول",           color: "#22c55e", tone: "success" },
+  { id: "مرفوض",           label: "Rejected",        labelAr: "مرفوض",           color: "#ef4444", tone: "destructive" },
+  { id: "مطلوب تخفيض",    label: "Price Reduction", labelAr: "مطلوب تخفيض",    color: "#8b5cf6", tone: "purple" },
+  { id: "تم التسليم",      label: "Delivered",       labelAr: "تم التسليم",      color: "#06b6d4", tone: "accent" },
+  { id: "جاري التوصيل",   label: "In Transit",      labelAr: "جاري التوصيل",   color: "#3b82f6", tone: "cta" },
+  { id: "قيد التجهيز",    label: "In Preparation",  labelAr: "قيد التجهيز",    color: "#a855f7", tone: "purple" },
 ];
 
 /** Returns the canonical Arabic category name whether the input is Arabic or the
@@ -129,4 +133,9 @@ export function displayCategory(category: string, isRTL: boolean): string {
   const cat = CATEGORIES.find((c) => c.labelAr === category || c.label === category);
   if (!cat) return category;
   return isRTL ? cat.labelAr : cat.label;
+}
+
+/** The tone for any RFQ or offer status string, "neutral" when unknown. */
+export function statusTone(status: string | null | undefined): Tone {
+  return RFQ_STATUSES.find((s) => s.id === status)?.tone ?? OFFER_STATUSES.find((s) => s.id === status)?.tone ?? "neutral";
 }

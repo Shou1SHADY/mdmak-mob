@@ -1,6 +1,14 @@
 import React, { ReactNode } from "react";
 import { View, ViewStyle, TouchableOpacity } from "react-native";
 import { useColors } from "@/hooks/useColors";
+import { radius, cardPadding } from "@/lib/design";
+
+/**
+ * A card is a lifted object: white on the page's cool ground, one hairline
+ * border, the card radius. Elevation is spent by role — most cards are
+ * "raised" (a whisper of shadow), a sheet or a hero is "high", and a card
+ * inside another card is "flat" so the page never stacks shadows on shadows.
+ */
 
 type CardElevation = "flat" | "raised" | "high";
 
@@ -8,46 +16,36 @@ interface CardProps {
   children: ReactNode;
   style?: ViewStyle | ViewStyle[];
   onPress?: () => void;
-  glass?: boolean;
   elevation?: CardElevation;
+  /** Read by screen readers when the card is pressable. */
+  accessibilityLabel?: string;
 }
 
-const elevationToShadow = {
-  flat: "none",
-  raised: "md",
-  high: "lg",
-} as const;
+const elevationToShadow = { flat: "none", raised: "sm", high: "md" } as const;
 
-export function Card({
-  children,
-  style,
-  onPress,
-  glass = false,
-  elevation = "raised",
-}: CardProps) {
+export function Card({ children, style, onPress, elevation = "raised", accessibilityLabel }: CardProps) {
   const colors = useColors();
-  const shadow = colors.shadow[elevationToShadow[elevation]];
-
   const cardStyle: ViewStyle = {
-    backgroundColor: glass ? "rgba(255,255,255,0.82)" : colors.card,
-    borderRadius: colors.radiusXl,
-    padding: colors.spacing.base,
+    backgroundColor: colors.card,
+    borderRadius: radius.card,
+    padding: cardPadding.panel,
     borderWidth: 1,
     borderColor: colors.border,
-    ...shadow,
+    ...colors.shadow[elevationToShadow[elevation]],
   };
 
   if (onPress) {
     return (
-      <TouchableOpacity style={[cardStyle, style]} onPress={onPress} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={[cardStyle, style]}
+        onPress={onPress}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+      >
         {children}
       </TouchableOpacity>
     );
   }
-
-  return (
-    <View style={[cardStyle, style]} accessibilityRole="none">
-      {children}
-    </View>
-  );
+  return <View style={[cardStyle, style]}>{children}</View>;
 }

@@ -1,17 +1,14 @@
-import React, { useState, useRef, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Animated,
-  StyleSheet,
-  TextInputProps,
-  TouchableOpacity,
-  ViewStyle,
-} from "react-native";
+import React, { useState } from "react";
+import { View, Text, TextInput, StyleSheet, TextInputProps, TouchableOpacity, ViewStyle } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { type, space, radius, MIN_TOUCH } from "@/lib/design";
 
+/**
+ * The one text field. A quiet filled box on the card, the control radius, a
+ * label above in the caption size — not shouted in uppercase, which Arabic
+ * cannot do anyway — and one line under it for an error or a hint.
+ */
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
@@ -19,6 +16,8 @@ interface InputProps extends TextInputProps {
   leftIcon?: keyof typeof Feather.glyphMap;
   rightIcon?: keyof typeof Feather.glyphMap;
   onRightIconPress?: () => void;
+  /** Read by screen readers for the right-hand icon button (e.g. "Show password"). */
+  rightIconLabel?: string;
   containerStyle?: ViewStyle;
   isRTL?: boolean;
   required?: boolean;
@@ -31,84 +30,59 @@ export function Input({
   leftIcon,
   rightIcon,
   onRightIconPress,
+  rightIconLabel,
   containerStyle,
   isRTL = false,
   required = false,
   style,
+  multiline,
   ...props
 }: InputProps) {
   const colors = useColors();
   const [focused, setFocused] = useState(false);
-  const borderAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(borderAnim, {
-      toValue: focused || !!error ? 1 : 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  }, [focused, error]);
-
-  const borderColor = borderAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.border, error ? colors.destructive : colors.primaryText],
-  });
-
-  const sp = colors.spacing;
-  const typo = colors.typography;
-
-  const hasMessage = !!error || !!helperText;
-
-  const iconSize = 16;
+  const align = isRTL ? "right" : "left";
+  const borderColor = error ? colors.destructive : focused ? colors.cta : colors.border;
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && (
-        <Text
-          style={{
-            fontSize: typo.label.fontSize,
-            fontWeight: typo.label.fontWeight,
-            lineHeight: typo.label.lineHeight,
-            color: colors.onSurfaceVariant,
-            textAlign: isRTL ? "right" : "left",
-            textTransform: "uppercase",
-          }}
-        >
+      {label ? (
+        <Text style={[type.captionStrong, { color: colors.mutedForeground, textAlign: align }]}>
           {label}
-          {required && <Text style={{ color: colors.destructive }}> *</Text>}
+          {required ? <Text style={{ color: colors.destructive }}> *</Text> : null}
         </Text>
-      )}
-      <Animated.View
+      ) : null}
+      <View
         style={[
-          styles.inputContainer,
+          styles.field,
           {
             borderColor,
+            borderWidth: focused || error ? 1.5 : 1,
             backgroundColor: colors.surfaceGray,
-            borderRadius: colors.radius3xl,
-            borderWidth: focused ? 2 : 1,
-            minHeight: 52,
-            paddingHorizontal: 16,
+            borderRadius: radius.control,
+            minHeight: multiline ? 96 : 48,
+            flexDirection: isRTL ? "row-reverse" : "row",
+            alignItems: multiline ? "flex-start" : "center",
           },
         ]}
       >
-        {leftIcon && (
-          <View style={{ marginRight: isRTL ? 0 : 8, marginLeft: isRTL ? 8 : 0 }}>
-            <Feather
-              name={leftIcon}
-              size={iconSize}
-              color={focused ? colors.primaryText : colors.outline}
-            />
-          </View>
-        )}
+        {leftIcon ? (
+          <Feather
+            name={leftIcon}
+            size={16}
+            color={focused ? colors.cta : colors.outline}
+            style={multiline ? { marginTop: space.md } : undefined}
+          />
+        ) : null}
         <TextInput
           style={[
+            type.body,
             styles.input,
             {
-              fontSize: typo.bodySm.fontSize,
-              lineHeight: typo.bodySm.lineHeight,
               color: colors.foreground,
-              textAlign: isRTL ? "right" : "left",
+              textAlign: align,
               writingDirection: isRTL ? "rtl" : "ltr",
+              textAlignVertical: multiline ? "top" : "center",
+              paddingVertical: multiline ? space.md : 0,
             },
             style,
           ]}
@@ -117,48 +91,33 @@ export function Input({
           onBlur={() => setFocused(false)}
           accessibilityLabel={label}
           accessibilityState={{ invalid: !!error } as Record<string, unknown>}
+          multiline={multiline}
           {...props}
         />
-        {rightIcon && (
+        {rightIcon ? (
           <TouchableOpacity
             onPress={onRightIconPress}
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            style={{
-              justifyContent: "center",
-              alignItems: "center",
-              padding: 6,
-              marginLeft: isRTL ? 0 : 2,
-              marginRight: isRTL ? 2 : 0,
-            }}
+            hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+            accessibilityRole="button"
+            accessibilityLabel={rightIconLabel}
+            style={styles.rightBtn}
           >
-            <Feather name={rightIcon} size={iconSize} color={colors.outline} />
+            <Feather name={rightIcon} size={16} color={colors.outline} />
           </TouchableOpacity>
-        )}
-      </Animated.View>
-      {hasMessage && (
-        <Text
-          style={{
-            fontSize: typo.caption.fontSize,
-            lineHeight: typo.caption.lineHeight,
-            color: error ? colors.destructive : colors.outline,
-            textAlign: isRTL ? "right" : "left",
-            marginTop: sp.xs,
-            marginLeft: sp.xs,
-            marginRight: sp.xs,
-          }}
-        >
+        ) : null}
+      </View>
+      {error || helperText ? (
+        <Text style={[type.caption, { color: error ? colors.destructive : colors.outline, textAlign: align }]}>
           {error || helperText}
         </Text>
-      )}
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { gap: 8 },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  input: { flex: 1, paddingVertical: 14, paddingHorizontal: 4 },
+  container: { gap: 6 },
+  field: { paddingHorizontal: space.md, gap: space.sm },
+  input: { flex: 1, minHeight: MIN_TOUCH },
+  rightBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
 });

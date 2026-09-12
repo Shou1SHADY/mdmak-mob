@@ -2,62 +2,42 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
+import { type, space, radius, toneColors, type Tone } from "@/lib/design";
 
 interface StatsCardProps {
   title: string;
   value: string | number;
   icon: keyof typeof Feather.glyphMap;
+  /** Colour by meaning; `color` is the older hex API. */
+  tone?: Tone;
   color?: string;
   subtitle?: string;
 }
 
-export function StatsCard({ title, value, icon, color, subtitle }: StatsCardProps) {
+/** One number the screen exists to show, its name under it, in a tinted tile. */
+export function StatsCard({ title, value, icon, tone, color, subtitle }: StatsCardProps) {
   const colors = useColors();
-  const accent = color ?? colors.cta;
+  const { isRTL } = useLanguage();
+  const resolved = tone ? toneColors(colors, tone) : color ? { fg: color, bg: color + "14" } : toneColors(colors, "cta");
+  const align = isRTL ? "right" : "left";
 
   return (
-    <View
-      style={[
-        styles.card,
-        colors.shadow.sm,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-          borderRadius: colors.radiusXl,
-        },
-      ]}
-    >
-      {/* colored top accent strip */}
-      <View style={[styles.strip, { backgroundColor: accent }]} />
-
-      <View style={styles.body}>
-        <View style={[styles.iconBox, { backgroundColor: accent + "14", borderRadius: colors.radiusMd }]}>
-          <Feather name={icon} size={18} color={accent} />
-        </View>
-
-        <Text
-          style={[styles.value, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}
-          numberOfLines={1}
-        >
-          {value}
-        </Text>
-
-        <Text
-          style={[
-            styles.title,
-            { color: colors.outline, fontFamily: "Inter_500Medium" },
-          ]}
-          numberOfLines={1}
-        >
-          {title}
-        </Text>
-
-        {subtitle ? (
-          <Text style={[styles.subtitle, { color: accent, fontFamily: "Inter_600SemiBold" }]}>
-            {subtitle}
-          </Text>
-        ) : null}
+    <View style={[styles.card, colors.shadow.sm, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[styles.iconBox, { backgroundColor: resolved.bg, alignSelf: isRTL ? "flex-end" : "flex-start" }]}>
+        <Feather name={icon} size={18} color={resolved.fg} />
       </View>
+      <Text style={[type.display, styles.tabular, { color: colors.foreground, textAlign: align }]} numberOfLines={1}>
+        {value}
+      </Text>
+      <Text style={[type.caption, { color: colors.mutedForeground, textAlign: align }]} numberOfLines={1}>
+        {title}
+      </Text>
+      {subtitle ? (
+        <Text style={[type.captionStrong, { color: resolved.fg, textAlign: align }]} numberOfLines={1}>
+          {subtitle}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -66,34 +46,17 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     borderWidth: 1,
-    overflow: "hidden",
-  },
-  strip: {
-    height: 3,
-    width: "100%",
-  },
-  body: {
-    padding: 14,
-    gap: 4,
+    borderRadius: radius.card,
+    padding: space.lg,
+    gap: 2,
   },
   iconBox: {
     width: 36,
     height: 36,
+    borderRadius: radius.control,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 6,
+    marginBottom: space.sm,
   },
-  value: {
-    fontSize: 28,
-    lineHeight: 34,
-  },
-  title: {
-    fontSize: 11,
-    textTransform: "uppercase",
-    lineHeight: 15,
-  },
-  subtitle: {
-    fontSize: 11,
-    marginTop: 2,
-  },
+  tabular: { fontVariant: ["tabular-nums"] },
 });

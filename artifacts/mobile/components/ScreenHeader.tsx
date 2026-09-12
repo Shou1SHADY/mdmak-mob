@@ -9,6 +9,7 @@ import { headerTopPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { SaudiArabiaFlag, UKFlag } from "@/components/ui/FlagIcon";
 import { Image } from "expo-image";
+import { type, space, radius, MIN_TOUCH } from "@/lib/design";
 
 interface ScreenHeaderProps {
   title: string;
@@ -21,6 +22,7 @@ interface ScreenHeaderProps {
 export function ScreenHeader({ title, subtitle, showBack = false, right, style }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const t = useT();
   const { isRTL } = useLanguage();
 
   return (
@@ -41,17 +43,23 @@ export function ScreenHeader({ title, subtitle, showBack = false, right, style }
           right, which reads as a forward action on the wrong edge. */}
       <View style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
         {showBack ? (
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={t.common.back}
+          >
             <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
           </TouchableOpacity>
         ) : (
-          <View style={{ width: 34 }} />
+          <View style={{ width: MIN_TOUCH }} />
         )}
         <View style={styles.center}>
-          <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
-          {subtitle && <Text style={[styles.subtitle, { color: colors.outline }]} numberOfLines={1} ellipsizeMode="tail">{subtitle}</Text>}
+          <Text style={[type.title, { color: colors.foreground, textAlign: "center" }]} numberOfLines={1} ellipsizeMode="tail">{title}</Text>
+          {subtitle && <Text style={[type.caption, { color: colors.mutedForeground, textAlign: "center" }]} numberOfLines={1} ellipsizeMode="tail">{subtitle}</Text>}
         </View>
-        <View style={styles.rightSlot}>{right ?? <View style={{ width: 34 }} />}</View>
+        <View style={styles.rightSlot}>{right ?? <View style={{ width: MIN_TOUCH }} />}</View>
       </View>
     </View>
   );
@@ -91,8 +99,8 @@ export function DashboardHeader({
           style,
         ]}
       >
-        <View style={[styles.dashInner, { paddingHorizontal: 16, paddingBottom: 12, marginTop: 4 }]}>
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, marginRight: isRTL ? 0 : 8, marginLeft: isRTL ? 8 : 0 }}>
+        <View style={[styles.dashInner, { paddingHorizontal: space.lg, paddingBottom: space.md, marginTop: space.xs, flexDirection: isRTL ? "row-reverse" : "row" }]}>
+          <View style={{ flex: 1, flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: space.md, marginHorizontal: 0 }}>
             <View style={[styles.avatarRing, { borderColor: colors.accent }]}>
               <Image
                 source={require("@/assets/images/figma/user-profile.png")}
@@ -102,14 +110,14 @@ export function DashboardHeader({
             </View>
             <View style={{ flex: 1 }}>
               <Text
-                style={{ fontFamily: "Inter_600SemiBold", fontSize: 15, lineHeight: 20, color: colors.foreground }}
+                style={[type.bodyStrong, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
                 numberOfLines={2}
                 ellipsizeMode="tail"
               >
-                {orgName ?? userName ?? "Mdmak Tech"}
+                {orgName ?? userName ?? t.common.appName}
               </Text>
               {orgType && (
-                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 16, color: colors.outline }} numberOfLines={1}>
+                <Text style={[type.caption, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={1}>
                   {orgType}
                 </Text>
               )}
@@ -143,17 +151,17 @@ export function DashboardHeader({
         onRequestClose={() => setShowSheet(false)}
         statusBarTranslucent
       >
-        <View style={styles.modalOuter}>
+        <View style={[styles.modalOuter, { backgroundColor: colors.overlay }]}>
           {/* Backdrop */}
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowSheet(false)} />
 
           {/* Sheet */}
-          <View style={[styles.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}>
+          <View style={[styles.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + space.lg }]}>
             {/* Handle */}
             <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
 
             {/* Title */}
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
+            <Text style={[type.title, styles.sheetTitle, { color: colors.foreground }]}>
               {language === "ar" ? "اختر اللغة" : "Select Language"}
             </Text>
 
@@ -162,8 +170,8 @@ export function DashboardHeader({
               style={[
                 styles.langOption,
                 {
-                  backgroundColor: language === "ar" ? colors.primaryText + "08" : "transparent",
-                  borderColor: language === "ar" ? colors.primaryText + "30" : colors.border,
+                  backgroundColor: language === "ar" ? colors.ctaSoft : "transparent",
+                  borderColor: language === "ar" ? colors.cta : colors.border,
                 },
               ]}
               onPress={() => { setLanguage("ar"); setShowSheet(false); }}
@@ -172,13 +180,13 @@ export function DashboardHeader({
               <View style={styles.flagWrap}>
                 <SaudiArabiaFlag width={52} height={34} />
               </View>
-              <Text style={[styles.langOptionText, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+              <Text style={[type.bodyStrong, { color: colors.foreground }]}>
                 عربي
               </Text>
               <View style={{ flex: 1 }} />
               {language === "ar" && (
                 <View style={[styles.checkCircle, { backgroundColor: colors.success }]}>
-                  <Feather name="check" size={13} color="#fff" />
+                  <Feather name="check" size={13} color={colors.successForeground} />
                 </View>
               )}
             </TouchableOpacity>
@@ -188,8 +196,8 @@ export function DashboardHeader({
               style={[
                 styles.langOption,
                 {
-                  backgroundColor: language === "en" ? colors.primaryText + "08" : "transparent",
-                  borderColor: language === "en" ? colors.primaryText + "30" : colors.border,
+                  backgroundColor: language === "en" ? colors.ctaSoft : "transparent",
+                  borderColor: language === "en" ? colors.cta : colors.border,
                 },
               ]}
               onPress={() => { setLanguage("en"); setShowSheet(false); }}
@@ -198,13 +206,13 @@ export function DashboardHeader({
               <View style={styles.flagWrap}>
                 <UKFlag width={52} height={34} />
               </View>
-              <Text style={[styles.langOptionText, { color: colors.foreground, fontFamily: "HankenGrotesk_700Bold" }]}>
+              <Text style={[type.bodyStrong, { color: colors.foreground }]}>
                 English
               </Text>
               <View style={{ flex: 1 }} />
               {language === "en" && (
                 <View style={[styles.checkCircle, { backgroundColor: colors.success }]}>
-                  <Feather name="check" size={13} color="#fff" />
+                  <Feather name="check" size={13} color={colors.successForeground} />
                 </View>
               )}
             </TouchableOpacity>
@@ -239,24 +247,24 @@ export function WelcomeHeroCard({
       end={{ x: 1, y: 1 }}
       style={[styles.heroCard, colors.shadow.md]}
     >
-      <Text style={[styles.heroTitle, { fontFamily: "HankenGrotesk_700Bold", textAlign: isRTL ? "right" : "left", letterSpacing: isRTL ? 0 : -0.52 }]}>
+      <Text style={[type.display, { color: colors.textWhite, textAlign: isRTL ? "right" : "left" }]}>
         {t.dashboard.greeting} {userName ?? ""}
       </Text>
-      <Text style={[styles.heroDesc, { textAlign: isRTL ? "right" : "left" }]}>
+      <Text style={[type.body, { color: colors.textWhite80, textAlign: isRTL ? "right" : "left" }]}>
         {t.dashboard.heroYouHave}{" "}
-        <Text style={{ fontFamily: "Inter_700Bold", color: "#FFFFFF" }}>{activeRfqs ?? 0}</Text>
+        <Text style={[type.bodyStrong, { color: colors.textWhite }]}>{activeRfqs ?? 0}</Text>
         {" "}{t.dashboard.heroActiveRfqsAnd}{" "}
-        <Text style={{ fontFamily: "Inter_700Bold", color: "#FFFFFF" }}>{totalOffers ?? 0}</Text>
+        <Text style={[type.bodyStrong, { color: colors.textWhite }]}>{totalOffers ?? 0}</Text>
         {" "}{t.dashboard.heroOffersReview}
       </Text>
       {onAction && (
         <TouchableOpacity
-          style={[styles.heroBtn, { alignSelf: isRTL ? "flex-end" : "flex-start" }]}
+          style={[styles.heroBtn, { alignSelf: isRTL ? "flex-end" : "flex-start", backgroundColor: colors.textWhite, flexDirection: isRTL ? "row-reverse" : "row" }]}
           onPress={onAction}
           activeOpacity={0.8}
           accessibilityRole="button"
         >
-          <Text style={[styles.heroBtnText, { color: colors.cta }]}>{actionLabel ?? t.dashboard.viewAll}</Text>
+          <Text style={[type.captionStrong, { color: colors.cta }]}>{actionLabel ?? t.dashboard.viewAll}</Text>
           <Feather name={isRTL ? "arrow-left" : "arrow-right"} size={14} color={colors.cta} />
         </TouchableOpacity>
       )}
@@ -297,11 +305,11 @@ export function QuickActionCard({
       accessibilityLabel={title}
       accessibilityRole="button"
     >
-      <View style={[styles.quickActionIcon, { backgroundColor: bgColor, borderRadius: 10 }]}>
+      <View style={[styles.quickActionIcon, { backgroundColor: bgColor }]}>
         <Feather name={icon} size={22} color={resolvedIconColor} />
       </View>
       <Text
-        style={[styles.quickActionTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}
+        style={[type.captionStrong, styles.quickActionTitle, { color: colors.foreground }]}
         numberOfLines={2}
       >
         {title}
@@ -312,8 +320,8 @@ export function QuickActionCard({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
+    paddingHorizontal: space.lg,
+    paddingBottom: space.md,
   },
   row: {
     flexDirection: "row",
@@ -322,16 +330,14 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   backBtn: {
-    width: 44,
-    height: 44,
+    width: MIN_TOUCH,
+    height: MIN_TOUCH,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
+    borderRadius: radius.control,
   },
   center: { flex: 1, alignItems: "center" },
-  title: { fontSize: 17, fontWeight: "700" as const },
-  subtitle: { fontSize: 12, marginTop: 1 },
-  rightSlot: { width: 34, alignItems: "flex-end" },
+  rightSlot: { minWidth: MIN_TOUCH, alignItems: "flex-end" },
   dashInner: {
     flexDirection: "row",
     alignItems: "center",
@@ -347,31 +353,28 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   langBtn: {
-    height: 40,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+    height: MIN_TOUCH,
+    paddingHorizontal: space.sm,
+    borderRadius: radius.control,
     borderWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
   },
   langCode: {
-    fontSize: 12,
-    lineHeight: 20,
-    fontFamily: "Inter_600SemiBold",
+    ...type.captionStrong,
   },
   // ── Bottom sheet ──────────────────────────────────────
   modalOuter: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.45)",
   },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    gap: 10,
+    borderTopLeftRadius: radius.card,
+    borderTopRightRadius: radius.card,
+    paddingHorizontal: space.lg,
+    paddingTop: space.md,
+    gap: space.sm,
   },
   sheetHandle: {
     width: 40,
@@ -381,27 +384,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sheetTitle: {
-    fontSize: 15,
-    fontFamily: "HankenGrotesk_700Bold",
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: space.xs,
   },
   langOption: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: space.md,
     borderWidth: 1,
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: radius.control,
+    padding: space.md,
+    minHeight: 56,
   },
   flagWrap: {
-    borderRadius: 6,
+    borderRadius: radius.hairline,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.1)",
-  },
-  langOptionText: {
-    fontSize: 17,
   },
   checkCircle: {
     width: 26,
@@ -412,55 +409,38 @@ const styles = StyleSheet.create({
   },
   // ── Hero card ─────────────────────────────────────────
   heroCard: {
-    padding: 20,
-    borderRadius: 20,
-    gap: 8,
+    padding: space.xl,
+    borderRadius: radius.card,
+    gap: space.sm,
     overflow: "hidden",
   },
-  heroTitle: {
-    fontSize: 26,
-    color: "#FFFFFF",
-  },
-  heroDesc: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    lineHeight: 21,
-    color: "rgba(239,239,255,0.8)",
-  },
   heroBtn: {
-    flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
     gap: 6,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 6,
-    minHeight: 44,
-  },
-  heroBtnText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 13,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    borderRadius: radius.control,
+    marginTop: space.xs,
+    minHeight: MIN_TOUCH,
   },
   // ── Quick action ──────────────────────────────────────
   quickActionCard: {
     flex: 1,
-    padding: 16,
-    borderRadius: 12,
+    padding: space.lg,
+    borderRadius: radius.card,
     borderWidth: 1,
-    gap: 12,
+    gap: space.md,
     alignItems: "center",
   },
   quickActionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
+    width: MIN_TOUCH,
+    height: MIN_TOUCH,
+    borderRadius: radius.control,
     alignItems: "center",
     justifyContent: "center",
   },
   quickActionTitle: {
-    fontSize: 12,
     textAlign: "center",
   },
 });

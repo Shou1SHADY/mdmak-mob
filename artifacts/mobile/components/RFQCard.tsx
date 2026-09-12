@@ -4,7 +4,8 @@ import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { RFQ_STATUSES, CATEGORIES, CITIES_EN, displayCity } from "@/constants/data";
+import { RFQ_STATUSES, CATEGORIES, displayCity } from "@/constants/data";
+import { type, space, radius, toneColors, type Tone } from "@/lib/design";
 
 export interface RFQItem {
   id: string;
@@ -43,9 +44,9 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
   const t = useT();
   const { isRTL } = useLanguage();
   const statusData = RFQ_STATUSES.find((s) => s.id === rfq.status);
-  const statusInfo = statusData
-    ? { label: isRTL ? statusData.labelAr : statusData.label, color: statusData.color }
-    : { label: rfq.status, color: "#747688" };
+  const tone: Tone = statusData?.tone ?? "neutral";
+  const toneC = toneColors(colors, tone);
+  const statusInfo = { label: statusData ? (isRTL ? statusData.labelAr : statusData.label) : rfq.status, color: toneC.fg };
 
   const displayCategory = isRTL
     ? rfq.category
@@ -67,12 +68,12 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
     try {
       const d = ts.toDate ? ts.toDate() : new Date(ts);
       const diff = Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      if (diff < 0) return { label: isRTL ? "انتهى الموعد" : "Expired", color: "#ef4444", urgent: true };
-      if (diff === 0) return { label: isRTL ? "اليوم" : "Today", color: "#ef4444", urgent: true };
-      if (diff === 1) return { label: isRTL ? "غداً" : "Tomorrow", color: "#ef4444", urgent: true };
-      if (diff <= 3) return { label: isRTL ? `${diff} أيام` : `${diff}d left`, color: "#ef4444", urgent: true };
-      if (diff <= 7) return { label: isRTL ? `${diff} أيام` : `${diff}d left`, color: "#f59e0b", urgent: false };
-      return { label: formatDate(ts) ?? "", color: "#f59e0b", urgent: false };
+      if (diff < 0) return { label: isRTL ? "انتهى الموعد" : "Expired", color: colors.destructive, urgent: true };
+      if (diff === 0) return { label: isRTL ? "اليوم" : "Today", color: colors.destructive, urgent: true };
+      if (diff === 1) return { label: isRTL ? "غداً" : "Tomorrow", color: colors.destructive, urgent: true };
+      if (diff <= 3) return { label: isRTL ? `${diff} أيام` : `${diff}d left`, color: colors.destructive, urgent: true };
+      if (diff <= 7) return { label: isRTL ? `${diff} أيام` : `${diff}d left`, color: colors.warning, urgent: false };
+      return { label: formatDate(ts) ?? "", color: colors.mutedForeground, urgent: false };
     } catch {
       return null;
     }
@@ -92,8 +93,8 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
         {
           backgroundColor: colors.card,
           borderColor: colors.border,
-          borderRadius: colors.radiusXl,
-          marginBottom: 10,
+          borderRadius: radius.card,
+          marginBottom: space.md,
           ...colors.shadow.sm,
           opacity: pressed ? 0.88 : 1,
           transform: [{ scale: pressed ? 0.987 : 1 }],
@@ -103,7 +104,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
       accessibilityRole="button"
     >
       {/* Status color stripe */}
-      {!isRTL && <View style={[styles.stripe, { backgroundColor: statusInfo.color + "CC" }]} />}
+      {!isRTL && <View style={[styles.stripe, { backgroundColor: statusInfo.color }]} />}
 
       <View style={styles.inner}>
         {/* Top row: category + status badge + offers badge */}
@@ -115,7 +116,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
             </Text>
           </View>
           <View style={[styles.topRight, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-            <StatusBadge label={statusInfo.label} color={statusInfo.color} size="sm" />
+            <StatusBadge label={statusInfo.label} tone={tone} size="sm" />
           </View>
         </View>
 
@@ -123,7 +124,7 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
         <Text
           style={[
             styles.title,
-            { color: colors.foreground, lineHeight: isRTL ? 30 : 26, textAlign: isRTL ? "right" : "left" },
+            { color: colors.foreground, textAlign: isRTL ? "right" : "left" },
           ]}
           numberOfLines={2}
         >
@@ -150,11 +151,11 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
             <View style={[
               styles.metaItem,
               deadlineUrgency.urgent && styles.urgentPill,
-              deadlineUrgency.urgent && { backgroundColor: "#ef444418", borderColor: "#ef444430" },
+              deadlineUrgency.urgent && { backgroundColor: colors.destructiveSoft, borderColor: colors.destructiveSoft },
               { flexDirection: isRTL ? "row-reverse" : "row" },
             ]}>
               <Feather name={deadlineUrgency.urgent ? "alert-circle" : "clock"} size={12} color={deadlineUrgency.color} />
-              <Text style={[styles.metaText, { color: deadlineUrgency.color, fontFamily: deadlineUrgency.urgent ? "Inter_700Bold" : "Inter_400Regular" }]}>
+              <Text style={[deadlineUrgency.urgent ? type.captionStrong : type.caption, { color: deadlineUrgency.color }]}>
                 {deadlineUrgency.label}
               </Text>
             </View>
@@ -170,8 +171,8 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
         <View style={[styles.bottomRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           {showOffers && (
             <View style={[styles.offerCountPill, {
-              backgroundColor: offersCount > 0 ? colors.cta + "12" : colors.muted,
-              borderColor: offersCount > 0 ? colors.cta + "35" : colors.border,
+              backgroundColor: offersCount > 0 ? colors.ctaSoft : colors.muted,
+              borderColor: offersCount > 0 ? colors.ctaSoft : colors.border,
               flexDirection: isRTL ? "row-reverse" : "row",
             }]}>
               <Feather name="tag" size={11} color={offersCount > 0 ? colors.cta : colors.outline} />
@@ -181,17 +182,17 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
             </View>
           )}
           <View style={{ flex: 1 }} />
-          <View style={[styles.chevronWrap, { backgroundColor: colors.accentBlueSoft }]}>
+          <View style={[styles.chevronWrap, { backgroundColor: colors.ctaSoft }]}>
             <Feather
               name={isRTL ? "chevron-left" : "chevron-right"}
               size={14}
-              color={colors.primaryText}
+              color={colors.cta}
             />
           </View>
         </View>
       </View>
 
-      {isRTL && <View style={[styles.stripe, styles.stripeRTL, { backgroundColor: statusInfo.color + "CC" }]} />}
+      {isRTL && <View style={[styles.stripe, styles.stripeRTL, { backgroundColor: statusInfo.color }]} />}
     </Pressable>
   );
 }
@@ -203,7 +204,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   stripe: {
-    width: 5,
+    width: 4,
   },
   stripeRTL: {
     borderTopRightRadius: 0,
@@ -213,8 +214,8 @@ const styles = StyleSheet.create({
   },
   inner: {
     flex: 1,
-    padding: 14,
-    gap: 8,
+    padding: space.lg,
+    gap: space.sm,
   },
   topRow: {
     alignItems: "center",
@@ -232,36 +233,18 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   category: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    textTransform: "uppercase",
+    ...type.caption,
     flex: 1,
   },
   topRight: {
     alignItems: "center",
     gap: 6,
   },
-  offersBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  offersBadgeText: {
-    fontSize: 11,
-    fontFamily: "Inter_700Bold",
-  },
   title: {
-    fontSize: 16,
-    fontFamily: "HankenGrotesk_600SemiBold",
+    ...type.title,
   },
   desc: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 18,
+    ...type.caption,
   },
   metaRow: {
     alignItems: "center",
@@ -273,41 +256,34 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    ...type.caption,
   },
   bottomRow: {
     alignItems: "center",
     marginTop: 2,
-  },
-  noOffersHint: {
-    fontSize: 11,
-    fontFamily: "Inter_400Regular",
-    fontStyle: "italic",
   },
   offerCountPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     borderWidth: 1,
-    borderRadius: 999,
+    borderRadius: radius.pill,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 2,
   },
   offerCountText: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
+    ...type.captionStrong,
   },
   urgentPill: {
     borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 7,
+    borderRadius: radius.pill,
+    paddingHorizontal: 8,
     paddingVertical: 2,
   },
   chevronWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
+    borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
   },

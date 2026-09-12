@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useLanguage } from "@/context/LanguageContext";
+import { type, space, radius, MIN_TOUCH } from "@/lib/design";
 
 interface SectionHeaderProps {
   title: string;
@@ -10,67 +11,40 @@ interface SectionHeaderProps {
   onAction?: () => void;
 }
 
+/** A section's name with, optionally, the one link that goes further. The
+ * teal tick before the title is the brand's mark on a plain screen. */
 export function SectionHeader({ title, actionLabel, onAction }: SectionHeaderProps) {
   const colors = useColors();
   const { isRTL } = useLanguage();
+  const row = isRTL ? "row-reverse" : "row";
 
   return (
-    <View style={[styles.container, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-      <View style={[styles.titleRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+    <View style={[styles.container, { flexDirection: row }]}>
+      <View style={[styles.titleRow, { flexDirection: row }]}>
         <View style={[styles.accent, { backgroundColor: colors.accent }]} />
-        <Text
-          style={[
-            styles.title,
-            { color: colors.foreground, fontFamily: "HankenGrotesk_600SemiBold", textAlign: isRTL ? "right" : "left" },
-          ]}
-        >
+        <Text style={[type.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left", flex: 1 }]} numberOfLines={1}>
           {title}
         </Text>
       </View>
 
-      {actionLabel && onAction && (
+      {actionLabel && onAction ? (
         <TouchableOpacity
           onPress={onAction}
           activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          style={[styles.actionBtn, { flexDirection: isRTL ? "row-reverse" : "row" }]}
+          accessibilityRole="button"
+          style={[styles.actionBtn, { flexDirection: row }]}
         >
-          <Text style={[styles.action, { color: colors.cta }]}>{actionLabel}</Text>
-          <Feather
-            name={isRTL ? "chevron-left" : "chevron-right"}
-            size={13}
-            color={colors.cta}
-          />
+          <Text style={[type.captionStrong, { color: colors.cta }]}>{actionLabel}</Text>
+          <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={14} color={colors.cta} />
         </TouchableOpacity>
-      )}
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  titleRow: {
-    alignItems: "center",
-    gap: 8,
-  },
-  accent: {
-    width: 3,
-    height: 18,
-    borderRadius: 2,
-  },
-  title: {
-    fontSize: 17,
-  },
-  actionBtn: {
-    alignItems: "center",
-    gap: 2,
-  },
-  action: {
-    fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
-  },
+  container: { justifyContent: "space-between", alignItems: "center", marginBottom: space.md, gap: space.sm },
+  titleRow: { alignItems: "center", gap: space.sm, flex: 1 },
+  accent: { width: 3, height: 18, borderRadius: radius.hairline },
+  actionBtn: { alignItems: "center", gap: 2, minHeight: MIN_TOUCH, paddingHorizontal: space.xs },
 });

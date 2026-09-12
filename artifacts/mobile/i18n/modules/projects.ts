@@ -1,0 +1,88 @@
+// i18n — projects: projects.
+//
+// Both languages live side by side so a string is never added to one without
+// the other, and `ar` is typed from `en`: a key missing from either side, or
+// present in only one, fails the typecheck. Add new strings for this module
+// HERE, never in en.ts / ar.ts, which only assemble the modules.
+
+export const en = {
+  projects: {
+    title: "Projects",
+    newProject: "New project",
+    searchProjects: "Search projects",
+    noProjects: "No projects yet",
+    noProjectsHint: "Start one to group its tenders and BOQ.",
+    budget: "Budget",
+    client: "Client",
+    location: "Location",
+    projectType: "Type",
+    description: "Description",
+    nameRequired: "Project name is required",
+    saved: "Saved",
+    saveFailed: "Could not save. Please try again.",
+    tenders: "Tenders",
+    noTenders: "No tenders yet",
+    noTendersHint: "Tenders are published from the web app.",
+    boq: "Bill of Quantities",
+    noBoq: "No BOQ lines",
+    boqOnWeb: "Upload and edit the BOQ on the web app.",
+    boqLines: "Lines",
+    boqValue: "BOQ value",
+    drawnIntoTender: "drawn",
+    locked: "Locked",
+    changeStatus: "Status",
+    handoverPending: "Handover waiting on the project manager",
+    fromDeal: "From a CRM deal",
+    statuses: {
+      todo: "To do",
+      waiting_approval: "Waiting approval",
+      pricing: "Pricing",
+      approved_waiting_start: "Approved, not started",
+      working: "Working",
+      hold: "On hold",
+      remaining_payment: "Remaining payment",
+      canceled: "Canceled",
+    },
+  },
+};
+
+export const ar: typeof en = {
+  projects: {
+    title: "المشاريع",
+    newProject: "مشروع جديد",
+    searchProjects: "ابحث في المشاريع",
+    noProjects: "لا توجد مشاريع",
+    noProjectsHint: "ابدأ مشروعاً لتجميع مناقصاته وجدول الكميات.",
+    budget: "الميزانية",
+    client: "العميل",
+    location: "الموقع",
+    projectType: "النوع",
+    description: "الوصف",
+    nameRequired: "اسم المشروع مطلوب",
+    saved: "تم الحفظ",
+    saveFailed: "تعذّر الحفظ. حاول مرة أخرى.",
+    tenders: "المناقصات",
+    noTenders: "لا توجد مناقصات",
+    noTendersHint: "يتم نشر المناقصات من نسخة الويب.",
+    boq: "جدول الكميات",
+    noBoq: "لا توجد بنود",
+    boqOnWeb: "رفع وتعديل جدول الكميات يتم على نسخة الويب.",
+    boqLines: "البنود",
+    boqValue: "قيمة الجدول",
+    drawnIntoTender: "مسحوب",
+    locked: "مقفل",
+    changeStatus: "الحالة",
+    handoverPending: "التسليم بانتظار مدير المشروع",
+    fromDeal: "من فرصة في إدارة العلاقات",
+    statuses: {
+      todo: "للتنفيذ",
+      waiting_approval: "بانتظار الاعتماد",
+      pricing: "التسعير",
+      approved_waiting_start: "معتمد ولم يبدأ",
+      working: "قيد التنفيذ",
+      hold: "متوقف",
+      remaining_payment: "دفعة متبقية",
+      canceled: "ملغى",
+    },
+  },
+};
