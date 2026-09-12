@@ -378,6 +378,9 @@ export default function MyRFQsScreen() {
           {
             backgroundColor: colors.cta,
             bottom: insets.bottom + (Platform.OS === "web" ? 20 : 88),
+            // The primary action sits on the reading-end side: right in
+            // English, left in Arabic — and clear of the AI button either way.
+            [isRTL ? "left" : "right"]: 20,
             ...colors.shadow.card,
           },
         ]}
@@ -583,7 +586,6 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    right: 20,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,

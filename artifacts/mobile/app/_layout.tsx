@@ -19,11 +19,14 @@ import { AuthProvider } from "@/context/AuthContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { installWebAlert } from "@/lib/web-alert";
 // Push registration intentionally disabled for now — re-enable after `eas init`
 // and push credentials are configured (see DEPLOYMENT.md).
 // import { usePushToken } from "@/hooks/usePushToken";
 
 SplashScreen.preventAutoHideAsync();
+// On the web target Alert.alert is a no-op; give it the browser's dialogs.
+installWebAlert();
 
 const queryClient = new QueryClient();
 

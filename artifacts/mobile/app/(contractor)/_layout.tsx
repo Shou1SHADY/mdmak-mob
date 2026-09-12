@@ -4,7 +4,6 @@ import { View, ActivityIndicator } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import { useT } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
-import { AIChatWidget } from "@/components/AIChatWidget";
 import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
 
 
@@ -84,7 +83,6 @@ export default function ContractorLayout() {
       <Tabs.Screen name="team" options={{ href: null }} />
       <Tabs.Screen name="suppliers" options={{ href: null }} />
     </Tabs>
-    <AIChatWidget userRole="Contractor" />
     </View>
   );
 }

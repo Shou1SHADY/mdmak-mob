@@ -7,7 +7,7 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
-import { tabScreenBottomPadding } from "@/lib/layout";
+import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -48,12 +48,17 @@ export default function TeamScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.topBar, { paddingTop: insets.top + (Platform.OS === "web" ? 67 : 16), backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()}>
+      <View style={[styles.topBar, { paddingTop: headerTopPadding(insets.top, 16), flexDirection: isRTL ? "row-reverse" : "row", backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel={t.common.back}
+        >
           <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={24} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>{t.team.title}</Text>
-        <View style={{ width: 24 }} />
+        <Text style={[styles.title, { color: colors.foreground, textAlign: "center" }]}>{t.team.title}</Text>
+        <View style={{ width: 44 }} />
       </View>
       <FlatList
         data={members}
@@ -84,8 +89,9 @@ export default function TeamScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, minHeight: 56 },
-  title: { fontSize: 18, fontWeight: "700" as const },
+  topBar: { alignItems: "center", justifyContent: "space-between", paddingHorizontal: 6, paddingBottom: 12, borderBottomWidth: 1, minHeight: 56 },
+  backBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  title: { flex: 1, fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
   list: { paddingTop: 8 },
   memberItem: { flexDirection: "row", gap: 14, padding: 16, borderBottomWidth: 1, alignItems: "center", flexWrap: "nowrap" },
   avatar: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },

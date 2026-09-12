@@ -4,7 +4,7 @@ import {
   Modal, Pressable, TextInput, ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, addDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, addDoc, writeBatch } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -161,13 +161,35 @@ export default function RFQDetailScreen() {
         text: t.common.confirm,
         onPress: async () => {
           const newStatus = action === "accept" ? OFFER_STATUS.ACCEPTED : OFFER_STATUS.REJECTED;
-          await updateDoc(doc(db, "offers", offer.id), {
+          const now = new Date().toISOString();
+          // The field set the website's RfqOffersView writes, committed with the
+          // same atomicity: an accepted offer and its RFQ's "Awarded" status go
+          // in one batch, so the two can never disagree.
+          const decision = {
             status: newStatus,
-            decidedAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
+            decidedByUserId: user?.uid ?? null,
+            decidedByUserName: user?.displayName || user?.email || null,
+            decidedAt: now,
+            updatedAt: now,
+            readAt: null,
+          };
+          try {
+            if (action === "accept") {
+              const batch = writeBatch(db);
+              batch.update(doc(db, "offers", offer.id), decision);
+              batch.update(doc(db, "rfqs", id), { status: "Awarded", awardedAt: now });
+              await batch.commit();
+            } else {
+              await updateDoc(doc(db, "offers", offer.id), decision);
+            }
+          } catch {
+            Alert.alert(t.common.error, t.errors.generic);
+            return;
+          }
 
-          if (action === "accept") {
+          // A guest offer (share-link, no account) has nobody to chat with or
+          // notify in-app; the website reaches the guest over the share channel.
+          if (action === "accept" && !offer.isGuestOffer) {
             // Create chat doc
             const chatRef = doc(db, "chats", offer.id);
             const chatSnap = await getDoc(chatRef);
@@ -183,22 +205,17 @@ export default function RFQDetailScreen() {
                 createdAt: new Date().toISOString(),
               });
             }
-            // Update RFQ status to Awarded
-            await updateDoc(doc(db, "rfqs", id), {
-              status: "Awarded",
-              awardedAt: new Date().toISOString(),
-            });
           }
 
           // Notify supplier
           const supplierId = offer.supplierId || offer.organizationId;
-          if (supplierId) {
+          if (supplierId && !offer.isGuestOffer) {
             try {
               await addDoc(collection(db, "users", supplierId, "notifications"), {
                 userId: supplierId,
                 type: action === "accept" ? "offer_accepted" : "offer_rejected",
                 title: action === "accept"
-                  ? (isRTL ? "🎉 تم قبول عرضك" : "🎉 Your offer was accepted")
+                  ? (isRTL ? "تم قبول عرضك" : "Your offer was accepted")
                   : (isRTL ? "تم رفض عرضك" : "Your offer was rejected"),
                 message: isRTL
                   ? `${action === "accept" ? "تم قبول" : "تم رفض"} عرضك على مناقصة: ${rfq?.title || ""}`
@@ -240,7 +257,7 @@ export default function RFQDetailScreen() {
           await addDoc(collection(db, "users", supplierId, "notifications"), {
             userId: supplierId,
             type: "price_reduction",
-            title: isRTL ? "💰 طُلب منك تخفيض السعر" : "💰 Price reduction requested",
+            title: isRTL ? "طُلب منك تخفيض السعر" : "Price reduction requested",
             message: isRTL
               ? `يطلب المقاول تخفيض سعرك إلى ${priceNum.toLocaleString("ar-SA")} ر.س على مناقصة: ${rfq?.title || ""}`
               : `The contractor requests a price reduction to SAR ${priceNum.toLocaleString("en-SA")} for: ${rfq?.title || ""}`,

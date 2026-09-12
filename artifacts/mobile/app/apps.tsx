@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { router, Redirect } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
@@ -9,9 +10,12 @@ import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { scrollBottomPadding } from "@/lib/layout";
+import { type, space, radius } from "@/lib/design";
+import { siteUrl } from "@/lib/site-api";
 import {
   communicationForRole,
   componentsForRole,
+  hasBuiltScreens,
   visibleComponents,
   visibleItems,
   type AccentToken,
@@ -25,9 +29,11 @@ import {
  *
  * It reads the same registry the website's sidebar reads, filtered through the
  * same permission checks, so a member sees exactly the modules here that they
- * see there. A module whose screens have not been ported yet still appears, but
- * dimmed with an explanation — hiding it would suggest the company does not have
- * the feature, when in fact it is one tab away on the web app.
+ * see there. Modules with screens on the phone are cards listing those screens.
+ * Modules that are desktop work (Sales, Manufacturing, Accounting) are listed
+ * compactly under "More on the web app" and open the website in one tap —
+ * hiding them would suggest the company does not have the feature, and listing
+ * every desktop page as a dimmed row would bury the ones that matter here.
  */
 export default function AppsLauncherScreen() {
   const colors = useColors();
@@ -36,6 +42,9 @@ export default function AppsLauncherScreen() {
   const insets = useSafeAreaInsets();
   const { user, loading } = useAuth();
   const { can, isLoading: permsLoading } = usePermissions();
+
+  const align = isRTL ? "right" : "left";
+  const row = isRTL ? "row-reverse" : "row";
 
   const accent = (token: AccentToken): string => {
     const map: Record<AccentToken, string> = {
@@ -55,6 +64,8 @@ export default function AppsLauncherScreen() {
     // `can` closes over the member's groups, which load asynchronously.
     [user?.role, can]
   );
+  const onPhone = useMemo(() => modules.filter((m) => hasBuiltScreens(m, can)), [modules, can]);
+  const onWebOnly = useMemo(() => modules.filter((m) => !hasBuiltScreens(m, can)), [modules, can]);
   const communication = useMemo(() => communicationForRole(user?.role), [user?.role]);
 
   // The launcher lists every module the caller may open, so it needs the same
@@ -69,9 +80,13 @@ export default function AppsLauncherScreen() {
   }
   if (!user) return <Redirect href="/auth/login" />;
 
+  const openOnWeb = (path: string) => {
+    void WebBrowser.openBrowserAsync(siteUrl(path));
+  };
+
   const openItem = (item: NavItem) => {
     if (!item.built) {
-      Alert.alert(t.modules.onWebOnly, t.modules.onWebOnlyHint);
+      openOnWeb(item.href);
       return;
     }
     router.push(item.href as never);
@@ -81,74 +96,49 @@ export default function AppsLauncherScreen() {
     const items = visibleItems(mod.items, can);
     const home = items.find((i) => i.href === mod.homeHref && i.built) ?? items.find((i) => i.built);
     if (!home) {
-      Alert.alert(t.modules.onWebOnly, t.modules.onWebOnlyHint);
+      openOnWeb(mod.homeHref);
       return;
     }
     router.push(home.href as never);
   };
 
+  const label = (mod: PortalComponentDef) => t.modules.labels[mod.labelKey as keyof typeof t.modules.labels];
+  const description = (mod: PortalComponentDef) =>
+    t.modules.descriptions[mod.descKey as keyof typeof t.modules.descriptions];
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScreenHeader
-        title={t.modules.launcherTitle}
-        subtitle={t.modules.launcherSubtitle}
-        showBack
-      />
+      <ScreenHeader title={t.modules.launcherTitle} subtitle={t.modules.launcherSubtitle} showBack />
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: scrollBottomPadding(insets.bottom, false) }}
+        contentContainerStyle={{ padding: space.lg, paddingBottom: scrollBottomPadding(insets.bottom, false) }}
         showsVerticalScrollIndicator={false}
       >
-        {modules.map((mod) => {
+        {onPhone.map((mod) => {
           const items = visibleItems(mod.items, can);
           const tint = accent(mod.accentToken);
-          const anyBuilt = items.some((i) => i.built);
 
           return (
-            <View
-              key={mod.id}
-              style={[styles.module, { backgroundColor: colors.card, borderColor: colors.border }]}
-            >
+            <View key={mod.id} style={[styles.module, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <TouchableOpacity
                 onPress={() => openModule(mod)}
                 activeOpacity={0.8}
                 accessibilityRole="button"
-                style={[styles.moduleHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}
+                accessibilityLabel={label(mod)}
+                style={[styles.moduleHeader, { flexDirection: row }]}
               >
                 <View style={[styles.moduleIcon, { backgroundColor: tint + "1A" }]}>
                   <Feather name={mod.icon} size={20} color={tint} />
                 </View>
                 <View style={styles.moduleTitles}>
+                  <Text style={[type.title, { color: colors.foreground, textAlign: align }]}>{label(mod)}</Text>
                   <Text
-                    style={[
-                      styles.moduleTitle,
-                      { color: colors.foreground, textAlign: isRTL ? "right" : "left" },
-                    ]}
-                  >
-                    {t.modules.labels[mod.labelKey as keyof typeof t.modules.labels]}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.moduleDesc,
-                      { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" },
-                    ]}
+                    style={[type.caption, { color: colors.mutedForeground, textAlign: align }]}
                     numberOfLines={1}
                   >
-                    {t.modules.descriptions[mod.descKey as keyof typeof t.modules.descriptions]}
+                    {description(mod)}
                   </Text>
                 </View>
-                {anyBuilt ? (
-                  <Feather
-                    name={isRTL ? "chevron-left" : "chevron-right"}
-                    size={20}
-                    color={colors.outline}
-                  />
-                ) : (
-                  <View style={[styles.webBadge, { backgroundColor: colors.muted }]}>
-                    <Text style={[styles.webBadgeText, { color: colors.mutedForeground }]}>
-                      {t.modules.onWebOnly}
-                    </Text>
-                  </View>
-                )}
+                <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={20} color={colors.outline} />
               </TouchableOpacity>
 
               <View style={[styles.items, { borderTopColor: colors.border }]}>
@@ -156,31 +146,22 @@ export default function AppsLauncherScreen() {
                   <TouchableOpacity
                     key={item.href}
                     onPress={() => openItem(item)}
-                    activeOpacity={item.built ? 0.7 : 1}
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: !item.built }}
-                    style={[styles.item, { flexDirection: isRTL ? "row-reverse" : "row" }]}
+                    activeOpacity={0.7}
+                    accessibilityRole={item.built ? "button" : "link"}
+                    style={[styles.item, { flexDirection: row }]}
                   >
-                    <Feather
-                      name={item.icon}
-                      size={16}
-                      color={item.built ? colors.mutedForeground : colors.outline}
-                    />
+                    <Feather name={item.icon} size={16} color={item.built ? colors.mutedForeground : colors.outline} />
                     <Text
                       style={[
-                        styles.itemText,
-                        {
-                          color: item.built ? colors.foreground : colors.outline,
-                          textAlign: isRTL ? "right" : "left",
-                        },
+                        type.body,
+                        { flex: 1, color: item.built ? colors.foreground : colors.mutedForeground, textAlign: align },
                       ]}
                       numberOfLines={1}
                     >
                       {t.modules.items[item.titleKey as keyof typeof t.modules.items]}
                     </Text>
-                    {!item.built && (
-                      <Feather name="external-link" size={13} color={colors.outline} />
-                    )}
+                    {/* An item that lives on the website says so, and opens it there. */}
+                    {!item.built && <Feather name="external-link" size={13} color={colors.outline} />}
                   </TouchableOpacity>
                 ))}
               </View>
@@ -188,12 +169,7 @@ export default function AppsLauncherScreen() {
           );
         })}
 
-        <Text
-          style={[
-            styles.sectionLabel,
-            { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" },
-          ]}
-        >
+        <Text style={[type.captionStrong, styles.sectionLabel, { color: colors.mutedForeground, textAlign: align }]}>
           {t.tabs.messages}
         </Text>
         <View style={[styles.module, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -204,21 +180,62 @@ export default function AppsLauncherScreen() {
                 onPress={() => openItem(item)}
                 activeOpacity={0.7}
                 accessibilityRole="button"
-                style={[styles.item, { flexDirection: isRTL ? "row-reverse" : "row" }]}
+                style={[styles.item, { flexDirection: row }]}
               >
                 <Feather name={item.icon} size={16} color={colors.mutedForeground} />
-                <Text
-                  style={[
-                    styles.itemText,
-                    { color: colors.foreground, textAlign: isRTL ? "right" : "left" },
-                  ]}
-                >
+                <Text style={[type.body, { flex: 1, color: colors.foreground, textAlign: align }]}>
                   {t.modules.items[item.titleKey as keyof typeof t.modules.items]}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
+
+        {onWebOnly.length > 0 && (
+          <>
+            <Text
+              style={[type.captionStrong, styles.sectionLabel, { color: colors.mutedForeground, textAlign: align }]}
+            >
+              {t.modules.moreOnWeb}
+            </Text>
+            <Text style={[type.caption, styles.sectionHint, { color: colors.outline, textAlign: align }]}>
+              {t.modules.moreOnWebHint}
+            </Text>
+            <View style={[styles.module, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.items}>
+                {onWebOnly.map((mod) => {
+                  const tint = accent(mod.accentToken);
+                  return (
+                    <TouchableOpacity
+                      key={mod.id}
+                      onPress={() => openModule(mod)}
+                      activeOpacity={0.7}
+                      accessibilityRole="link"
+                      accessibilityLabel={label(mod)}
+                      style={[styles.webRow, { flexDirection: row }]}
+                    >
+                      <View style={[styles.webIcon, { backgroundColor: tint + "1A" }]}>
+                        <Feather name={mod.icon} size={16} color={tint} />
+                      </View>
+                      <View style={styles.moduleTitles}>
+                        <Text style={[type.bodyStrong, { color: colors.foreground, textAlign: align }]}>
+                          {label(mod)}
+                        </Text>
+                        <Text
+                          style={[type.caption, { color: colors.mutedForeground, textAlign: align }]}
+                          numberOfLines={1}
+                        >
+                          {description(mod)}
+                        </Text>
+                      </View>
+                      <Feather name="external-link" size={14} color={colors.outline} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -227,42 +244,54 @@ export default function AppsLauncherScreen() {
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   module: {
-    borderRadius: 16,
+    borderRadius: radius.card,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: space.md,
     overflow: "hidden",
   },
   moduleHeader: {
     alignItems: "center",
-    gap: 12,
-    padding: 16,
+    gap: space.md,
+    padding: space.lg,
   },
   moduleIcon: {
     width: 42,
     height: 42,
-    borderRadius: 12,
+    borderRadius: radius.control,
     alignItems: "center",
     justifyContent: "center",
   },
-  moduleTitles: { flex: 1, gap: 4 },
-  moduleTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
-  moduleDesc: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
-  webBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  webBadgeText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  moduleTitles: { flex: 1, gap: space.xs },
   items: { borderTopWidth: StyleSheet.hairlineWidth },
   item: {
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
+    gap: space.sm,
+    paddingHorizontal: space.lg,
     // 44px minimum touch target.
     minHeight: 44,
   },
-  itemText: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
+  webRow: {
+    alignItems: "center",
+    gap: space.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+    minHeight: 56,
+  },
+  webIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   sectionLabel: {
-    fontSize: 12, lineHeight: 20,
-    fontFamily: "Inter_600SemiBold",
-    marginTop: 8,
-    marginBottom: 8,
-    marginHorizontal: 4,
+    marginTop: space.sm,
+    marginBottom: space.sm,
+    marginHorizontal: space.xs,
+  },
+  sectionHint: {
+    marginTop: -space.xs,
+    marginBottom: space.sm,
+    marginHorizontal: space.xs,
   },
 });

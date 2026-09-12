@@ -16,6 +16,7 @@ import { useColors } from "@/hooks/useColors";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
+import { headerTopPadding } from "@/lib/layout";
 
 interface Message {
   id: string;
@@ -232,7 +233,7 @@ export default function ChatScreen() {
         colors={colors.gradientPrimary}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 48 : 10) }]}
+        style={[styles.header, { paddingTop: headerTopPadding(insets.top, 10), flexDirection: isRTL ? "row-reverse" : "row" }]}
       >
         <TouchableOpacity
           onPress={() => router.back()}

@@ -92,6 +92,9 @@ export interface CrmContact {
   paymentDays?: number | null
   /** Currently-overdue receivable, in SAR. */
   overdueAmount?: number | null
+  /** SAR of credit the org exposes to this party. 0 or absent = cash only.
+   * Sales READS this; setting it is a Finance decision made here in CRM. */
+  creditLimit?: number | null
   organizationId: string
   createdAt?: unknown
   updatedAt?: unknown
@@ -899,6 +902,100 @@ export function needsHigherApproval(amount: number, limit: number): boolean {
 
 export type QuotationStatus = "draft" | "sent" | "accepted" | "rejected"
 export const QUOTATION_STATUSES: QuotationStatus[] = ["draft", "sent", "accepted", "rejected"]
+
+/** Before manufacturing: an estimate whose acceptance sends the missing goods
+ * to Manufacturing. After manufacturing: the price of a finished item, so
+ * acceptance never spawns a work order. Quotations written before phases
+ * existed carry none and read as "before". */
+export type QuotationPhase = "pre_manufacturing" | "post_manufacturing"
+export const QUOTATION_PHASES: QuotationPhase[] = ["pre_manufacturing", "post_manufacturing"]
+
+export function quotationPhase(q: { phase?: QuotationPhase | null }): QuotationPhase {
+  return q.phase === "post_manufacturing" ? "post_manufacturing" : "pre_manufacturing"
+}
+
+export const QUOTATION_PHASE_BADGE_CLASS: Record<QuotationPhase, string> = {
+  pre_manufacturing: "bg-warning/10 text-warning border-warning/20",
+  post_manufacturing: "bg-success/10 text-success border-success/20",
+}
+
+/** One line of the payment schedule defined INSIDE the quotation (decision:
+ * Finance reads the deposit and installments straight off the quotation, no
+ * manual hand-off). `percent` is the share of the quotation amount. */
+export interface QuotationInstallment {
+  id: string
+  label: string
+  percent: number
+}
+
+/** A customer payment recorded against one installment, keyed by its id in
+ * `CrmQuotation.payments`. Kept apart from the schedule so editing the
+ * schedule and recording money are different permissions. */
+export interface QuotationPaymentEntry {
+  paidAt: string
+  paidAmount: number
+  paidByUserId: string | null
+  paidByUserName: string | null
+  note: string | null
+}
+
+/** The running total paid against one installment. `paidAmount` accumulates
+ * across `entries` (each partial payment); the other fields describe the
+ * latest one. Records written before partial payments existed have no
+ * `entries` and read as a single payment. */
+export interface QuotationPayment extends QuotationPaymentEntry {
+  entries?: QuotationPaymentEntry[]
+}
+
+export const INSTALLMENT_DEPOSIT_ID = "deposit"
+export const INSTALLMENT_BALANCE_ID = "balance"
+/** The synthetic single installment of a quotation with no schedule. */
+export const INSTALLMENT_FULL_ID = "full"
+
+/** Default schedule for a new quotation — the 30% deposit the client's
+ * finance asked for, and the rest on delivery. Labels are filled by the UI. */
+export function defaultInstallments(labels: { deposit: string; balance: string }): QuotationInstallment[] {
+  return [
+    { id: INSTALLMENT_DEPOSIT_ID, label: labels.deposit, percent: 30 },
+    { id: INSTALLMENT_BALANCE_ID, label: labels.balance, percent: 70 },
+  ]
+}
+
+/** A quotation without a schedule is one payment of the whole amount. */
+export function quotationInstallments(q: Pick<CrmQuotation, "installments">): QuotationInstallment[] {
+  if (q.installments && q.installments.length > 0) return q.installments
+  return [{ id: INSTALLMENT_FULL_ID, label: "", percent: 100 }]
+}
+
+export function installmentAmount(q: Pick<CrmQuotation, "amount">, inst: Pick<QuotationInstallment, "percent">): number {
+  return Math.round(((Number(q.amount) || 0) * inst.percent) / 100 * 100) / 100
+}
+
+/** Percents must cover the amount exactly; every line needs a positive share
+ * and a name. Returns the problem, or null when the schedule is sound. */
+export function validateInstallments(list: QuotationInstallment[]): "empty_label" | "bad_percent" | "not_100" | null {
+  if (list.length === 0) return null
+  for (const inst of list) {
+    if (!inst.label.trim()) return "empty_label"
+    if (!Number.isFinite(inst.percent) || inst.percent <= 0 || inst.percent > 100) return "bad_percent"
+  }
+  const total = list.reduce((sum, i) => sum + i.percent, 0)
+  return Math.abs(total - 100) < 0.01 ? null : "not_100"
+}
+
+/** A line on the quotation template — picked from inventory or free-typed.
+ * On acceptance these become the auto work order's requested items, so the
+ * stock check can route only the missing goods to manufacturing. */
+export interface QuotationItem {
+  name: string
+  quantity: number
+  unit: string
+  unitPrice: number
+}
+
+export function quotationItemsTotal(items: QuotationItem[]): number {
+  return Math.round(items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0) * 100) / 100
+}
 export const QUOTATION_STATUS_BADGE_CLASS: Record<QuotationStatus, string> = {
   draft: "bg-muted text-muted-foreground border-border",
   sent: "bg-cta/10 text-cta border-cta/20",
@@ -917,12 +1014,39 @@ export interface CrmQuotation {
   version?: number | null
   quotationNumber: string
   amount: number
+  /** When present, `amount` is their computed total. */
+  items?: QuotationItem[] | null
   status: QuotationStatus
   date?: string | null
   /** How many days the price holds. */
   validityDays?: number | null
   paymentTerms?: string | null
   notes?: string | null
+  /** See `QuotationPhase`. Absent on older records — use `quotationPhase()`. */
+  phase?: QuotationPhase | null
+  /** The linked work order: the one acceptance spawned (before manufacturing)
+   * or the finished one being sold (after manufacturing). Either way its
+   * presence stops acceptance from creating another. */
+  workOrderId?: string | null
+  /** Stamped when acceptance created the sales order — the backbone document
+   * that deliveries and invoices hang off. One quotation, one order, ever. */
+  salesOrderId?: string | null
+  workOrderNumber?: number | null
+  /** When the status last moved into each state — the detail page's timeline. */
+  sentAt?: string | null
+  acceptedAt?: string | null
+  rejectedAt?: string | null
+  /** Payment schedule (deposit, installments). Absent = one full payment. */
+  installments?: QuotationInstallment[] | null
+  /** Payments recorded against installments, by installment id. */
+  payments?: Record<string, QuotationPayment> | null
+  /** Set when EVERY installment is paid. ISO date; null until then. Total paid
+   * so far lives in `paidAmount` even before that. */
+  paidAt?: string | null
+  paidAmount?: number | null
+  paidByUserId?: string | null
+  paidByUserName?: string | null
+  paymentNote?: string | null
   organizationId: string
   createdAt?: unknown
   updatedAt?: unknown

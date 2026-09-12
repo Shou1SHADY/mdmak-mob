@@ -44,9 +44,7 @@ function resolveNavPath(webPath: string): string {
     .replace(/^\/contractor\/suppliers$/, '/(contractor)/rfqs')
     .replace(/^\/supplier\/rfqs$/, '/(supplier)/rfqs')
     .replace(/^\/supplier\/rfq\/([^/]+)$/, '/(supplier)/rfq/$1')
-    .replace(/^\/supplier\/offers$/, '/(supplier)/offers')
-    .replace(/^\/admin\/rfqs\/([^/]+)$/, '/(admin)/rfqs/$1')
-    .replace(/^\/admin\/rfqs$/, '/(admin)/rfqs');
+    .replace(/^\/supplier\/offers$/, '/(supplier)/offers');
 }
 
 // ── i18n strings ──────────────────────────────────────────────────────────────

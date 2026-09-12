@@ -3,6 +3,9 @@
 // mirrored again in firestore.rules, so a member this module blocks is blocked
 // by the rules too. When the website copy changes, re-copy this file whole
 // rather than hand-editing it.
+// Team permission system — single source of truth for the permission catalog,
+// seeded groups, and permission resolution. Used by UI gating, API routes,
+// and mirrored by firestore.rules (keep the ids in sync when changing).
 
 export const ALL_PERMISSION = "*" as const
 
@@ -25,11 +28,61 @@ export const PERMISSION_IDS = [
   // Projects. Split from `crm.manage` so a sales rep can work the pipeline
   // without being able to declare a win.
   "crm.close",
+  // Manufacturing splits four ways, because the foreman, the quality officer,
+  // and the cost controller are different people: `manufacturing.manage` is
+  // the workshop manager (answers requests, creates and releases orders,
+  // approves scrap up to the org's limit, edits departments and products);
+  // `manufacturing.work` is a department hand (reports output and hands over,
+  // requests and receives materials, ticks checklists); `manufacturing.qc`
+  // decides rework-or-scrap and records the client's slab sign-off;
+  // `manufacturing.cost` sees cost and margin, approves ANY scrap value, and
+  // may release a blocked order with a documented risk.
+  "manufacturing.manage",
+  "manufacturing.work",
+  "manufacturing.qc",
+  "manufacturing.cost",
+  // The Sales module, deliberately separate from `invoices.manage` (Finance):
+  // `sales.manage` writes quotations and the price list; `sales.approve`
+  // marks a quotation accepted — the step that posts the deposit to Finance
+  // and opens the work order — and, with `invoices.manage`, records the
+  // customer's payments.
+  "sales.manage",
+  "sales.approve",
+  // Confirming receipt of a delivery note (stock arriving from Manufacturing)
+  // without the power to edit stock — the warehouse keeper's signature.
+  "warehouses.receive",
+  // Accounting. Three levels because the people who read the books, the people
+  // who write to them, and the person who declares a period final are rarely the
+  // same: `accounting.view` reads statements and ledgers; `accounting.post`
+  // writes manual vouchers and reverses entries; `accounting.close` locks a
+  // period (and reopens one), which is what makes a signed statement stay true.
+  "accounting.view",
+  "accounting.post",
+  "accounting.close",
   "team.manage",
 ] as const
 
 export type PermissionId = (typeof PERMISSION_IDS)[number]
 export type PermissionValue = PermissionId | typeof ALL_PERMISSION
+
+/** The catalog grouped by portal component, for the group editor — a
+ * permission belongs to exactly one section (guarded by a test). */
+export const PERMISSION_SECTIONS: Array<{ key: string; permissions: PermissionId[] }> = [
+  { key: "projects", permissions: ["projects.view", "projects.edit", "projects.publish", "projects.delete"] },
+  { key: "procurement", permissions: ["rfq.create", "rfq.manage", "offers.view", "offers.accept", "suppliers.manage", "deliveries.confirm"] },
+  { key: "inventory", permissions: ["warehouses.manage", "warehouses.receive"] },
+  { key: "finance", permissions: ["invoices.manage"] },
+  { key: "accounting", permissions: ["accounting.view", "accounting.post", "accounting.close"] },
+  { key: "hr", permissions: ["employees.manage"] },
+  { key: "crm", permissions: ["crm.manage", "crm.close"] },
+  { key: "sales", permissions: ["sales.manage", "sales.approve"] },
+  { key: "manufacturing", permissions: ["manufacturing.manage", "manufacturing.work", "manufacturing.qc", "manufacturing.cost"] },
+  { key: "governance", permissions: ["team.manage"] },
+]
+
+export function permissionSectionLabelKey(key: string): string {
+  return `perm_section_${key}`
+}
 
 // Translation key (Portal.Shared namespace) for each permission's label/description.
 export function permissionLabelKey(id: PermissionId): string {
@@ -79,6 +132,10 @@ export const SEEDED_GROUPS: Array<{
       "offers.accept",
       "invoices.manage",
       "employees.manage",
+      // Finance reads and writes the books, but closing a period stays with the
+      // owner or whoever they name — it is the step that makes a statement final.
+      "accounting.view",
+      "accounting.post",
     ],
     isSystem: false,
   },
@@ -93,6 +150,7 @@ export const SEEDED_GROUPS: Array<{
       "suppliers.manage",
       "deliveries.confirm",
       "warehouses.manage",
+      "warehouses.receive",
     ],
     isSystem: false,
   },

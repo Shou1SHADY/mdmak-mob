@@ -119,7 +119,7 @@ export default function MyOffersScreen() {
           await addDoc(collection(db, "users", contractorId, "notifications"), {
             userId: contractorId,
             type: "price_updated",
-            title: "💰 قام المورد بتحديث سعر عرضه",
+            title: "قام المورد بتحديث سعر عرضه",
             message: `تم تحديث السعر لمناقصة: ${updatePriceOffer.rfqTitle || ""}. السعر الجديد: ${newPrice} ر.س`,
             offerId: updatePriceOffer.id,
             rfqId: updatePriceOffer.rfqId,

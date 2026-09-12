@@ -7,6 +7,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { OFFER_STATUSES } from "@/constants/data";
 
 export interface OfferItem {
+  /** Share-link offer with no account behind it: nobody to chat with or notify in-app. */
+  isGuestOffer?: boolean;
   id: string;
   rfqId: string;
   organizationId: string;

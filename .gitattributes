@@ -1,0 +1,12 @@
+# Keep the checkout on LF everywhere. The working tree was once copied from a
+# Windows filesystem with CRLF endings, which made every file show as modified.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary

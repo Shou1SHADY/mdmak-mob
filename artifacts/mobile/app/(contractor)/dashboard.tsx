@@ -22,6 +22,7 @@ import { DashboardHeader, WelcomeHeroCard, QuickActionCard } from "@/components/
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNotifications } from "@/hooks/useNotifications";
 import { RFQ_STATUSES } from "@/constants/data";
+import { AIChatWidget } from "@/components/AIChatWidget";
 
 // ── Donut chart ───────────────────────────────────────────────────────────────
 interface DonutSlice { value: number; color: string; }
@@ -257,7 +258,7 @@ export default function ContractorDashboard() {
           userName={user?.displayName}
           activeRfqs={stats.inProgress}
           totalOffers={stats.offers}
-          onAction={() => router.push("/(contractor)/rfqs/index")}
+          onAction={() => router.push("/(contractor)/rfqs")}
           actionLabel={t.dashboard.viewAll}
         />
 
@@ -317,7 +318,7 @@ export default function ContractorDashboard() {
             </View>
             <TouchableOpacity
               style={[styles.viewAllPill, { flexDirection: isRTL ? "row-reverse" : "row", backgroundColor: colors.accentBlueSoft }]}
-              onPress={() => router.push("/(contractor)/rfqs/index")}
+              onPress={() => router.push("/(contractor)/rfqs")}
             >
               <Text style={[styles.viewAllPillText, { color: colors.cta }]}>{t.dashboard.viewAll}</Text>
               <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={12} color={colors.cta} />
@@ -387,7 +388,7 @@ export default function ContractorDashboard() {
         <SectionHeader
           title={t.dashboard.recentRfqs}
           actionLabel={t.dashboard.viewAll}
-          onAction={() => router.push("/(contractor)/rfqs/index")}
+          onAction={() => router.push("/(contractor)/rfqs")}
         />
 
         {loading
@@ -398,6 +399,9 @@ export default function ContractorDashboard() {
             <RFQCard key={rfq.id} rfq={rfq} onPress={() => router.push(`/(contractor)/rfqs/${rfq.id}`)} showOffers />
           ))}
       </ScrollView>
+      {/* The assistant floats here only: on the list screens it sat on top of
+          the primary action button. */}
+      <AIChatWidget userRole="Contractor" />
     </View>
   );
 }

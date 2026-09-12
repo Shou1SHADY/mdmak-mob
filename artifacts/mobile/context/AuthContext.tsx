@@ -8,6 +8,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithCredential,
+  updateProfile,
   User as FirebaseUser,
 } from "firebase/auth";
 import { Platform } from "react-native";
@@ -26,6 +27,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { isPreview, PREVIEW_USER } from "@/lib/preview";
+import { acceptInvitation } from "@/lib/site-api";
 
 /* eslint-disable no-console */
 const devLog = (...args: any[]) => { if (__DEV__) console.log(...args); };
@@ -80,10 +82,25 @@ export interface Organization {
   location?: string;
   website?: string;
   description?: string;
+  /** Live (admin-approved) specializations — canonical Arabic category names. */
   specializations?: string[];
-  serviceAreas?: string[];
+  /** Live (admin-approved) coverage cities. */
+  coverageCities?: string[];
+  /** Edits awaiting Mdmak's approval; null when nothing is pending. The website
+   * gates the live fields behind an admin, so a supplier's own edits land here. */
+  pendingSpecializations?: string[] | null;
+  pendingCoverageCities?: string[] | null;
   verified?: boolean;
   documents?: Record<string, LegalDoc>;
+}
+
+export interface RegisterWithInvitationArgs {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+  /** The 64-hex invitation token from the invitation email's link. */
+  token: string;
 }
 
 interface AuthContextType {
@@ -91,14 +108,7 @@ interface AuthContextType {
   organization: Organization | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<AppUser>;
-  register: (
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-    orgName: string,
-    city: string
-  ) => Promise<AppUser>;
+  registerWithInvitation: (args: RegisterWithInvitationArgs) => Promise<AppUser>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   signInWithGoogle: () => Promise<AppUser>;
@@ -197,9 +207,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       website: identity.website,
       description: identity.description,
       specializations: identity.specializations ?? [],
-      serviceAreas: identity.serviceAreas ?? identity.coverageCities ?? [],
+      // `serviceAreas` is what this app wrote before it learned the website's
+      // field name; read it as a fallback so older records still show.
+      coverageCities: identity.coverageCities ?? identity.serviceAreas ?? [],
+      pendingSpecializations: identity.pendingSpecializations ?? null,
+      pendingCoverageCities: identity.pendingCoverageCities ?? null,
       verified: identity.verified ?? identity.isVerified ?? false,
-      documents: identity.documents ?? identity.legalDocuments ?? {},
+      // `legalDocuments` is the website's field; `documents` is what older
+      // builds of this app wrote, kept as a read fallback.
+      documents: identity.legalDocuments ?? identity.documents ?? {},
     });
     return appUser;
   }
@@ -216,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         phone: PREVIEW_USER.phone,
         city: PREVIEW_USER.city,
         specializations: [],
-        serviceAreas: [],
+        coverageCities: [],
         verified: true,
         documents: {},
       });
@@ -267,60 +283,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw e;
     }
     if (!appUser) {
+      // A Firebase Auth user with no Firestore profile was never invited (or
+      // their invitation was rolled back). Nothing to load, nothing to create.
       devLog("[Auth] No user profile, signing out");
       await signOut(auth);
-      throw new Error("User profile not found. Please re-register.");
+      throw Object.assign(new Error("No profile for this account"), { code: "auth/no-profile" });
     }
     return appUser;
   }
 
-  async function register(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-    orgName: string,
-    city: string
-  ): Promise<AppUser> {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
+  /**
+   * Registration is by invitation only, exactly as on the website: public
+   * self-registration was removed there on 2026-08-04 and firestore.rules
+   * reserves users/{uid} creation for the Admin SDK. The Auth account is
+   * created here; the Firestore profile — and the link to the inviting
+   * organization — is created by the website's invitation-accept API, with
+   * the invitation token as the authorization. If that step fails the Auth
+   * account is deleted again, so a failed attempt leaves nothing behind that
+   * could neither log in nor be re-invited.
+   */
+  async function registerWithInvitation(args: RegisterWithInvitationArgs): Promise<AppUser> {
+    const email = args.email.trim().toLowerCase();
+    const cred = await createUserWithEmailAndPassword(auth, email, args.password);
     devLog("[Auth] Firebase sign-up succeeded, uid:", cred.user.uid);
-    await sendEmailVerification(cred.user);
-
-    // The website keys a solo/primary organization by the owner's own uid
-    // (see its API route that creates users, and useResolvedProfile). A generated
-    // id here would make the site treat the account as a SECONDARY company and
-    // look for its identity in organizations/{id} — a doc that does not exist —
-    // so the whole company profile would read as blank on the website.
-    const organizationId = cred.user.uid;
-
     try {
-      await setDoc(doc(db, "users", cred.user.uid), {
-        email,
-        name: displayName,
-        role,
-        organizationId,
-        organizationRole: "owner",
-        companyName: orgName,
-        city,
-        providers: ["password"] as string[],
-        profileCompleted: true,
-        createdAt: serverTimestamp(),
-        lastLoginAt: serverTimestamp(),
+      await updateProfile(cred.user, { displayName: args.name });
+    } catch (e) {
+      devWarn("[Auth] updateProfile failed:", e);
+    }
+    try {
+      await sendEmailVerification(cred.user);
+    } catch (e) {
+      devWarn("[Auth] sendEmailVerification failed:", e);
+    }
+
+    const idToken = await cred.user.getIdToken();
+    const result = await acceptInvitation({
+      idToken,
+      token: args.token,
+      name: args.name,
+      phone: args.phone,
+    });
+    if (!result.ok) {
+      devLog("[Auth] invitation accept failed:", result.code, result.message);
+      await cred.user.delete().catch(() => signOut(auth).catch(() => {}));
+      throw Object.assign(new Error(result.message || "Invitation could not be accepted"), {
+        code: "invite/accept-failed",
+        inviteCode: result.code,
       });
-    } catch (e: any) {
-      devLog("[Auth] Firestore write failed:", e.code, e.message);
-      if (e.code === "permission-denied") {
-        throw new Error("Firestore permission denied. Please check Firestore security rules.");
-      }
-      throw e;
     }
 
     const appUser = await loadUserData(cred.user);
     if (!appUser) {
       await signOut(auth);
-      throw new Error("Registration succeeded but profile setup failed. Please try again.");
+      throw Object.assign(new Error("No profile for this account"), { code: "auth/no-profile" });
     }
     return appUser;
+  }
+
+  /**
+   * A Google identity with no Firestore profile was never invited. Accounts
+   * are created server-side by invitation (see registerWithInvitation), so
+   * there is nothing to create here: sign out and say so. An email that
+   * already has a password account is reported separately so the person
+   * links Google from inside that account instead.
+   */
+  async function rejectUnknownAccount(fbUser: FirebaseUser): Promise<never> {
+    const existing = await findUserByEmail(fbUser.email ?? "").catch(() => null);
+    await signOut(auth);
+    if (existing && !existing.empty) {
+      throw Object.assign(
+        new Error("An account already exists with this email. Please sign in with your password first to link Google Sign-In."),
+        { code: "auth/account-exists-with-different-credential" }
+      );
+    }
+    throw Object.assign(new Error("No profile for this account"), { code: "auth/no-profile" });
   }
 
   async function logout() {
@@ -370,52 +407,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const fbUser = result.user;
       devLog("[Auth] Google sign-in succeeded, uid:", fbUser.uid);
 
-      let appUser = await loadUserData(fbUser);
-
-      if (!appUser) {
-        devLog("[Auth] New Google user, checking for existing account by email");
-
-        // Check for existing account with this email (password provider)
-        const emailSnapshot = await findUserByEmail(fbUser.email ?? "");
-
-        if (!emailSnapshot.empty) {
-          await signOut(auth);
-          throw Object.assign(
-            new Error("An account already exists with this email. Please sign in with your password first to link Google Sign-In."),
-            { code: "auth/account-exists-with-different-credential" }
-          );
-        }
-
-        devLog("[Auth] Truly new Google user, creating profile");
-        const organizationId = fbUser.uid;
-        const displayName = fbUser.displayName || fbUser.email?.split("@")[0] || "User";
-
-        await setDoc(doc(db, "users", fbUser.uid), {
-          email: fbUser.email?.toLowerCase(),
-          name: displayName,
-          role: "Contractor" as UserRole,
-          organizationId,
-          organizationRole: "owner",
-          companyName: displayName,
-          city: "",
-          providers: ["google.com"] as string[],
-          profileCompleted: false,
-          createdAt: serverTimestamp(),
-          lastLoginAt: serverTimestamp(),
-        });
-
-        appUser = await loadUserData(fbUser);
-      } else {
-        // Existing user — update lastLoginAt
-        updateDoc(doc(db, "users", fbUser.uid), { lastLoginAt: serverTimestamp() }).catch(() => {});
-      }
-
-      if (!appUser) {
-        await signOut(auth);
-        throw new Error("Failed to set up user profile.");
-      }
-
-      return appUser;
+      const appUser = await loadUserData(fbUser);
+      if (!appUser) await rejectUnknownAccount(fbUser);
+      updateDoc(doc(db, "users", fbUser.uid), { lastLoginAt: serverTimestamp() }).catch(() => {});
+      return appUser as AppUser;
     }
 
     if (!googleClientId) {
@@ -473,53 +468,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const fbUser = auth.currentUser;
-    let appUser = await loadUserData(fbUser);
-
-    if (!appUser) {
-      // Check for existing account with this email (password provider)
-      const emailSnapshot = await findUserByEmail(fbUser.email ?? "");
-
-      if (!emailSnapshot.empty) {
-        await signOut(auth);
-        throw Object.assign(
-          new Error("An account already exists with this email. Please sign in with your password first to link Google Sign-In."),
-          { code: "auth/account-exists-with-different-credential" }
-        );
-      }
-
-      const organizationId = fbUser.uid;
-      const displayName = fbUser.displayName || fbUser.email?.split("@")[0] || "User";
-
-      await setDoc(doc(db, "users", fbUser.uid), {
-        email: fbUser.email?.toLowerCase(),
-        name: displayName,
-        role: "Contractor" as UserRole,
-        organizationId,
-        organizationRole: "owner",
-        companyName: displayName,
-        city: "",
-        providers: ["google.com"],
-        profileCompleted: false,
-        createdAt: serverTimestamp(),
-        lastLoginAt: serverTimestamp(),
-      });
-
-      appUser = await loadUserData(fbUser);
-    } else {
-      // Existing user — update lastLoginAt
-      updateDoc(doc(db, "users", fbUser.uid), { lastLoginAt: serverTimestamp() }).catch(() => {});
-    }
-
-    if (!appUser) {
-      await signOut(auth);
-      throw new Error("Failed to set up user profile.");
-    }
-
-    return appUser;
+    const appUser = await loadUserData(fbUser);
+    if (!appUser) await rejectUnknownAccount(fbUser);
+    updateDoc(doc(db, "users", fbUser.uid), { lastLoginAt: serverTimestamp() }).catch(() => {});
+    return appUser as AppUser;
   }
 
   return (
-    <AuthContext.Provider value={{ user, organization, loading, login, register, logout, refreshUser, signInWithGoogle }}>
+    <AuthContext.Provider value={{ user, organization, loading, login, registerWithInvitation, logout, refreshUser, signInWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );

@@ -11,6 +11,8 @@ track orders. Shares the website's Firebase backend; there is no separate mobile
 - `cd artifacts/mobile && npm run check:mirrors` — verifies every file copied
   VERBATIM from the website still matches it. Run after any website change that
   touches them. On drift, RE-COPY the whole file; never hand-patch the diff.
+  The website is expected as a sibling checkout; pass its path as an argument
+  or set `MDMAK_WEB_DIR` when it lives elsewhere.
 - `cd artifacts/mobile && pnpm run build:web` — static web export to `dist/`
 - `cd artifacts/mobile && pnpm run eas:preview` / `eas:prod` — EAS native builds
 - See `artifacts/mobile/DEPLOYMENT.md` for the full deployment checklist
@@ -44,17 +46,26 @@ track orders. Shares the website's Firebase backend; there is no separate mobile
   `src/lib/permissions.ts`; re-copy it whole when the website's changes.
   `hooks/usePermissions.ts` resolves it against `teamGroups` for team members.
 - `artifacts/mobile/lib/portal-components.ts` — **the module registry.** Mirrors
-  the website's `src/lib/portal-components.ts`: same seven module ids, same
-  accent per module, same permission on every nav item. Each item also carries
+  the website's `src/lib/portal-components.ts`: same module ids, same accent
+  per module, same permission on every nav item. Each item also carries
   `built`, which is false until the screen exists here — flip it in the same
-  commit that adds the screen. `app/apps.tsx` is the launcher that renders it.
+  commit that adds the screen. An unbuilt item carries the WEBSITE's path and
+  the launcher opens it in the browser. Sales, Manufacturing and Accounting are
+  web-only by design (desktop work) and appear under "More on the web app".
+  `app/apps.tsx` is the launcher that renders it.
+- `artifacts/mobile/lib/site-api.ts` — the website's HTTP API, for the flows
+  that must run server-side: invitation lookup/accept (registration) and the
+  access-request form. `EXPO_PUBLIC_SITE_URL` points a UAT build at the UAT
+  site; production otherwise.
 - `artifacts/mobile/lib/crm.ts` — the CRM domain model, copied VERBATIM from the
   website (it has zero imports, which is what makes that safe). Stages, tracks,
   gates and the value ladder are identical by construction. Never hand-edit;
   re-copy when the website's changes.
 - `artifacts/mobile/lib/crm-writes.ts` — the CRM writes this app performs, each
   payload mirroring the website dialog named in its comment.
-- Every module in the registry is now BUILT — no `built: false` entries remain.
+- Every module ported to the phone is fully built; the `built: false` entries
+  that remain are deliberate (Sales, Manufacturing, Accounting, the supplier
+  directory) and open on the website.
 - `artifacts/mobile/app/(projects)/` — Project Management (contractor only).
   `app/(inventory)/` — warehouses, requests and waste. `app/(finance)/` — invoices,
   guarantees and employees (Finance + HR; read-only). `app/(goods)/` — delivery
@@ -76,6 +87,23 @@ track orders. Shares the website's Firebase backend; there is no separate mobile
 
 ## Architecture decisions
 
+- **Registration is by invitation only**, exactly as on the website: public
+  self-registration was removed there on 2026-08-04 and firestore.rules
+  reserves `users/{uid}` creation for the Admin SDK. `app/auth/register.tsx`
+  resolves an invitation token (pasted link, or a `?invite=` deep link), creates
+  the Auth user, then calls the website's `/api/invitations/accept`, which
+  creates the profile and links the org. If that call fails the Auth user is
+  deleted again. A Google sign-in with no profile is refused with a clear
+  message — never provisioned client-side. A company with no invitation is sent
+  to the website's access-request form.
+- **Supplier specializations and coverage cities are gated by admin approval.**
+  The rules reject a supplier's write to `specializations`/`coverageCities`;
+  edits go to `pendingSpecializations`/`pendingCoverageCities` (canonical
+  Arabic category names) and the profile shows them as awaiting approval. Legal
+  documents live on `legalDocuments` (the website's field), never `documents`.
+- `Alert.alert` is an empty stub in react-native-web. `lib/web-alert.ts` maps it
+  onto the browser's alert/confirm at start-up so confirmations and errors are
+  not silent on the PWA. New code should still prefer the toast provider.
 - Arabic-first (RTL) like the website; `context/LanguageContext.tsx` drives direction
 - Firestore document shapes are byte-compatible with the website (verified for
   `users`, `rfqs`, `offers`, `chats/{id}/messages`, `users/{uid}/notifications`)
@@ -126,6 +154,16 @@ track orders. Shares the website's Firebase backend; there is no separate mobile
   ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY in a non-interactive shell.
 
 - `pnpm run typecheck` pipes through nothing — never trust `tsc | tail` exit codes
+- A checkout copied from Windows arrives with CRLF endings and every file shows
+  as modified (283 files, zero content changes). `.gitattributes` now pins LF;
+  `git checkout -- .` restores a copy that drifted. The same copy flattens
+  pnpm's symlinks into empty directories — `node_modules/expo` exists but is
+  empty and `tsc` cannot find `expo/tsconfig.base`. Reinstall with
+  `CI=true npx pnpm@10 install --frozen-lockfile` (`CI=true` lets pnpm purge
+  the broken tree without a TTY).
+- The design-preview harness (`/design-preview`, `lib/preview.ts`) is off in
+  production bundles; a QA web export opts in with
+  `EXPO_PUBLIC_DESIGN_PREVIEW=1`.
 - `expo-doctor` warns about a duplicate `react` from the PARENT repo's
   node_modules (this workspace nests inside studio-monaqasati) — expected, ignore
 - Run `npx expo install <pkg>` (not plain pnpm add) so versions match the SDK

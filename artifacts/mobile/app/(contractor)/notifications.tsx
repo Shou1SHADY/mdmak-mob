@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
-import { tabScreenBottomPadding } from "@/lib/layout";
+import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useNotifications, AppNotification } from "@/hooks/useNotifications";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -36,6 +36,11 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
     case "delivery_notice":
     case "supply_completed":
       return { icon: "truck" as const, color: colors.success, nav: (n: AppNotification) => n.rfqId ? `/(contractor)/rfqs/${n.rfqId}` : null };
+    // Written by the website's invitation-accept API.
+    case "team_invite_accepted":
+      return { icon: "user-check" as const, color: colors.success, nav: () => `/(contractor)/team` };
+    case "supplier_invite_accepted":
+      return { icon: "user-check" as const, color: colors.success, nav: () => null };
     default:
       return { icon: "bell" as const, color: colors.accent, nav: () => null };
   }
@@ -165,7 +170,7 @@ export default function ContractorNotificationsScreen() {
         colors={colors.gradientPrimary}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 52 : 16) }]}
+        style={[styles.header, { paddingTop: headerTopPadding(insets.top, 16), flexDirection: isRTL ? "row-reverse" : "row" }]}
       >
         <TouchableOpacity
           onPress={() => router.back()}

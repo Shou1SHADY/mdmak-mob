@@ -115,3 +115,18 @@ export const OFFER_STATUSES = [
   { id: "جاري التوصيل",   label: "In Transit",      labelAr: "جاري التوصيل",   color: "#3b82f6" },
   { id: "قيد التجهيز",    label: "In Preparation",  labelAr: "قيد التجهيز",    color: "#a855f7" },
 ];
+
+/** Returns the canonical Arabic category name whether the input is Arabic or the
+ * English label an older build of this app stored. */
+export function normalizeCategoryToAr(category: string): string {
+  return CATEGORIES.find((c) => c.label === category)?.labelAr ?? category;
+}
+
+/** Display a specialization (a canonical Arabic category name) in the current
+ * locale. Values written in English by older builds, or categories this build
+ * does not know, come back unchanged rather than blank. */
+export function displayCategory(category: string, isRTL: boolean): string {
+  const cat = CATEGORIES.find((c) => c.labelAr === category || c.label === category);
+  if (!cat) return category;
+  return isRTL ? cat.labelAr : cat.label;
+}

@@ -8,10 +8,11 @@ import { collection, addDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
-import { tabScreenBottomPadding } from "@/lib/layout";
+import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { notifyFavoritesOfPublish } from "@/lib/site-api";
 import { buildRfqDoc } from "@/lib/contracts";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Input } from "@/components/ui/Input";
@@ -77,7 +78,7 @@ export default function CreateRFQScreen() {
     }
     setLoading(true);
     try {
-      await addDoc(
+      const ref = await addDoc(
         collection(db, "rfqs"),
         buildRfqDoc({
           uid: user.uid,
@@ -93,6 +94,14 @@ export default function CreateRFQScreen() {
           isDraft: draft,
         })
       );
+      // Same fan-out the website does on publish: favourited suppliers get a
+      // text about the new RFQ. Fire-and-forget, like the website.
+      if (!draft) {
+        auth.currentUser
+          ?.getIdToken()
+          .then((idToken) => notifyFavoritesOfPublish(idToken, [ref.id]))
+          .catch(() => {});
+      }
       Alert.alert(t.common.success, draft ? t.rfq.savedDraft : t.rfq.published, [
         { text: t.common.ok, onPress: () => router.back() },
       ]);
@@ -127,7 +136,8 @@ export default function CreateRFQScreen() {
         style={[
           styles.header,
           {
-            paddingTop: insets.top + (Platform.OS === "web" ? 48 : 10),
+            paddingTop: headerTopPadding(insets.top, 10),
+            flexDirection: isRTL ? "row-reverse" : "row",
             backgroundColor: colors.surface,
             borderBottomWidth: 1,
             borderBottomColor: colors.border,

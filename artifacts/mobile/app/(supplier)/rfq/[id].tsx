@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/Button";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { RFQ_STATUSES } from "@/constants/data";
 import { BOQEditor } from "@/components/BOQEditor";
+import { headerTopPadding } from "@/lib/layout";
 
 export default function SupplierRFQDetailScreen() {
   const colors = useColors();
@@ -54,7 +55,7 @@ export default function SupplierRFQDetailScreen() {
     } catch { return null; }
   };
 
-  const topPad = insets.top + (Platform.OS === "web" ? 67 : 0);
+  const topPad = headerTopPadding(insets.top, 0);
 
   if (loading) {
     return (

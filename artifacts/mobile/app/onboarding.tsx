@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { SAUDI_CITIES, displayCity, CITIES_EN } from "@/constants/data";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { headerTopPadding } from "@/lib/layout";
 import { db } from "@/lib/firebase";
 
 function CityPickerModal({
@@ -180,7 +181,7 @@ export default function OnboardingScreen() {
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const topPad = insets.top + (Platform.OS === "web" ? 67 : 0);
+  const topPad = headerTopPadding(insets.top, 0);
 
   const handleCompleteSetup = async () => {
     if (!orgName.trim()) {
@@ -190,17 +191,14 @@ export default function OnboardingScreen() {
     if (!user) return;
     setLoading(true);
     try {
-      // Never mint a fresh organization id here: the account already has one,
-      // and for a solo company the website expects it to equal the uid. Team
-      // members keep their owner's org and their "member" role untouched —
-      // completing a profile must not silently promote them to owner.
-      const isMember = user.organizationRole === "member";
+      // Only the profile fields. Never write organizationId/organizationRole
+      // from here: firestore.rules rejects a self-update that touches org
+      // membership (that is how joining a team is kept server-side), and the
+      // account already carries both from the invitation that created it.
       await setDoc(
         doc(db, "users", user.uid),
         {
-          organizationId: user.organizationId || user.uid,
           companyName: orgName.trim(),
-          ...(isMember ? {} : { organizationRole: "owner" }),
           city,
           profileCompleted: true,
           updatedAt: serverTimestamp(),

@@ -22,6 +22,7 @@ import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DashboardHeader, WelcomeHeroCard, QuickActionCard } from "@/components/ScreenHeader";
 import { useNotifications } from "@/hooks/useNotifications";
+import { AIChatWidget } from "@/components/AIChatWidget";
 
 export default function SupplierDashboard() {
   const colors = useColors();
@@ -285,6 +286,9 @@ export default function SupplierDashboard() {
             />
           ))}
       </ScrollView>
+      {/* The assistant floats here only: on the list screens it sat on top of
+          the primary action button. */}
+      <AIChatWidget userRole="Supplier" />
     </View>
   );
 }

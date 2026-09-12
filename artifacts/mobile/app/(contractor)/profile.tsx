@@ -8,7 +8,7 @@ import { updateDoc, collection, query, where, getDocs } from "firebase/firestore
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
-import { tabScreenBottomPadding } from "@/lib/layout";
+import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import type { LegalDoc } from "@/context/AuthContext";
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DocumentUploadRow } from "@/components/DocumentUploadRow";
 import { router } from "expo-router";
+import Constants from "expo-constants";
 import { ProfileTourGuide, useProfileTour } from "@/components/ProfileTourGuide";
 
 /* ─── Quick Action Pill ─── */
@@ -132,8 +133,10 @@ export default function ContractorProfileScreen() {
     const isProfileComplete = !!(orgName?.trim() && (phone?.trim()) && crNumber?.trim() && taxNumber?.trim() && city?.trim() && location?.trim());
     try {
       await updateDoc(identityRef(), {
-        companyName: orgName, orgName, city, crNumber,
-        taxNumber, phone, location, website, description,
+        companyName: orgName, city, crNumber,
+        // The website reads `phone` and its SMS routes fall back to
+        // `phoneNumber`; write both so a number entered here is found either way.
+        taxNumber, phone, phoneNumber: phone, location, website, description,
         profileCompleted: isProfileComplete,
       });
       await refreshUser();
@@ -150,7 +153,9 @@ export default function ContractorProfileScreen() {
     setDocuments(updated);
     if (user?.uid) {
       try {
-        await updateDoc(identityRef(), { documents: updated });
+        // The website's field. `documents` was this app's own name for it,
+        // and nothing on the website ever read it.
+        await updateDoc(identityRef(), { legalDocuments: updated });
       } catch {
         Alert.alert(t.common.error, t.profile.saveFailed);
       }
@@ -220,7 +225,7 @@ export default function ContractorProfileScreen() {
         colors={colors.gradientPrimary}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 48 : 12) }]}>
+        style={[styles.header, { paddingTop: headerTopPadding(insets.top, 12) }]}>
         {/* Top bar */}
         <View style={[styles.headerTop, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>{t.profile.title}</Text>
@@ -470,7 +475,7 @@ export default function ContractorProfileScreen() {
           />
           <MenuRow
             icon="bell" label={t.profile.notifications} color="#f59e0b"
-            subtitle="Notification preferences"
+            subtitle={t.profile.notifPreferences}
             onPress={() => router.push("/(contractor)/notifications")}
             isRTL={isRTL}
             isLast={false}
@@ -491,7 +496,7 @@ export default function ContractorProfileScreen() {
         </TouchableOpacity>
 
         <Text style={[styles.version, { color: colors.outline }]}>
-          Mdmak Tech v1.0
+          Mdmak Tech v{Constants.expoConfig?.version ?? "1.0.0"}
         </Text>
       </ScrollView>
 

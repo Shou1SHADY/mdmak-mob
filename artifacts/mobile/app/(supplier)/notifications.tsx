@@ -28,6 +28,15 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
     case "invitation":
     case "inquiry_reply":
       return { icon: "users" as const, color: colors.cta, nav: () => null };
+    // A contractor awarded this supplier directly — the accepted offer is
+    // already in Orders; the RFQ page shows what was awarded.
+    case "direct_award":
+      return { icon: "award" as const, color: colors.success, nav: (n: AppNotification) => n.rfqId ? `/(supplier)/rfq/${n.rfqId}` : `/(supplier)/orders` };
+    // Mdmak decided on submitted specializations / coverage, or the account
+    // was linked to a contractor: both are about the company profile.
+    case "specs_decision":
+    case "supplier_connected":
+      return { icon: "user-check" as const, color: colors.cta, nav: () => `/(supplier)/profile` };
     case "new_chat_message":
     case "new_message":
       return { icon: "message-circle" as const, color: colors.primaryText, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };

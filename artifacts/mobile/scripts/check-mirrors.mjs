@@ -19,14 +19,18 @@
  *
  * The website is expected at ../../../studio-monaqasati (the layout the
  * mdmak-mob.code-workspace file describes). Pass a different path as the first
- * argument if yours differs.
+ * argument, or set MDMAK_WEB_DIR, if yours differs.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const MOB = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const WEB = path.resolve(process.argv[2] ?? path.join(MOB, "../../../studio-monaqasati"));
+// Resolution order: CLI argument, MDMAK_WEB_DIR, then the sibling-checkout
+// layout. A machine that keeps the two repos elsewhere sets the variable once.
+const WEB = path.resolve(
+  process.argv[2] ?? process.env.MDMAK_WEB_DIR ?? path.join(MOB, "../../../studio-monaqasati")
+);
 
 /** mobile path -> website path */
 const MIRRORS = {
@@ -74,7 +78,7 @@ function read(root, rel) {
 
 if (!fs.existsSync(WEB)) {
   console.error(`Website repo not found at ${WEB}`);
-  console.error("Pass its path as the first argument, e.g. npm run check:mirrors -- ../../site");
+  console.error("Pass its path as the first argument (npm run check:mirrors -- ../../site) or set MDMAK_WEB_DIR.");
   process.exit(2);
 }
 

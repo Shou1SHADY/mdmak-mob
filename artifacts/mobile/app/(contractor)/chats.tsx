@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
-import { tabScreenBottomPadding } from "@/lib/layout";
+import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
@@ -99,7 +99,7 @@ export default function ContractorChatsScreen() {
         colors={colors.gradientPrimary}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 52 : 16) }]}
+        style={[styles.header, { paddingTop: headerTopPadding(insets.top, 16) }]}
       >
         <TouchableOpacity
           onPress={() => router.back()}

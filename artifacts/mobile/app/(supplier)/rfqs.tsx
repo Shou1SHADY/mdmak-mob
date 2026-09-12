@@ -130,7 +130,12 @@ export default function BrowseRFQsScreen() {
         if (OPEN_STATUSES.includes(item.status)) byId.set(d.id, item);
       });
 
-      const items = Array.from(byId.values()).sort(
+      // A direct award (`directAward: true`) is already decided — it reaches
+      // this supplier as an accepted offer under My Offers / Orders, not as a
+      // tender to bid on.
+      const items = Array.from(byId.values())
+        .filter((r) => !(r as { directAward?: boolean }).directAward)
+        .sort(
         (a, b) => createdAtMs(b.createdAt) - createdAtMs(a.createdAt)
       );
       setRfqs(items);

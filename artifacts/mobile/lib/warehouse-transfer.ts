@@ -81,7 +81,7 @@ export async function runTransfer(params: RunTransferParams): Promise<void> {
 
   await runTransaction(firestore, async (tx) => {
     const sourceSnap = await tx.get(sourceRef)
-    const source = sourceSnap.exists() ? (sourceSnap.data() as TransferItemState & { name: string; sku?: string | null; unit: string; minStockLevel?: number | null }) : null
+    const source = sourceSnap.exists() ? (sourceSnap.data() as TransferItemState & { name: string; sku?: string | null; unit: string; minStockLevel?: number | null; typeId?: string | null }) : null
     const error = validateTransfer({ sourceItem: source, quantity, fromWarehouseId, toWarehouseId })
     if (error) throw new Error(error)
 
@@ -99,6 +99,7 @@ export async function runTransfer(params: RunTransferParams): Promise<void> {
         unit: source!.unit,
         minStockLevel: source!.minStockLevel ?? null,
         trackingMode: null,
+        typeId: source!.typeId ?? null,
         organizationId,
         warehouseId: toWarehouseId,
         createdAt: serverTimestamp(),

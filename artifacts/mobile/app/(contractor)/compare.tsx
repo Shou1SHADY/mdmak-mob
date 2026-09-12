@@ -3,11 +3,11 @@ import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
   Platform, ActivityIndicator, ScrollView, Alert,
 } from "react-native";
-import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, writeBatch } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
-import { tabScreenBottomPadding } from "@/lib/layout";
+import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -24,6 +24,7 @@ interface RFQRow {
 }
 
 interface OfferRow {
+  isGuestOffer?: boolean;
   id: string;
   supplierName?: string;
   companyName?: string;
@@ -121,21 +122,28 @@ export default function CompareScreen() {
     }
     setProcessing(offer.id);
     try {
-      await updateDoc(doc(db, "offers", offer.id), {
+      // The field set the website's RfqOffersView writes, committed with the
+      // same atomicity: the accepted offer and the RFQ's "Awarded" status go
+      // in one batch, so the two can never disagree.
+      const now = new Date().toISOString();
+      const batch = writeBatch(db);
+      batch.update(doc(db, "offers", offer.id), {
         status: OFFER_STATUS.ACCEPTED,
-        decidedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        decidedByUserId: user.uid,
+        decidedByUserName: user.displayName || user.email || null,
+        decidedAt: now,
+        updatedAt: now,
+        readAt: null,
       });
-      await updateDoc(doc(db, "rfqs", selectedRfq.id), {
-        status: "Awarded",
-        awardedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-      if (offer.supplierId) {
+      batch.update(doc(db, "rfqs", selectedRfq.id), { status: "Awarded", awardedAt: now, updatedAt: now });
+      await batch.commit();
+      // A guest offer has no account behind it — the website reaches the guest
+      // over the share channel instead, so there is nobody to notify here.
+      if (offer.supplierId && !offer.isGuestOffer) {
         await addDoc(collection(db, "users", offer.supplierId, "notifications"), {
           userId: offer.supplierId,
           type: "offer_accepted",
-          title: isRTL ? "🎉 تم قبول عرضك" : "🎉 Your offer was accepted",
+          title: isRTL ? "تم قبول عرضك" : "Your offer was accepted",
           message: isRTL
             ? `تم قبول عرضك لـ "${offer.rfqTitle ?? selectedRfq.title}"`
             : `Your offer for "${offer.rfqTitle ?? selectedRfq.title}" was accepted`,
@@ -147,7 +155,7 @@ export default function CompareScreen() {
       }
       setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, status: OFFER_STATUS.ACCEPTED } : o));
     } catch (e: any) {
-      Alert.alert(isRTL ? "خطأ" : "Error", e?.message || (isRTL ? "فشل قبول العرض" : "Failed to accept offer"));
+      Alert.alert(t.common.error, t.errors.generic);
     } finally {
       setProcessing(null);
     }
@@ -200,7 +208,7 @@ export default function CompareScreen() {
     return colors.cta;
   };
 
-  const topPad = insets.top + (Platform.OS === "web" ? 67 : 16);
+  const topPad = headerTopPadding(insets.top, 16);
 
   /* ══════════════════════════════════════════
      VIEW A — RFQ list

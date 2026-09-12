@@ -27,6 +27,9 @@ const KEY = "mdmak.designPreview";
 
 export function isPreview(): boolean {
   if (Platform.OS !== "web" || typeof window === "undefined") return false;
+  // Never in a production build: a design-QA export opts in explicitly with
+  // EXPO_PUBLIC_DESIGN_PREVIEW=1, and a dev server always may.
+  if (!__DEV__ && process.env.EXPO_PUBLIC_DESIGN_PREVIEW !== "1") return false;
   try {
     return window.sessionStorage.getItem(KEY) === "1";
   } catch {

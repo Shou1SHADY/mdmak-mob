@@ -4,11 +4,11 @@ import {
   Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { updateDoc, deleteField, collection, query, where, getDocs } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
-import { tabScreenBottomPadding } from "@/lib/layout";
+import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import type { LegalDoc } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DocumentUploadRow } from "@/components/DocumentUploadRow";
 import { router } from "expo-router";
-import { CATEGORIES, SAUDI_CITIES, displayCity } from "@/constants/data";
+import Constants from "expo-constants";
+import { CATEGORIES, SAUDI_CITIES, displayCity, displayCategory, normalizeCategoryToAr } from "@/constants/data";
 import { ProfileTourGuide, useProfileTour } from "@/components/ProfileTourGuide";
 
 /* ─── Quick Action Pill ─── */
@@ -72,8 +73,15 @@ export default function SupplierProfileScreen() {
 
   const [editingSpecs, setEditingSpecs] = useState(false);
   const [editingInfo, setEditingInfo] = useState(false);
-  const [selectedSpecs, setSelectedSpecs] = useState<string[]>(organization?.specializations ?? []);
-  const [selectedAreas, setSelectedAreas] = useState<string[]>(organization?.serviceAreas ?? []);
+  // Editing starts from what the supplier last asked for (pending), else the
+  // approved set — the same choice the website's profile page makes. Values
+  // are normalised to the canonical Arabic names the website stores; an older
+  // build of this app saved the English labels.
+  const draftSpecs = () =>
+    (organization?.pendingSpecializations ?? organization?.specializations ?? []).map(normalizeCategoryToAr);
+  const draftAreas = () => organization?.pendingCoverageCities ?? organization?.coverageCities ?? [];
+  const [selectedSpecs, setSelectedSpecs] = useState<string[]>(draftSpecs);
+  const [selectedAreas, setSelectedAreas] = useState<string[]>(draftAreas);
 
   const [orgName, setOrgName] = useState(organization?.name ?? "");
   const [crNumber, setCrNumber] = useState(organization?.crNumber ?? "");
@@ -97,6 +105,15 @@ export default function SupplierProfileScreen() {
   useEffect(() => {
     if (organization?.documents) setDocuments(organization.documents);
   }, [organization?.documents]);
+
+  // Auth may resolve after mount; refresh the drafts when the record arrives,
+  // but never under the supplier's fingers mid-edit.
+  useEffect(() => {
+    if (editingSpecs) return;
+    setSelectedSpecs(draftSpecs());
+    setSelectedAreas(draftAreas());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organization]);
 
   const fadeAnim = useState(new Animated.Value(0))[0];
   const infoFadeAnim = useState(new Animated.Value(0))[0];
@@ -147,8 +164,10 @@ export default function SupplierProfileScreen() {
     const isProfileComplete = !!(orgName?.trim() && phone?.trim() && crNumber?.trim() && taxNumber?.trim() && city?.trim() && location?.trim());
     try {
       await updateDoc(identityRef(), {
-        companyName: orgName, orgName, crNumber,
-        taxNumber, phone, city, location, website, description,
+        companyName: orgName, crNumber,
+        // The website reads `phone` and its SMS routes fall back to
+        // `phoneNumber`; write both so a number entered here is found either way.
+        taxNumber, phone, phoneNumber: phone, city, location, website, description,
         profileCompleted: isProfileComplete,
       });
       await refreshUser();
@@ -172,13 +191,22 @@ export default function SupplierProfileScreen() {
     setEditingInfo(false);
   };
 
+  const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+
+  // Specializations and coverage cities go live only after Mdmak approves
+  // them: firestore.rules rejects a supplier's write to the live fields, so
+  // edits land on pending* exactly as they do on the website, and an admin
+  // copies them across. Reverting to the approved set withdraws the request
+  // instead of re-submitting it.
   const handleSave = async () => {
     if (!user?.organizationId) return;
     setSaving(true);
     try {
+      const approvedSpecsNow = (organization?.specializations ?? []).map(normalizeCategoryToAr);
+      const approvedAreasNow = organization?.coverageCities ?? [];
       await updateDoc(identityRef(), {
-        specializations: selectedSpecs,
-        serviceAreas: selectedAreas,
+        pendingSpecializations: sameSet(selectedSpecs, approvedSpecsNow) ? deleteField() : selectedSpecs,
+        pendingCoverageCities: sameSet(selectedAreas, approvedAreasNow) ? deleteField() : selectedAreas,
       });
       await refreshUser();
       setEditingSpecs(false);
@@ -190,8 +218,8 @@ export default function SupplierProfileScreen() {
   };
 
   const handleCancelEdit = () => {
-    setSelectedSpecs(organization?.specializations ?? []);
-    setSelectedAreas(organization?.serviceAreas ?? []);
+    setSelectedSpecs(draftSpecs());
+    setSelectedAreas(draftAreas());
     setEditingSpecs(false);
   };
 
@@ -200,7 +228,9 @@ export default function SupplierProfileScreen() {
     setDocuments(updated);
     if (user?.uid) {
       try {
-        await updateDoc(identityRef(), { documents: updated });
+        // The website's field. `documents` was this app's own name for it,
+        // and nothing on the website ever read it.
+        await updateDoc(identityRef(), { legalDocuments: updated });
       } catch {
         Alert.alert(t.common.error, t.profile.saveFailed);
       }
@@ -231,7 +261,7 @@ export default function SupplierProfileScreen() {
     { ok: !!organization?.taxNumber,                             label: t.profile.taxNumber },
     { ok: !!organization?.city,                                  label: t.profile.city },
     { ok: !!organization?.location,                              label: t.profile.location },
-    { ok: (organization?.specializations?.length ?? 0) > 0,     label: t.supplierProfile.specializations },
+    { ok: (organization?.specializations?.length ?? 0) > 0 || (organization?.pendingSpecializations?.length ?? 0) > 0, label: t.supplierProfile.specializations },
     { ok: !!organization?.documents?.cr?.url,                    label: t.profile.docCR },
     { ok: !!organization?.documents?.vat?.url,                   label: t.profile.docVAT },
   ];
@@ -239,6 +269,10 @@ export default function SupplierProfileScreen() {
   const missingFields = completenessChecks.filter((c) => !c.ok).map((c) => c.label);
 
   const initial = (organization?.name ?? user?.displayName ?? "S").trim().charAt(0).toUpperCase();
+  const approvedSpecs = organization?.specializations ?? [];
+  const approvedAreas = organization?.coverageCities ?? [];
+  const hasPending =
+    organization?.pendingSpecializations != null || organization?.pendingCoverageCities != null;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -247,7 +281,7 @@ export default function SupplierProfileScreen() {
         colors={colors.gradientPrimary}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + (Platform.OS === "web" ? 48 : 12) }]}>
+        style={[styles.header, { paddingTop: headerTopPadding(insets.top, 12) }]}>
         {/* Top bar */}
         <View style={[styles.headerTop, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>{t.profile.title}</Text>
@@ -512,12 +546,14 @@ export default function SupplierProfileScreen() {
                   <TouchableOpacity
                     key={cat.id}
                     style={[styles.chip, {
-                      borderColor: selectedSpecs.includes(cat.label) ? colors.primaryText : colors.border,
-                      backgroundColor: selectedSpecs.includes(cat.label) ? colors.primaryText + "15" : "transparent",
+                      borderColor: selectedSpecs.includes(cat.labelAr) ? colors.primaryText : colors.border,
+                      backgroundColor: selectedSpecs.includes(cat.labelAr) ? colors.primaryText + "15" : "transparent",
                     }]}
-                    onPress={() => toggleSpec(cat.label)}
+                    onPress={() => toggleSpec(cat.labelAr)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selectedSpecs.includes(cat.labelAr) }}
                   >
-                    <Text style={[styles.chipText, { color: selectedSpecs.includes(cat.label) ? colors.primaryText : colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{cat.label}</Text>
+                    <Text style={[styles.chipText, { color: selectedSpecs.includes(cat.labelAr) ? colors.primaryText : colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{isRTL ? cat.labelAr : cat.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -543,28 +579,50 @@ export default function SupplierProfileScreen() {
             </Animated.View>
           ) : (
             <View style={{ gap: 12 }}>
-              {(organization?.specializations?.length ?? 0) > 0 ? (
+              {hasPending && (
+                <View style={[styles.pendingBox, { backgroundColor: colors.warning + "12", borderColor: colors.warning + "40" }]}>
+                  <View style={[styles.pendingHead, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                    <Feather name="clock" size={14} color={colors.warning} />
+                    <Text style={[styles.pendingTitle, { color: colors.warning, textAlign: isRTL ? "right" : "left" }]}>{t.supplierProfile.pendingApproval}</Text>
+                  </View>
+                  <Text style={[styles.pendingHint, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>{t.supplierProfile.pendingHint}</Text>
+                  <View style={styles.chipsGrid}>
+                    {(organization?.pendingSpecializations ?? []).map((spec, i) => (
+                      <View key={`ps-${i}`} style={[styles.chip, { borderColor: colors.warning + "60", backgroundColor: "transparent" }]}>
+                        <Text style={[styles.chipText, { color: colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{displayCategory(spec, isRTL)}</Text>
+                      </View>
+                    ))}
+                    {(organization?.pendingCoverageCities ?? []).map((area, i) => (
+                      <View key={`pc-${i}`} style={[styles.areaChip, { backgroundColor: colors.warning + "1A" }]}>
+                        <Feather name="map-pin" size={10} color={colors.warning} />
+                        <Text style={[styles.areaChipText, { color: colors.foreground }]} numberOfLines={1} ellipsizeMode="tail">{displayCity(area, isRTL)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+              {approvedSpecs.length > 0 ? (
                 <View style={styles.chipsGrid}>
-                  {organization?.specializations?.map((spec, i) => (
+                  {approvedSpecs.map((spec, i) => (
                     <View key={i} style={[styles.chip, { borderColor: colors.border, backgroundColor: colors.muted }]}>
-                      <Text style={[styles.chipText, { color: colors.mutedForeground }]} numberOfLines={1} ellipsizeMode="tail">{spec}</Text>
+                      <Text style={[styles.chipText, { color: colors.mutedForeground }]} numberOfLines={1} ellipsizeMode="tail">{displayCategory(spec, isRTL)}</Text>
                     </View>
                   ))}
                 </View>
-              ) : (
+              ) : !hasPending ? (
                 <View style={[styles.emptyState, { backgroundColor: colors.muted + "40" }]}>
                   <Feather name="layers" size={20} color={colors.outline} />
                   <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t.supplierProfile.noSpecializations}</Text>
-                  <TouchableOpacity onPress={() => setEditingSpecs(true)}>
-                    <Text style={[styles.emptyAction, { color: colors.cta }]}>{t.common.next}</Text>
+                  <TouchableOpacity onPress={() => setEditingSpecs(true)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: "center" }}>
+                    <Text style={[styles.emptyAction, { color: colors.cta }]}>{t.supplierProfile.editSpecializations}</Text>
                   </TouchableOpacity>
                 </View>
-              )}
-              {(organization?.serviceAreas?.length ?? 0) > 0 && (
+              ) : null}
+              {approvedAreas.length > 0 && (
                 <View style={{ gap: 6 }}>
                   <Text style={[styles.subLabel, { color: colors.outline }]}>{t.supplierProfile.serviceAreas}</Text>
                   <View style={styles.chipsGrid}>
-                    {organization?.serviceAreas?.map((area, i) => (
+                    {approvedAreas.map((area, i) => (
                       <View key={i} style={[styles.areaChip, { backgroundColor: colors.accentBlueSoft }]}>
                         <Feather name="map-pin" size={10} color={colors.cta} />
                         <Text style={[styles.areaChipText, { color: colors.cta }]} numberOfLines={1} ellipsizeMode="tail">{displayCity(area, isRTL)}</Text>
@@ -615,7 +673,7 @@ export default function SupplierProfileScreen() {
         </TouchableOpacity>
 
         <Text style={[styles.version, { color: colors.outline }]}>
-          Mdmak Tech v1.0
+          Mdmak Tech v{Constants.expoConfig?.version ?? "1.0.0"}
         </Text>
       </ScrollView>
 
@@ -704,6 +762,10 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: "center", gap: 8, padding: 20, borderRadius: 12 },
   emptyText: { fontSize: 14, fontFamily: "Inter_500Medium" },
   emptyAction: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  pendingBox: { borderRadius: 12, borderWidth: 1, padding: 12, gap: 8 },
+  pendingHead: { alignItems: "center", gap: 6 },
+  pendingTitle: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", flex: 1 },
+  pendingHint: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 
   // Menu
   menuRow: { alignItems: "center", gap: 14, paddingVertical: 14, paddingHorizontal: 10 },

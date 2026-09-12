@@ -24,6 +24,24 @@ mobile backend.
 |---|---|---|
 | `EXPO_PUBLIC_FIREBASE_*` (6 vars) | No | Fallbacks in `lib/firebase.ts` point at the production project already; also set explicitly in `eas.json` production profile. |
 | `EXPO_PUBLIC_FIREBASE_CLIENT_ID` | For native Google sign-in | The **Web client** OAuth 2.0 client ID from Google Cloud Console → Credentials (Firebase project). Web builds use `signInWithPopup` and don't need it. Set it as an EAS environment variable for production builds. |
+| `EXPO_PUBLIC_SITE_URL` | UAT builds | Base URL of the website whose API the app calls for registration (`/api/invitations/*`), the access-request form and the AI assistant. Defaults to `https://mdmaktech.sa`; set the UAT site's URL in `.env.uat`. |
+| `EXPO_PUBLIC_DESIGN_PREVIEW` | Design QA only | `1` re-enables the `/design-preview` fixture harness in a production web export. Never set it for a build users receive. |
+
+## Registration and the website's API
+
+Accounts are created by invitation only (as on the website since 2026-08-04).
+The register screen resolves the invitation token against
+`GET {SITE_URL}/api/invitations/lookup`, creates the Firebase Auth user, then
+calls `POST {SITE_URL}/api/invitations/accept` with the user's ID token; the
+website creates the Firestore profile and links the organization. Native
+builds call these routes directly. **A PWA build is a different origin** from
+the website, so the website's `src/middleware.ts` allow-lists the PWA origins
+(`src/lib/cors.ts`: `mdmak-mobile-uat.web.app`, its `firebaseapp.com` twin,
+and localhost dev servers on UAT). A new hosting site must be added there — or
+to the website's `CORS_EXTRA_ORIGINS` env — before its PWA can register.
+Google sign-in from a PWA additionally needs the PWA's domain in the Firebase
+project's Auth → Authorized domains. Sign-in with email, and everything after
+it, is Firestore-direct and unaffected.
 
 ## One-time EAS setup
 

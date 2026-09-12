@@ -13,8 +13,10 @@ import {
   arrayUnion,
   documentId,
 } from 'firebase/firestore';
+import { router } from 'expo-router';
 import { db } from '@/lib/firebase';
-import { useAuth, type UserRole } from '@/context/AuthContext';
+import { SITE_URL } from '@/lib/site-api';
+import { useAuth, type AppUser, type UserRole } from '@/context/AuthContext';
 import type { Language } from '@/context/LanguageContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -70,7 +72,8 @@ type RagContext = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'https://mdmaktech.sa';
+// The website hosts the RAG endpoint; one source of truth for its URL.
+const API_BASE = SITE_URL;
 
 function genId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -142,29 +145,33 @@ async function buildContext(
   return ctx;
 }
 
-async function executeAction(action: PendingAction, userId: string): Promise<void> {
+async function executeAction(action: PendingAction, user: AppUser): Promise<void> {
   const p = action.params;
   switch (action.type) {
     case 'submitOffer':
-      await addDoc(collection(db, 'offers'), {
-        rfqId: p.rfqId,
-        supplierId: userId,
-        price: Number(p.price) || 0,
-        notes: p.notes ?? '',
-        status: 'Pending',
-        createdAt: serverTimestamp(),
-      });
+      // An offer is a full document the website queries on a dozen fields
+      // (contractorOrgId, deliveryBatches, the Arabic status vocabulary…). The
+      // submit-offer screen builds it through lib/contracts.ts; a thin record
+      // written from here reached nobody's inbox and could not be withdrawn.
+      if (!p.rfqId) throw new Error('Missing rfqId');
+      router.push(`/(supplier)/submit-offer/${p.rfqId}` as never);
       break;
     case 'createInquiry':
+      // Same shape the website's supplier RFQ page writes, so the contractor
+      // sees who asked.
       await addDoc(collection(db, `rfqs/${p.rfqId}/inquiries`), {
         question: p.question,
-        userId,
-        supplierId: userId,
-        createdAt: serverTimestamp(),
+        userId: user.uid,
+        supplierId: user.uid,
+        organizationId: user.organizationId,
+        supplierName: user.orgName || user.displayName,
+        submittedByUserId: user.uid,
+        submittedByUserName: user.displayName,
+        createdAt: new Date().toISOString(),
       });
       break;
     case 'favoriteSupplier':
-      await updateDoc(fsDoc(db, 'users', userId), {
+      await updateDoc(fsDoc(db, 'users', user.uid), {
         favoriteSuppliers: arrayUnion(p.supplierId),
       });
       break;
@@ -264,7 +271,7 @@ export function useAIChat() {
     if (!user) return;
     const msg = messages.find(m => m.id === messageId);
     if (!msg?.pendingAction) return;
-    await executeAction(msg.pendingAction, user.uid);
+    await executeAction(msg.pendingAction, user);
     contextRef.current = null;
     setMessages(prev =>
       prev.map(m => m.id === messageId ? { ...m, actionExecuted: true } : m)

@@ -23,6 +23,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { headerTopPadding } from "@/lib/layout";
 
 /**
  * The hero is sized per render, not once at import.
@@ -99,8 +100,10 @@ export default function LoginScreen() {
           ? t.auth.errors.userDisabled
           : err.code === "auth/network-request-failed"
           ? t.auth.errors.networkError
+          : err.code === "auth/no-profile"
+          ? t.auth.errors.noProfile
           : err.message || t.auth.errors.genericLogin;
-      Alert.alert(t.auth.login.title, msg);
+      Alert.alert(err.code === "auth/no-profile" ? t.auth.errors.noProfileTitle : t.auth.login.title, msg);
     } finally {
       setLoading(false);
     }
@@ -119,6 +122,10 @@ export default function LoginScreen() {
     } catch (err: any) {
       if (err.code === "auth/popup-closed-by-user") return;
       if (err.message?.includes("cancelled") || err.message?.includes("cancel")) return;
+      if (err.code === "auth/no-profile") {
+        Alert.alert(t.auth.errors.noProfileTitle, t.auth.errors.noProfile);
+        return;
+      }
       const msg =
         err.code === "auth/popup-blocked"
           ? t.auth.login.popupBlocked
@@ -134,41 +141,33 @@ export default function LoginScreen() {
   const handleForgotPassword = async () => {
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
-      Alert.alert(
-        isRTL ? "استعادة كلمة المرور" : "Reset Password",
-        isRTL ? "أدخل بريدك الإلكتروني أولاً في حقل البريد" : "Enter your email address above first, then tap 'Forgot password?' again."
-      );
+      Alert.alert(t.auth.login.resetTitle, t.auth.login.resetEnterEmail);
       return;
     }
     if (!/\S+@\S+\.\S+/.test(trimmedEmail)) {
-      Alert.alert(isRTL ? "بريد غير صالح" : "Invalid Email", t.auth.validation.emailInvalid);
+      Alert.alert(t.auth.login.resetTitle, t.auth.validation.emailInvalid);
       return;
     }
     setResetLoading(true);
     try {
       await sendPasswordResetEmail(auth, trimmedEmail);
-      Alert.alert(
-        isRTL ? "تم إرسال الرابط ✓" : "Email Sent ✓",
-        isRTL
-          ? `تم إرسال رابط إعادة تعيين كلمة المرور إلى ${trimmedEmail}. تحقق من صندوق الوارد والبريد العشوائي.`
-          : `A password reset link was sent to ${trimmedEmail}. Check your inbox and spam folder.`
-      );
+      Alert.alert(t.auth.login.resetTitle, t.auth.login.resetSent.replace("{email}", trimmedEmail));
     } catch (err: any) {
       const msg =
         err.code === "auth/user-not-found"
-          ? (isRTL ? "لا يوجد حساب بهذا البريد الإلكتروني" : "No account found with this email address.")
+          ? t.auth.login.resetNoAccount
           : err.code === "auth/too-many-requests"
-          ? (isRTL ? "طلبات كثيرة جداً. حاول لاحقاً." : "Too many requests. Please try again later.")
+          ? t.auth.errors.tooManyRequests
           : err.code === "auth/network-request-failed"
           ? t.auth.errors.networkError
-          : (isRTL ? "فشل إرسال الرابط. حاول مرة أخرى." : "Failed to send reset email. Please try again.");
-      Alert.alert(isRTL ? "خطأ" : "Error", msg);
+          : t.auth.login.resetFailed;
+      Alert.alert(t.common.error, msg);
     } finally {
       setResetLoading(false);
     }
   };
 
-  const topPad = insets.top + (Platform.OS === "web" ? 24 : 20);
+  const topPad = headerTopPadding(insets.top, 20);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.drawerBg }]}>
