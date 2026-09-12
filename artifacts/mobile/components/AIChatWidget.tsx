@@ -23,7 +23,7 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
-import { useLanguage } from '@/context/LanguageContext';
+import { useT, useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { useAIChat, type AIChatMessage, type PendingAction, type NavLink } from '@/hooks/useAIChat';
 
@@ -47,60 +47,9 @@ function resolveNavPath(webPath: string): string {
     .replace(/^\/supplier\/offers$/, '/(supplier)/offers');
 }
 
-// ── i18n strings ──────────────────────────────────────────────────────────────
+// ── i18n ─────────────────────────────────────────────────────────────────────
 
-const STRINGS = {
-  ar: {
-    title: 'المساعد الذكي',
-    subtitle: 'مدعوم بمدماك تيك',
-    placeholder: 'اسأل عن بياناتك...',
-    thinking: 'جارٍ التحليل...',
-    confirm: 'تأكيد',
-    dismiss: 'إلغاء',
-    done: 'تم تنفيذ الإجراء بنجاح',
-    open: 'مساعد مدماك الذكي',
-    close: 'إغلاق',
-    clear: 'مسح المحادثة',
-    price: 'السعر',
-    sar: 'ر.س',
-    actionFailed: 'فشل تنفيذ الإجراء. يرجى المحاولة مرة أخرى.',
-    welcome: {
-      Contractor: 'مرحباً! يمكنني مساعدتك في إدارة طلبات العروض ومراجعة الأسعار الواردة.',
-      Supplier: 'مرحباً! يمكنني مساعدتك في البحث عن طلبات العروض وتقديم عروض أسعار.',
-      Admin: 'مرحباً! يمكنني مساعدتك في استعراض إحصائيات المنصة.',
-    },
-    prompts: {
-      Contractor: ['كم طلب عروض لديّ؟', 'أحدث العروض الواردة', 'ابحث عن موردين'],
-      Supplier: ['طلبات العروض المتاحة', 'كم عرضاً قدمت؟', 'طلبات في الرياض'],
-      Admin: ['إحصائيات المنصة', 'عدد المستخدمين', 'أكثر الفئات نشاطاً'],
-    },
-  },
-  en: {
-    title: 'AI Assistant',
-    subtitle: 'Powered by Mdmak Tech',
-    placeholder: 'Ask about your data...',
-    thinking: 'Thinking...',
-    confirm: 'Confirm',
-    dismiss: 'Cancel',
-    done: 'Action completed successfully',
-    open: 'Mdmak AI Assistant',
-    close: 'Close',
-    clear: 'Clear chat',
-    price: 'Price',
-    sar: 'SAR',
-    actionFailed: 'Action failed. Please try again.',
-    welcome: {
-      Contractor: "Hello! I can help you manage RFQs and review incoming offers.",
-      Supplier: "Hello! I can help you find available RFQs and submit offers.",
-      Admin: "Hello! I can help you review platform statistics.",
-    },
-    prompts: {
-      Contractor: ["How many RFQs do I have?", "Latest incoming offers?", "Find suppliers"],
-      Supplier: ["Available RFQs for me?", "How many offers submitted?", "RFQs in Riyadh"],
-      Admin: ["Platform statistics", "Active users count", "Top categories"],
-    },
-  },
-} as const;
+type AssistantStrings = ReturnType<typeof useT>['assistant'];
 
 type Role = 'Contractor' | 'Supplier' | 'Admin';
 
@@ -151,7 +100,7 @@ function ActionCard({
   onDismiss,
 }: {
   msg: AIChatMessage;
-  strings: (typeof STRINGS)[keyof typeof STRINGS];
+  strings: AssistantStrings;
   colors: ReturnType<typeof useColors>;
   onConfirm: () => void;
   onDismiss: () => void;
@@ -244,7 +193,7 @@ function MessageBubble({
   onDismiss,
 }: {
   msg: AIChatMessage;
-  strings: (typeof STRINGS)[keyof typeof STRINGS];
+  strings: AssistantStrings;
   colors: ReturnType<typeof useColors>;
   onConfirm: () => void;
   onDismiss: () => void;
@@ -314,7 +263,7 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
-  const S = STRINGS[language];
+  const S = useT().assistant;
   const { messages, isLoading, sendMessage, confirmAction, dismissAction, clear } = useAIChat();
 
   const [isOpen, setIsOpen] = useState(false);

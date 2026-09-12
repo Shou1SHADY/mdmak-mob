@@ -658,8 +658,8 @@ export default function SupplierProfileScreen() {
             isLast={false}
           />
           <MenuRow
-            icon="globe" label={isRTL ? "English" : "العربية"} color={colors.success}
-            subtitle={isRTL ? "Switch to English" : "التبديل إلى العربية"}
+            icon="globe" label={t.profile.languageToggle} color={colors.success}
+            subtitle={t.profile.languageToggleHint}
             onPress={() => setLanguage(isRTL ? "en" : "ar")}
             isRTL={isRTL}
             isLast={true}

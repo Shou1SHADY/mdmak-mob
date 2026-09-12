@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
+import type { Translations } from "@/i18n";
 import { useNotifications, AppNotification } from "@/hooks/useNotifications";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -46,7 +47,7 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
   }
 }
 
-function formatRelativeTime(ts: any, isRTL: boolean): string {
+function formatRelativeTime(ts: any, isRTL: boolean, t: Translations): string {
   if (!ts) return "";
   try {
     const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -55,11 +56,11 @@ function formatRelativeTime(ts: any, isRTL: boolean): string {
     const hours = Math.floor(diffMs / 3600000);
     const days = Math.floor(diffMs / 86400000);
 
-    if (mins < 1) return isRTL ? "الآن" : "just now";
-    if (mins < 60) return isRTL ? `منذ ${mins} دقيقة` : `${mins}m ago`;
-    if (hours < 24) return isRTL ? `منذ ${hours} ساعة` : `${hours}h ago`;
-    if (days === 1) return isRTL ? "أمس" : "Yesterday";
-    if (days < 7) return isRTL ? `منذ ${days} أيام` : `${days}d ago`;
+    if (mins < 1) return t.notifications.justNow;
+    if (mins < 60) return t.notifications.minutesAgo.replace("{n}", String(mins));
+    if (hours < 24) return t.notifications.hoursAgo.replace("{n}", String(hours));
+    if (days === 1) return t.common.yesterday;
+    if (days < 7) return t.notifications.daysAgo.replace("{n}", String(days));
     return d.toLocaleDateString(isRTL ? "ar-SA" : "en-SA", { month: "short", day: "numeric" });
   } catch { return ""; }
 }
@@ -74,6 +75,7 @@ function NotifCard({
   colors: ReturnType<typeof useColors>;
   fallbackTitle: string;
 }) {
+  const t = useT();
   const { icon, color } = notifMeta(item.type, colors);
 
   return (
@@ -124,12 +126,12 @@ function NotifCard({
 
           <View style={[styles.footer, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <Text style={[styles.time, { color: colors.outline }]}>
-              {formatRelativeTime(item.createdAt, isRTL)}
+              {formatRelativeTime(item.createdAt, isRTL, t)}
             </Text>
             {!item.read && (
               <View style={[styles.unreadPill, { backgroundColor: colors.accent + "18" }]}>
                 <Text style={[styles.unreadPillText, { color: colors.accent }]}>
-                  {isRTL ? "جديد" : "New"}
+                  {t.notifications.new}
                 </Text>
               </View>
             )}
@@ -187,7 +189,7 @@ export default function ContractorNotificationsScreen() {
           </Text>
           {unreadCount > 0 && (
             <Text style={styles.headerSub}>
-              {unreadCount} {isRTL ? "غير مقروءة" : "unread"}
+              {t.notifications.unreadCount.replace("{n}", String(unreadCount))}
             </Text>
           )}
         </View>
@@ -211,7 +213,7 @@ export default function ContractorNotificationsScreen() {
         <View style={[styles.errorBanner, { backgroundColor: colors.destructive + "12", borderBottomColor: colors.destructive + "25" }]}>
           <Feather name="alert-triangle" size={14} color={colors.destructive} />
           <Text style={[styles.errorText, { color: colors.destructive }]}>
-            {isRTL ? "تعذّر تحميل الإشعارات" : "Failed to load notifications"}
+            {t.notifications.loadFailed}
           </Text>
         </View>
       )}
@@ -221,7 +223,7 @@ export default function ContractorNotificationsScreen() {
         <View style={styles.loadingRow}>
           <ActivityIndicator size="small" color={colors.accent} />
           <Text style={[styles.loadingText, { color: colors.outline }]}>
-            {isRTL ? "جارٍ التحميل..." : "Loading..."}
+            {t.common.loading}
           </Text>
         </View>
       )}

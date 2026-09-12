@@ -68,11 +68,11 @@ export function RFQCard({ rfq, onPress, showOffers = false }: RFQCardProps) {
     try {
       const d = ts.toDate ? ts.toDate() : new Date(ts);
       const diff = Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      if (diff < 0) return { label: isRTL ? "انتهى الموعد" : "Expired", color: colors.destructive, urgent: true };
-      if (diff === 0) return { label: isRTL ? "اليوم" : "Today", color: colors.destructive, urgent: true };
-      if (diff === 1) return { label: isRTL ? "غداً" : "Tomorrow", color: colors.destructive, urgent: true };
-      if (diff <= 3) return { label: isRTL ? `${diff} أيام` : `${diff}d left`, color: colors.destructive, urgent: true };
-      if (diff <= 7) return { label: isRTL ? `${diff} أيام` : `${diff}d left`, color: colors.warning, urgent: false };
+      if (diff < 0) return { label: t.cards.expired, color: colors.destructive, urgent: true };
+      if (diff === 0) return { label: t.cards.today, color: colors.destructive, urgent: true };
+      if (diff === 1) return { label: t.cards.tomorrow, color: colors.destructive, urgent: true };
+      if (diff <= 3) return { label: t.cards.daysLeft.replace("{n}", String(diff)), color: colors.destructive, urgent: true };
+      if (diff <= 7) return { label: t.cards.daysLeft.replace("{n}", String(diff)), color: colors.warning, urgent: false };
       return { label: formatDate(ts) ?? "", color: colors.mutedForeground, urgent: false };
     } catch {
       return null;

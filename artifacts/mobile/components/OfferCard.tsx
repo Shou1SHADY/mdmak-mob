@@ -54,11 +54,11 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
   const rankC = rankTone ? toneColors(colors, rankTone) : undefined;
   const rankColor = rankC?.fg;
   const rankLabel = rank === 1
-    ? (isRTL ? "الأدنى سعراً" : "Lowest")
+    ? t.cards.rankLowest
     : rank === 2
-    ? (isRTL ? "الثاني" : "2nd")
+    ? t.cards.rankSecond
     : rank === 3
-    ? (isRTL ? "الثالث" : "3rd")
+    ? t.cards.rankThird
     : undefined;
 
   const formatCurrency = (amount: string) =>
@@ -168,7 +168,7 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
             <View style={[styles.reductionRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <Feather name="trending-down" size={12} color={colors.warning} />
               <Text style={[styles.reductionLabel, { color: colors.warning }]}>
-                {isRTL ? "السعر المطلوب:" : "Target price:"}
+                {t.cards.targetPrice}
                 {"  "}
                 <Text style={[styles.reductionValue, { color: colors.warning }]}>
                   {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(offer.targetPrice)}

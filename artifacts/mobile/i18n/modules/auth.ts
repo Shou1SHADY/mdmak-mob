@@ -99,6 +99,11 @@ export const en = {
     city: "City",
     role: "Your Role",
     completeSetup: "Complete Setup",
+    searchCities: "Search cities...",
+    resultOne: "result",
+    resultMany: "results",
+    noCities: "No cities found",
+    noCitiesHint: "Try searching in Arabic or English",
   },
   welcome: {
     skip: "Skip",
@@ -218,6 +223,11 @@ export const ar: typeof en = {
     city: "المدينة",
     role: "نوع الحساب",
     completeSetup: "إكمال الإعداد",
+    searchCities: "ابحث عن مدينة...",
+    resultOne: "نتيجة",
+    resultMany: "نتيجة",
+    noCities: "لا توجد نتائج",
+    noCitiesHint: "\"{query}\" غير موجودة في القائمة",
   },
   welcome: {
     skip: "تخطي",

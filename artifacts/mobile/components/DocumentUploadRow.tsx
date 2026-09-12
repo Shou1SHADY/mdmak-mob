@@ -37,10 +37,10 @@ export function DocumentUploadRow({ docType, label, required, doc, orgId, onUpda
       if (supported) {
         await Linking.openURL(doc.url);
       } else {
-        Alert.alert(t.common.error, isRTL ? "تعذر فتح الملف" : "Cannot open this file");
+        Alert.alert(t.common.error, t.profile.cannotOpenFile);
       }
     } catch {
-      Alert.alert(t.common.error, isRTL ? "تعذر فتح الملف" : "Cannot open this file");
+      Alert.alert(t.common.error, t.profile.cannotOpenFile);
     }
   };
 

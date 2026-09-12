@@ -32,15 +32,17 @@ interface ListItem {
   label?: string;
 }
 
-function toDateLabel(ts: any, isRTL: boolean): string {
+type DateLabels = { today: string; yesterday: string };
+
+function toDateLabel(ts: any, isRTL: boolean, labels: DateLabels): string {
   if (!ts) return "";
   try {
     const d = ts.toDate ? ts.toDate() : new Date(ts);
     const now = new Date();
     const isToday = d.toDateString() === now.toDateString();
     const isYesterday = new Date(now.getTime() - 86400000).toDateString() === d.toDateString();
-    if (isToday) return isRTL ? "اليوم" : "Today";
-    if (isYesterday) return isRTL ? "أمس" : "Yesterday";
+    if (isToday) return labels.today;
+    if (isYesterday) return labels.yesterday;
     return d.toLocaleDateString(isRTL ? "ar-SA" : "en-SA", { weekday: "long", month: "short", day: "numeric" });
   } catch { return ""; }
 }
@@ -53,7 +55,7 @@ function toTimeLabel(ts: any, isRTL: boolean): string {
   } catch { return ""; }
 }
 
-function buildListItems(messages: Message[], isRTL: boolean): ListItem[] {
+function buildListItems(messages: Message[], isRTL: boolean, labels: DateLabels): ListItem[] {
   // messages come inverted (newest first), we need newest-first for inverted FlatList
   const result: ListItem[] = [];
   let lastDateKey = "";
@@ -69,7 +71,7 @@ function buildListItems(messages: Message[], isRTL: boolean): ListItem[] {
     // Insert date separator below this message (inverted list = older messages at bottom)
     if (dateKey && dateKey !== lastDateKey) {
       lastDateKey = dateKey;
-      result.push({ type: "date", id: `date-${dateKey}`, label: toDateLabel(ts, isRTL) });
+      result.push({ type: "date", id: `date-${dateKey}`, label: toDateLabel(ts, isRTL, labels) });
     }
   }
   return result;
@@ -173,7 +175,7 @@ export default function ChatScreen() {
         setChatError(null);
         setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Message)));
       },
-      (err) => setChatError(err.message || "Failed to load messages")
+      (err) => setChatError(err.message || t.chat.loadFailed)
     );
     return unsub;
   }, [validChatId, chatId, t.common.error]);
@@ -214,14 +216,14 @@ export default function ChatScreen() {
         }).catch(() => {});
       }
     } catch (err: any) {
-      Alert.alert(t.common.error, err.message || "Failed to send message");
+      Alert.alert(t.common.error, err.message || t.chat.sendFailed);
       setText(msg);
     } finally {
       setSending(false);
     }
   };
 
-  const listItems = buildListItems(messages, isRTL);
+  const listItems = buildListItems(messages, isRTL, t.common);
 
   return (
     <KeyboardAvoidingView
@@ -389,7 +391,7 @@ export default function ChatScreen() {
           ]}
           onPress={sendMessage}
           disabled={!text.trim() || sending || !validChatId}
-          accessibilityLabel={t.common.send || "Send"}
+          accessibilityLabel={t.common.send}
           accessibilityRole="button"
         >
           {sending ? (

@@ -42,6 +42,7 @@ function CityPickerModal({
   isRTL: boolean;
   colors: ReturnType<typeof useColors>;
 }) {
+  const t = useT();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -70,7 +71,7 @@ function CityPickerModal({
             {/* Header */}
             <View style={styles.sheetHeader}>
               <Text style={[styles.sheetTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-                {isRTL ? "اختر المدينة" : "Select City"}
+                {t.rfq.selectCity}
               </Text>
               <TouchableOpacity
                 onPress={() => { onClose(); setQuery(""); }}
@@ -86,7 +87,7 @@ function CityPickerModal({
               <Feather name="search" size={16} color={colors.mutedForeground} />
               <TextInput
                 style={[styles.searchInput, { color: colors.foreground }]}
-                placeholder={isRTL ? "ابحث عن مدينة..." : "Search cities..."}
+                placeholder={t.onboarding.searchCities}
                 placeholderTextColor={colors.mutedForeground}
                 value={query}
                 onChangeText={setQuery}
@@ -104,7 +105,7 @@ function CityPickerModal({
             {/* Result count hint when searching */}
             {query.length > 0 && (
               <Text style={[styles.resultCount, { color: colors.mutedForeground }]}>
-                {filtered.length} {isRTL ? "نتيجة" : filtered.length === 1 ? "result" : "results"}
+                {filtered.length} {filtered.length === 1 ? t.onboarding.resultOne : t.onboarding.resultMany}
               </Text>
             )}
 
@@ -123,10 +124,10 @@ function CityPickerModal({
                 <View style={styles.emptyState}>
                   <Feather name="map-pin" size={28} color={colors.mutedForeground} />
                   <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                    {isRTL ? "لا توجد نتائج" : "No cities found"}
+                    {t.onboarding.noCities}
                   </Text>
                   <Text style={[styles.emptyHint, { color: colors.mutedForeground }]}>
-                    {isRTL ? `"${query}" غير موجودة في القائمة` : `Try searching in Arabic or English`}
+                    {t.onboarding.noCitiesHint.replace("{query}", query)}
                   </Text>
                 </View>
               )}

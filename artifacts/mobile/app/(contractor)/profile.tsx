@@ -277,7 +277,7 @@ export default function ContractorProfileScreen() {
                 {completeness === 100 ? t.common.success : t.profile.completenessTitle}
               </Text>
               <Text style={[styles.compSubtitle, { color: colors.outline }]}>
-                {completeness === 100 ? "Your profile is complete" : `${missingFields.length} fields remaining`}
+                {completeness === 100 ? t.profile.profileComplete : `${missingFields.length} ${t.profile.fieldsRemaining}`}
               </Text>
             </View>
             <Text style={[styles.compPct, { color: completeness === 100 ? colors.success : colors.cta }]}>
@@ -411,7 +411,7 @@ export default function ContractorProfileScreen() {
                           </Text>
                         ) : (
                           <Text style={[styles.infoEmpty, { color: colors.warning, textAlign: isRTL ? "right" : "left" }]}>
-                            {isRTL ? "اضغط للإضافة" : "Tap to add"}
+                            {t.profile.tapToAdd}
                           </Text>
                         )}
                       </View>
@@ -481,8 +481,8 @@ export default function ContractorProfileScreen() {
             isLast={false}
           />
           <MenuRow
-            icon="globe" label={isRTL ? "English" : "العربية"} color={colors.success}
-            subtitle={isRTL ? "Switch to English" : "التبديل إلى العربية"}
+            icon="globe" label={t.profile.languageToggle} color={colors.success}
+            subtitle={t.profile.languageToggleHint}
             onPress={() => setLanguage(isRTL ? "en" : "ar")}
             isRTL={isRTL}
             isLast={true}
@@ -507,7 +507,7 @@ export default function ContractorProfileScreen() {
           <View style={[styles.actionSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[styles.actionHandle, { backgroundColor: colors.border }]} />
             <Text style={[styles.actionTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
-              {isRTL ? "الإعدادات" : "Settings"}
+              {t.profile.settings}
             </Text>
 
             {/* Edit Profile */}
@@ -517,10 +517,10 @@ export default function ContractorProfileScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.actionLabel, { color: colors.foreground }]}>
-                  {isRTL ? "تعديل الملف الشخصي" : "Edit Profile"}
+                  {t.profile.editProfile}
                 </Text>
                 <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>
-                  {isRTL ? "تحديث بيانات شركتك" : "Update your company info"}
+                  {t.profile.editProfileHint}
                 </Text>
               </View>
               <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={16} color={colors.outline} />
@@ -537,10 +537,10 @@ export default function ContractorProfileScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.actionLabel, { color: colors.foreground }]}>
-                  {isRTL ? "English" : "العربية"}
+                  {t.profile.languageToggle}
                 </Text>
                 <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>
-                  {isRTL ? "Switch to English" : "التبديل إلى العربية"}
+                  {t.profile.languageToggleHint}
                 </Text>
               </View>
               <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={16} color={colors.outline} />

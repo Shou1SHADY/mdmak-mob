@@ -85,7 +85,7 @@ export default function ContractorChatsScreen() {
       const isToday = d.toDateString() === now.toDateString();
       const isYesterday = new Date(now.getTime() - 86400000).toDateString() === d.toDateString();
       if (isToday) return d.toLocaleTimeString(isRTL ? "ar-SA" : "en-SA", { hour: "2-digit", minute: "2-digit" });
-      if (isYesterday) return isRTL ? "أمس" : "Yesterday";
+      if (isYesterday) return t.common.yesterday;
       return d.toLocaleDateString(isRTL ? "ar-SA" : "en-SA", { month: "short", day: "numeric" });
     } catch { return ""; }
   };
@@ -115,7 +115,7 @@ export default function ContractorChatsScreen() {
           </Text>
           {totalUnread > 0 && (
             <Text style={styles.headerSub}>
-              {totalUnread} {isRTL ? "رسالة غير مقروءة" : "unread"}
+              {t.chat.unreadCount.replace("{n}", String(totalUnread))}
             </Text>
           )}
         </View>
@@ -185,7 +185,7 @@ export default function ContractorChatsScreen() {
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
-                    {item.lastMessage ?? (isRTL ? "لا توجد رسائل بعد" : "No messages yet")}
+                    {item.lastMessage ?? t.chat.noMessages}
                   </Text>
                   {hasUnread ? (
                     <View style={[styles.badge, { backgroundColor: colors.accent }]}>
