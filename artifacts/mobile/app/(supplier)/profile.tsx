@@ -284,38 +284,38 @@ export default function SupplierProfileScreen() {
         style={[styles.header, { paddingTop: headerTopPadding(insets.top, 12) }]}>
         {/* Top bar */}
         <View style={[styles.headerTop, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-          <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>{t.profile.title}</Text>
+          <Text style={[styles.headerTitle, { color: colors.textWhite }]}>{t.profile.title}</Text>
           <TouchableOpacity
-            style={[styles.settingsBtn, { backgroundColor: "rgba(255,255,255,0.12)" }]}
+            style={[styles.settingsBtn, { backgroundColor: colors.textWhite12 }]}
             onPress={() => setEditingSpecs(!editingSpecs)}
             activeOpacity={0.7}
           >
-            <Feather name={editingSpecs ? "x" : "edit-2"} size={18} color="#FFFFFF" />
+            <Feather name={editingSpecs ? "x" : "edit-2"} size={18} color={colors.textWhite} />
           </TouchableOpacity>
         </View>
 
         {/* Avatar + name */}
         <View style={styles.avatarSection}>
-          <View style={[styles.avatarRing, { borderColor: "rgba(255,255,255,0.3)" }]}>
-            <View style={[styles.avatar, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+          <View style={[styles.avatarRing, { borderColor: colors.textWhite40 }]}>
+            <View style={[styles.avatar, { backgroundColor: colors.textWhite12 }]}>
               <Text style={[styles.avatarText, { fontFamily: "Inter_600SemiBold" }]}>{initial}</Text>
             </View>
           </View>
-          <Text style={[styles.name, { color: "#FFFFFF" }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={[styles.name, { color: colors.textWhite }]} numberOfLines={1} ellipsizeMode="tail">
             {organization?.name ?? user?.displayName}
           </Text>
-          <Text style={[styles.email, { color: "rgba(255,255,255,0.6)" }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={[styles.email, { color: colors.textWhite60 }]} numberOfLines={1} ellipsizeMode="tail">
             {user?.email}
           </Text>
           <View style={styles.badges}>
-            <View style={[styles.roleBadge, { backgroundColor: "rgba(255,255,255,0.1)", borderColor: "rgba(255,255,255,0.25)" }]}>
-              <Feather name="truck" size={10} color="#20CBD5" />
-              <Text style={[styles.roleText, { color: "#20CBD5" }]}>{t.auth.register.supplier}</Text>
+            <View style={[styles.roleBadge, { backgroundColor: colors.textWhite12, borderColor: colors.textWhite40 }]}>
+              <Feather name="truck" size={10} color={colors.accent} />
+              <Text style={[styles.roleText, { color: colors.accent }]}>{t.auth.register.supplier}</Text>
             </View>
             {organization?.verified && (
-              <View style={[styles.verifiedBadge, { backgroundColor: "rgba(255,255,255,0.1)", borderColor: "rgba(255,255,255,0.2)" }]}>
-                <Feather name="check-circle" size={12} color="#FFFFFF" />
-                <Text style={[styles.verifiedText, { color: "#FFFFFF" }]}>{t.supplierProfile.verified}</Text>
+              <View style={[styles.verifiedBadge, { backgroundColor: colors.textWhite12, borderColor: "rgba(255,255,255,0.2)" }]}>
+                <Feather name="check-circle" size={12} color={colors.textWhite} />
+                <Text style={[styles.verifiedText, { color: colors.textWhite }]}>{t.supplierProfile.verified}</Text>
               </View>
             )}
           </View>
@@ -455,7 +455,7 @@ export default function SupplierProfileScreen() {
                     {
                       flexDirection: isRTL ? "row-reverse" : "row",
                       backgroundColor: (!item.value && item.required) ? colors.destructive + "06" : "transparent",
-                      borderRadius: 10,
+                      borderRadius: 12,
                       borderWidth: (!item.value && item.required) ? 1 : 0,
                       borderColor: (!item.value && item.required) ? colors.destructive + "25" : "transparent",
                     },
@@ -497,7 +497,7 @@ export default function SupplierProfileScreen() {
               </View>
               <View>
                 <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.profile.documents}</Text>
-                <Text style={[{ fontSize: 11, fontFamily: "Inter_400Regular", color: colors.outline, marginTop: 1 }]}>
+                <Text style={[{ fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", color: colors.outline, marginTop: 1 }]}>
                   {t.profile.documentsDesc}
                 </Text>
               </View>
@@ -638,27 +638,27 @@ export default function SupplierProfileScreen() {
         {/* ── Menu ── */}
         <Card style={{ borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 6 }}>
           <MenuRow
-            icon="users" label={t.profile.teamMembers} color="#0369A1"
+            icon="users" label={t.profile.teamMembers} color={colors.cta}
             subtitle={t.profile.manageTeam}
             onPress={() => router.push("/(supplier)/team")}
             isRTL={isRTL}
           />
           <MenuRow
-            icon="bell" label={t.profile.notifications} color="#f59e0b"
+            icon="bell" label={t.profile.notifications} color={colors.warning}
             subtitle={t.profile.notifPreferences}
             onPress={() => router.push("/(supplier)/notifications")}
             isRTL={isRTL}
             isLast={false}
           />
           <MenuRow
-            icon="package" label={t.profile.orders} color="#8b5cf6"
+            icon="package" label={t.profile.orders} color={colors.purple}
             subtitle={t.profile.viewOrders}
             onPress={() => router.push("/(supplier)/orders")}
             isRTL={isRTL}
             isLast={false}
           />
           <MenuRow
-            icon="globe" label={isRTL ? "English" : "العربية"} color="#22c55e"
+            icon="globe" label={isRTL ? "English" : "العربية"} color={colors.success}
             subtitle={isRTL ? "Switch to English" : "التبديل إلى العربية"}
             onPress={() => setLanguage(isRTL ? "en" : "ar")}
             isRTL={isRTL}
@@ -696,19 +696,19 @@ const styles = StyleSheet.create({
   // Header
   header: { paddingHorizontal: 16, paddingBottom: 24 },
   headerTop: { alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
-  headerTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
-  settingsBtn: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  headerTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
+  settingsBtn: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   avatarSection: { alignItems: "center", gap: 8 },
   avatarRing: { width: 96, height: 96, borderRadius: 28, borderWidth: 3, alignItems: "center", justifyContent: "center" },
   avatar: { width: 86, height: 86, borderRadius: 25, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 36, color: "#FFFFFF" },
-  name: { fontSize: 20, fontFamily: "Inter_600SemiBold", textAlign: "center", marginTop: 4 },
-  email: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
+  avatarText: { fontSize: 24, lineHeight: 40, color: "#FFFFFF" },
+  name: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold", textAlign: "center", marginTop: 4 },
+  email: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", textAlign: "center" },
   badges: { flexDirection: "row", gap: 8, marginTop: 4 },
   roleBadge: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5, borderWidth: 1 },
-  roleText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  roleText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   verifiedBadge: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1 },
-  verifiedText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  verifiedText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 
   // Quick actions
 
@@ -717,51 +717,51 @@ const styles = StyleSheet.create({
 
   // Completeness
   compHeader: { alignItems: "center", marginBottom: 10 },
-  compIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  compTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1, marginHorizontal: 10 },
-  compSubtitle: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
-  compPct: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
-  compBar: { height: 5, borderRadius: 3, overflow: "hidden", marginTop: 4 },
-  compFill: { height: "100%", borderRadius: 3 },
+  compIcon: { width: 32, height: 32, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  compTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", flex: 1, marginHorizontal: 10 },
+  compSubtitle: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", marginTop: 1 },
+  compPct: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
+  compBar: { height: 5, borderRadius: 4, overflow: "hidden", marginTop: 4 },
+  compFill: { height: "100%", borderRadius: 4 },
   compMissing: { alignItems: "center", gap: 6, marginTop: 8 },
-  compMissingText: { fontSize: 11, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  compMissingText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
   compChips: { flexWrap: "wrap", gap: 6 },
   compChip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
-  compChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  compChipText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   requiredBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
-  requiredBadgeText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  requiredBadgeText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 
   // Stats grid
   statsGrid: { flexDirection: "row", gap: 8 },
-  statCard: { borderRadius: 14, borderWidth: 1, alignItems: "center", padding: 14, gap: 6 },
+  statCard: { borderRadius: 16, borderWidth: 1, alignItems: "center", padding: 14, gap: 6 },
   statIconBox: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  statValue: { fontSize: 24, lineHeight: 32, fontFamily: "Inter_600SemiBold" },
+  statValue: { fontSize: 24, lineHeight: 40, fontFamily: "Inter_600SemiBold" },
   statLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", textAlign: "center" },
 
   // Cards
   cardHeader: { alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
-  cardHeaderIcon: { width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  cardTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  editBtn: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  cardHeaderIcon: { width: 32, height: 32, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  cardTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  editBtn: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   editActions: { flexDirection: "row", gap: 10, marginTop: 4 },
 
   // Info rows (view mode)
   infoRow: { alignItems: "center", gap: 12, paddingVertical: 8 },
-  infoIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  infoLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, marginBottom: 2 },
-  infoValue: { fontSize: 15, fontFamily: "Inter_400Regular" },
+  infoIcon: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  infoLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  infoValue: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
 
   // Specializations
-  label: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  subLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const },
+  label: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
+  subLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", },
   chipsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { borderRadius: 8, borderWidth: 1.5, paddingHorizontal: 10, paddingVertical: 6, maxWidth: 140 },
-  chipText: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  chipText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   areaChip: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  areaChipText: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  areaChipText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   emptyState: { alignItems: "center", gap: 8, padding: 20, borderRadius: 12 },
-  emptyText: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  emptyAction: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  emptyText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
+  emptyAction: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   pendingBox: { borderRadius: 12, borderWidth: 1, padding: 12, gap: 8 },
   pendingHead: { alignItems: "center", gap: 6 },
   pendingTitle: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", flex: 1 },
@@ -769,12 +769,12 @@ const styles = StyleSheet.create({
 
   // Menu
   menuRow: { alignItems: "center", gap: 14, paddingVertical: 14, paddingHorizontal: 10 },
-  menuIconBox: { width: 40, height: 40, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  menuLabel: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  menuSubtitle: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  menuIconBox: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  menuLabel: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  menuSubtitle: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 
   // Sign out
-  signOutBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5 },
-  signOutText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  version: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 4 },
+  signOutBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 16, borderWidth: 1.5 },
+  signOutText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  version: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 4 },
 });

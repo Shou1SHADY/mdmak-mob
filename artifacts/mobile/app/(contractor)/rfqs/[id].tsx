@@ -302,14 +302,14 @@ export default function RFQDetailScreen() {
         <ScreenHeader title={t.rfq.detail} showBack />
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 32 }}>
           <Feather name="alert-triangle" size={36} color={colors.destructive} />
-          <Text style={{ fontSize: 15, fontFamily: "Inter_400Regular", color: colors.destructive, textAlign: "center" }}>
+          <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", color: colors.destructive, textAlign: "center" }}>
             {fetchError}
           </Text>
           <TouchableOpacity
             style={{ paddingHorizontal: 28, paddingVertical: 11, borderRadius: 12, borderWidth: 1.5, borderColor: colors.cta }}
             onPress={fetchData}
           >
-            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: colors.cta }}>
+            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, lineHeight: 24, color: colors.cta }}>
               {isRTL ? "إعادة المحاولة" : "Retry"}
             </Text>
           </TouchableOpacity>
@@ -580,31 +580,31 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 14 },
   rfqCard: { padding: 18, borderWidth: 1, gap: 8 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  category: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" },
-  rfqTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
-  desc: { fontSize: 14, lineHeight: 21 },
+  category: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", },
+  rfqTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
+  desc: { fontSize: 14, lineHeight: 24 },
   metaGrid: { flexDirection: "row", gap: 16, marginTop: 4 },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 5 },
-  metaText: { fontSize: 13 },
+  metaText: { fontSize: 14, lineHeight: 24 },
 
   offersHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  sectionTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
+  sectionTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
   sortRow: { flexDirection: "row", gap: 6 },
   sortChip: { borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
-  sortChipText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  sortChipText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 
   emptyOffers: { borderWidth: 1, padding: 32, alignItems: "center", gap: 8 },
-  emptyText: { fontSize: 14 },
+  emptyText: { fontSize: 14, lineHeight: 24 },
   offerActions: { gap: 7, marginTop: 4, flexWrap: "wrap", alignItems: "center" },
 
   priceSummary: { flexDirection: "row", borderWidth: 1, paddingVertical: 14, paddingHorizontal: 8 },
   priceSumItem: { flex: 1, alignItems: "center", gap: 3 },
-  priceSumLabel: { fontSize: 10, fontFamily: "Inter_400Regular", textTransform: "uppercase" },
-  priceSumValue: { fontSize: 15 },
+  priceSumLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", },
+  priceSumValue: { fontSize: 14, lineHeight: 24 },
   priceSumDivider: { width: 1, alignSelf: "stretch", marginVertical: 4 },
 
-  exportBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
-  exportBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  exportBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
+  exportBtnText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   boqSection: { borderRadius: 16, borderWidth: 1, padding: 16 },
 
   // Modal
@@ -620,36 +620,35 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 24,
   },
-  handle: { width: 40, height: 4, borderRadius: 2 },
-  modalTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
+  handle: { width: 40, height: 4, borderRadius: 4 },
+  modalTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
 
   currentPriceRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
   },
-  currentPriceText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  currentPriceText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
 
-  fieldLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  fieldLabel: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   priceInput: {
     height: 52,
     borderWidth: 1.5,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 16,
-    fontSize: 20,
+    fontSize: 17, lineHeight: 28,
     fontFamily: "Inter_600SemiBold",
   },
   noteInput: {
     minHeight: 80,
     borderWidth: 1.5,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingTop: 12,
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
-    lineHeight: 20,
   },
 });

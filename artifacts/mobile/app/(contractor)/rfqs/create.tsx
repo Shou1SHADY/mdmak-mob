@@ -341,7 +341,7 @@ export default function CreateRFQScreen() {
               <View style={styles.catSection}>
                 <View style={[styles.catHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
                   <Text style={[styles.label, { color: colors.foreground }]}>{t.rfq.district}</Text>
-                  <Text style={[{ fontSize: 12, color: colors.outline, fontFamily: "Inter_400Regular" }]}>
+                  <Text style={[{ fontSize: 12, lineHeight: 20, color: colors.outline, fontFamily: "Inter_400Regular" }]}>
                     {" "}({isRTL ? "اختياري" : "optional"})
                   </Text>
                 </View>
@@ -420,7 +420,7 @@ export default function CreateRFQScreen() {
           <View style={styles.form}>
             <View style={{ gap: 4 }}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.boq.title}</Text>
-              <Text style={{ fontSize: 13, fontFamily: "Inter_400Regular", color: colors.outline }}>
+              <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", color: colors.outline }}>
                 {isRTL ? "اختياري — أضف بنوداً لتحديد المواد والكميات التي يحتاجها الموردون" : "Optional — add items so suppliers know exactly what to price"}
               </Text>
             </View>
@@ -462,14 +462,14 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
+    borderRadius: 12,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17, lineHeight: 28,
     fontFamily: "Inter_600SemiBold",
   },
   stepLabel: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },
   progressBar: {
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: 3,
-    borderRadius: 2,
+    borderRadius: 4,
   },
   content: {
     padding: 20,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 17, lineHeight: 28,
     fontFamily: "Inter_600SemiBold",
     marginBottom: 4,
   },
@@ -501,12 +501,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   label: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
-    textTransform: "uppercase" as const,
   },
   required: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },
   selectedChip: {
@@ -520,7 +519,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   selectedChipText: {
-    fontSize: 13,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },
 
@@ -545,10 +544,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   catCardText: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_400Regular",
     textAlign: "center",
-    lineHeight: 16,
   },
   checkMark: {
     position: "absolute",
@@ -556,7 +554,7 @@ const styles = StyleSheet.create({
     right: 8,
     width: 18,
     height: 18,
-    borderRadius: 9,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -577,7 +575,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   cityCardText: {
-    fontSize: 13,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
   },
 

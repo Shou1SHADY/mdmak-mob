@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   handle: {
     width: 36,
     height: 4,
-    borderRadius: 2,
+    borderRadius: 4,
   },
   header: {
     flexDirection: 'row',
@@ -635,16 +635,15 @@ const styles = StyleSheet.create({
   headerIcon: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: 'rgba(32,203,213,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: 'Inter_600SemiBold',
-    lineHeight: 18,
   },
   headerSubRow: {
     flexDirection: 'row',
@@ -655,12 +654,12 @@ const styles = StyleSheet.create({
   onlineDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: 4,
     backgroundColor: '#4ade80',
   },
   headerSub: {
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 10,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_400Regular',
   },
   headerActions: {
@@ -670,7 +669,7 @@ const styles = StyleSheet.create({
   headerBtn: {
     width: 30,
     height: 30,
-    borderRadius: 15,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -700,9 +699,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   welcomeText: {
-    fontSize: 13,
+    fontSize: 14, lineHeight: 24,
     textAlign: 'center',
-    lineHeight: 20,
     paddingHorizontal: 20,
     fontFamily: 'Inter_400Regular',
   },
@@ -720,7 +718,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   promptChipText: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_400Regular',
   },
   msgRow: {
@@ -735,7 +733,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -755,8 +753,7 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   bubbleText: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14, lineHeight: 24,
     fontFamily: 'Inter_400Regular',
   },
   dotsRow: {
@@ -768,7 +765,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 7,
     height: 7,
-    borderRadius: 3.5,
+    borderRadius: 4.5,
   },
   navLinks: {
     flexDirection: 'row',
@@ -786,13 +783,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   navChipText: {
-    fontSize: 11,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_400Regular',
   },
   actionCard: {
     marginTop: 8,
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 12,
     width: '100%',
   },
@@ -802,14 +799,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionLabel: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_600SemiBold',
-    lineHeight: 16,
   },
   actionDesc: {
-    fontSize: 11,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_400Regular',
-    lineHeight: 15,
     marginTop: 2,
   },
   priceRow: {
@@ -821,11 +816,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   priceLabel: {
-    fontSize: 11,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_400Regular',
   },
   priceValue: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_600SemiBold',
   },
   actionBtns: {
@@ -839,23 +834,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   confirmBtnText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_600SemiBold',
   },
   dismissBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dismissBtnText: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_400Regular',
   },
   actionDone: {
@@ -868,12 +863,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   actionDoneText: {
-    fontSize: 11,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_400Regular',
   },
   actionError: {
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_400Regular',
     marginTop: 4,
   },
@@ -889,11 +884,10 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14, lineHeight: 24,
     minHeight: 40,
   },
   sendBtn: {
@@ -905,7 +899,7 @@ const styles = StyleSheet.create({
   },
   thinkingText: {
     textAlign: 'center',
-    fontSize: 10,
+    fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_400Regular',
     paddingBottom: 6,
   },

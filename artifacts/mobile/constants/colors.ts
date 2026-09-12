@@ -32,14 +32,17 @@ const colors = {
 
     accent: "#20CBD5",
     accentForeground: "#04252A", // white on teal is 2.0:1
+    // Teal as INK (a badge's text) cannot be the teal itself on a light ground;
+    // this is the deep teal that reads on white and on accentSoft.
+    accentText: "#0B6E75",
 
-    destructive: "#DC2626", // 4.9:1 both ways — was #EF4444 at 3.8:1
+    destructive: "#C81E1E", // AA on white, on the page and on destructiveSoft
     destructiveForeground: "#FFFFFF",
 
     success: "#0F7A4C", // 5.4:1 both ways — was #12A063 at 3.4:1
     successForeground: "#FFFFFF",
 
-    warning: "#A16207", // 5.0:1 both ways — was #F59E0B at 2.2:1
+    warning: "#976000", // AA on white, on the page and on warningSoft
     warningForeground: "#FFFFFF",
 
     border: "#E1E6EE",
@@ -72,7 +75,7 @@ const colors = {
     accentBlueSoft: "#E0E7FF",
     accentPurpleSoft: "#EEF2FF",
     surfaceGray: "#F1F5F9",
-    outline: "#64748B", // 4.6:1 — was #94A3B8 at 2.5:1
+    outline: "#5F6E82", // AA on the deeper page ground, on white and on muted
     onSurfaceVariant: "#334155", // 10.9:1
 
     chartColors: ["#0F172A", "#0369A1", "#12A063", "#334155", "#64748B"],
@@ -131,6 +134,7 @@ const colors = {
 
     accent: "#2DD4BF",
     accentForeground: "#032622",
+    accentText: "#2DD4BF",
 
     destructive: "#FF7070",
     destructiveForeground: "#1A0505",

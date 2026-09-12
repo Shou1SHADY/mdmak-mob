@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   heroBackBtn: {
     width: 38,
     height: 38,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "flex-start",
@@ -287,16 +287,14 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.2)",
   },
   categoryText: {
-    fontSize: 11,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",
     color: "rgba(255,255,255,0.9)",
-    textTransform: "uppercase",
   },
   heroTitle: {
-    fontSize: 22,
+    fontSize: 24, lineHeight: 40,
     fontFamily: "Inter_600SemiBold",
     color: "#FFFFFF",
-    lineHeight: 30,
   },
   heroStats: {
     gap: 16,
@@ -307,7 +305,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   heroStatText: {
-    fontSize: 13,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
     color: "rgba(255,255,255,0.75)",
   },
@@ -336,12 +334,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },
   desc: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
   },
 
@@ -353,7 +350,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     padding: 12,
   },
@@ -365,13 +362,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   detailLabel: {
-    fontSize: 10,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_400Regular",
-    textTransform: "uppercase",
     marginBottom: 2,
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },
 
@@ -396,7 +392,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   msgBtnText: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },
   closedBanner: {
@@ -410,7 +406,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   closedText: {
-    fontSize: 13,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
     textAlign: "center",
     flex: 1,

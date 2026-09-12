@@ -271,8 +271,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.12)",
   },
-  headerTitle: { fontSize: 18, color: "#FFFFFF" },
-  headerSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.65)", marginTop: 2 },
+  headerTitle: { fontSize: 17, lineHeight: 28, color: "#FFFFFF" },
+  headerSub: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.65)", marginTop: 2 },
   markAllBtn: {
     width: 40,
     height: 40,
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
   },
-  errorText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+  errorText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", flex: 1 },
 
   loadingRow: {
     flexDirection: "row",
@@ -298,12 +298,12 @@ const styles = StyleSheet.create({
     padding: 16,
     justifyContent: "center",
   },
-  loadingText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  loadingText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
 
   list: { padding: 14, paddingTop: 16 },
 
   card: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     overflow: "hidden",
   },
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 42,
     height: 42,
-    borderRadius: 13,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -323,22 +323,20 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4, marginTop: 4, flexShrink: 0 },
   notifTitle: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
-    lineHeight: 20,
   },
   notifBody: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
   },
 
   footer: { alignItems: "center", justifyContent: "space-between", marginTop: 2 },
-  time: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  time: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   unreadPill: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 20,
   },
-  unreadPillText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  unreadPillText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 });

@@ -207,10 +207,10 @@ const styles = StyleSheet.create({
     width: 4,
   },
   stripeRTL: {
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
-    borderTopLeftRadius: 3,
-    borderBottomLeftRadius: 3,
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4,
   },
   inner: {
     flex: 1,

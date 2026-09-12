@@ -88,7 +88,7 @@ function ItemForm({ item, onChange, isRTL, colors, t }: ItemFormProps) {
             onPress={() => setUnitModal(true)}
             activeOpacity={0.75}
           >
-            <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.foreground }}>
+            <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", color: colors.foreground }}>
               {isRTL ? selectedUnit.labelAr : selectedUnit.labelEn}
             </Text>
             <Feather name="chevron-down" size={14} color={colors.outline} />
@@ -130,7 +130,7 @@ function ItemForm({ item, onChange, isRTL, colors, t }: ItemFormProps) {
                     ]}
                     onPress={() => { onChange({ ...item, unit: u.id }); setUnitModal(false); }}
                   >
-                    <Text style={{ fontSize: 15, fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular", color: active ? colors.primaryText : colors.foreground }}>
+                    <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: active ? "Inter_600SemiBold" : "Inter_400Regular", color: active ? colors.primaryText : colors.foreground }}>
                       {isRTL ? u.labelAr : u.labelEn}
                     </Text>
                     {active && <Feather name="check" size={16} color={colors.primaryText} />}
@@ -303,10 +303,10 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
 
             <View style={[styles.sheetActions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <TouchableOpacity style={[styles.sheetBtn, { borderWidth: 1, borderColor: colors.border }]} onPress={() => setAddModalVisible(false)}>
-                <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: colors.outline }}>{t.common.cancel}</Text>
+                <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: colors.outline }}>{t.common.cancel}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.sheetBtn, { backgroundColor: colors.primary, flex: 2 }]} onPress={handleSave}>
-                <Text style={{ fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#FFF" }}>{t.common.save}</Text>
+                <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: "#FFF" }}>{t.common.save}</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -318,48 +318,48 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
 
 const styles = StyleSheet.create({
   sectionHeader: { alignItems: "center", justifyContent: "space-between" },
-  headerIcon: { width: 32, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  sectionTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  sectionSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
+  headerIcon: { width: 32, height: 32, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  sectionTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  sectionSub: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", marginTop: 1 },
   addBtn: {
     flexDirection: "row", alignItems: "center", gap: 5,
     paddingHorizontal: 12, paddingVertical: 7,
-    borderRadius: 10, borderWidth: 1,
+    borderRadius: 12, borderWidth: 1,
   },
-  addBtnText: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  addBtnText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", color: "#FFF" },
 
-  emptyBox: { borderRadius: 14, borderWidth: 1, borderStyle: "dashed", padding: 28, alignItems: "center", gap: 8 },
-  emptyTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  emptyDesc: { fontSize: 12, fontFamily: "Inter_400Regular", textAlign: "center" },
+  emptyBox: { borderRadius: 16, borderWidth: 1, borderStyle: "dashed", padding: 28, alignItems: "center", gap: 8 },
+  emptyTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  emptyDesc: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", textAlign: "center" },
 
-  itemCard: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 10 },
+  itemCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
   itemHeader: { alignItems: "flex-start", gap: 10 },
-  indexBadge: { width: 26, height: 26, borderRadius: 7, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 },
-  indexText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
+  indexBadge: { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 },
+  indexText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   itemDesc: { fontSize: 14, fontFamily: "Inter_600SemiBold", lineHeight: 20 },
   itemActions: { gap: 8, flexShrink: 0 },
   iconBtn: { width: 28, height: 28, alignItems: "center", justifyContent: "center" },
   itemMeta: { gap: 6, flexWrap: "wrap" },
   metaChip: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 4 },
-  metaChipText: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  metaChipText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 
   // Form fields
-  fieldLabel: { fontSize: 12, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" },
-  input: { height: 50, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, fontSize: 14, fontFamily: "Inter_400Regular" },
+  fieldLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", },
+  input: { height: 50, borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
   unitBtn: { height: 50, justifyContent: "space-between", alignItems: "center", paddingHorizontal: 14 },
   row: { gap: 10 },
 
   // Unit picker modal
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center", justifyContent: "center", padding: 32 },
   unitPickerCard: { width: "100%", borderRadius: 20, borderWidth: 1, overflow: "hidden" },
-  unitPickerTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", padding: 16, paddingBottom: 8 },
+  unitPickerTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", padding: 16, paddingBottom: 8 },
   unitRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 14, paddingHorizontal: 16 },
 
   // Bottom sheet
   sheetOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
   sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 16, maxHeight: "90%" },
-  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 4 },
-  sheetTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
+  handle: { width: 40, height: 4, borderRadius: 4, alignSelf: "center", marginBottom: 4 },
+  sheetTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
   sheetActions: { gap: 10, marginTop: 8 },
-  sheetBtn: { flex: 1, height: 50, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  sheetBtn: { flex: 1, height: 50, borderRadius: 16, alignItems: "center", justifyContent: "center" },
 });

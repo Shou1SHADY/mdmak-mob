@@ -146,13 +146,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24, lineHeight: 40,
     fontFamily: "Inter_600SemiBold",
   },
   desc: {
-    fontSize: 15,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
-    lineHeight: 23,
   },
   missingCard: {
     borderRadius: 16,
@@ -161,7 +160,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   missingTitle: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
     marginBottom: 4,
   },
@@ -172,10 +171,10 @@ const styles = StyleSheet.create({
   missingDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: 4,
   },
   missingText: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
     flex: 1,
   },

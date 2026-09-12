@@ -367,10 +367,9 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontFamily: "Inter_400Regular",
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     color: "rgba(255,255,255,0.78)",
     textAlign: "center",
-    lineHeight: 24,
   },
 
   // Form panel
@@ -386,7 +385,7 @@ const styles = StyleSheet.create({
   handle: {
     width: 36,
     height: 4,
-    borderRadius: 2,
+    borderRadius: 4,
     alignSelf: "center",
     marginBottom: 4,
     opacity: 0.3,
@@ -402,14 +401,12 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 24,
-    lineHeight: 40,
+    fontSize: 24, lineHeight: 40,
     marginBottom: 4,
   },
   subheading: {
     fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    lineHeight: 24,
+    fontSize: 14, lineHeight: 24,
     marginBottom: 16,
   },
 
@@ -426,8 +423,7 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    lineHeight: 24,
+    fontSize: 14, lineHeight: 24,
   },
 
   // Divider
@@ -444,8 +440,7 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
-    lineHeight: 20,
+    fontSize: 12, lineHeight: 20,
   },
 
   // Social
@@ -461,18 +456,16 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     paddingVertical: 13,
     minHeight: 50,
-    borderRadius: 14,
+    borderRadius: 16,
   },
   googleG: {
-    fontSize: 17,
+    fontSize: 17, lineHeight: 28,
     fontWeight: "800" as const,
     color: "#4285F4",
-    lineHeight: 20,
   },
   socialLabel: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    lineHeight: 24,
+    fontSize: 14, lineHeight: 24,
   },
 
   // Sign up
@@ -485,7 +478,6 @@ const styles = StyleSheet.create({
   },
   signupText: {
     fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    lineHeight: 24,
+    fontSize: 14, lineHeight: 24,
   },
 });

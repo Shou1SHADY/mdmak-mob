@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 3,
   },
-  countText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  countText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 
   // Search row
   searchRow: {
@@ -610,20 +610,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 14,
     height: 46,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
   },
   clearBtn: { padding: 4 },
   clearIcon: {
     width: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
   filterBtn: {
     width: 46,
     height: 46,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  filterBadgeText: { fontSize: 9, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  filterBadgeText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", color: "#FFF" },
 
   // Active pills bar
   activePills: {
@@ -670,8 +670,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     maxWidth: 140,
   },
-  activePillText: { fontSize: 12, fontFamily: "Inter_600SemiBold", flexShrink: 1 },
-  clearAllText: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginLeft: 4 },
+  activePillText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", flexShrink: 1 },
+  clearAllText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", marginLeft: 4 },
 
   // List
   list: { padding: 16, gap: 0 },
@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
 
   // Sheet handle
   handleWrap: { alignItems: "center", paddingTop: 10, paddingBottom: 4 },
-  handle: { width: 40, height: 4, borderRadius: 2 },
+  handle: { width: 40, height: 4, borderRadius: 4 },
 
   // Modal header
   modalHeader: {
@@ -706,7 +706,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  modalTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
+  modalTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
   closeBtn: {
     width: 44,
     height: 44,
@@ -721,8 +721,8 @@ const styles = StyleSheet.create({
   // Filter sections
   filterSection: { gap: 12, paddingVertical: 14 },
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
-  sectionDot: { width: 6, height: 6, borderRadius: 3 },
-  sectionTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" },
+  sectionDot: { width: 6, height: 6, borderRadius: 4 },
+  sectionTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", },
 
   // Category chips
   chipsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -733,7 +733,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     maxWidth: 150,
   },
-  filterChipText: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  filterChipText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 
   // City chips
   cityScroll: { gap: 8, paddingRight: 4 },
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
-  statusDot: { width: 7, height: 7, borderRadius: 3.5 },
+  statusDot: { width: 7, height: 7, borderRadius: 4.5 },
 
   // Footer
   modalFooter: {
@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     height: 50,
-    borderRadius: 14,
+    borderRadius: 16,
   },
-  footerBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  footerBtnText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
 });

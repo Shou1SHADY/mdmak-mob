@@ -407,7 +407,7 @@ export default function CompareScreen() {
 
                   {offer.createdAt ? (
                     <View style={[styles.metricBlock, { backgroundColor: colors.border + "80" }]}>
-                      <Text style={[styles.metricValue, { color: colors.onSurfaceVariant, fontSize: 13 }]}>
+                      <Text style={[styles.metricValue, { color: colors.onSurfaceVariant, fontSize: 14, lineHeight: 24 }]}>
                         {fmtDate(offer.createdAt)}
                       </Text>
                       <Text style={[styles.metricLabel, { color: colors.outline }]}>{t.compare.sortDate}</Text>
@@ -448,11 +448,11 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 20,
+    fontSize: 17, lineHeight: 28,
   },
   headerSub: {
     fontFamily: "Inter_400Regular",
-    fontSize: 13,
+    fontSize: 14, lineHeight: 24,
     marginTop: 2,
   },
   backRow: {
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   },
   backLabel: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
+    fontSize: 14, lineHeight: 24,
   },
   centered: {
     flex: 1,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   errorText: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
     textAlign: "center",
   },
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   },
   retryBtnText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
   },
 
   /* RFQ list */
@@ -493,14 +493,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     gap: 12,
   },
   rfqTitle: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 14, lineHeight: 24,
   },
   rfqMeta: {
     alignItems: "center",
@@ -516,11 +515,11 @@ const styles = StyleSheet.create({
   },
   offersCount: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
   },
   rfqDeadline: {
     fontFamily: "Inter_400Regular",
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
   },
 
   /* Sort bar */
@@ -538,7 +537,7 @@ const styles = StyleSheet.create({
   },
   sortLabel: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 12.5,
+    fontSize: 14, lineHeight: 24,
   },
 
   /* Offer cards */
@@ -558,7 +557,7 @@ const styles = StyleSheet.create({
   },
   rankText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 11.5,
+    fontSize: 12, lineHeight: 20,
   },
   statusPill: {
     paddingHorizontal: 10,
@@ -567,11 +566,11 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 11.5,
+    fontSize: 12, lineHeight: 20,
   },
   supplierName: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
+    fontSize: 14, lineHeight: 24,
   },
   metricsRow: {
     gap: 8,
@@ -580,17 +579,16 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     gap: 2,
   },
   metricValue: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
+    fontSize: 14, lineHeight: 24,
   },
   metricLabel: {
     fontFamily: "Inter_400Regular",
-    fontSize: 10,
-    textTransform: "uppercase",
+    fontSize: 12, lineHeight: 20,
   },
   acceptBtn: {
     flexDirection: "row",
@@ -603,7 +601,7 @@ const styles = StyleSheet.create({
   },
   acceptText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     color: "#fff",
   },
 });

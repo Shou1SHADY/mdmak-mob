@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   sheetHandle: {
     width: 40,
     height: 4,
-    borderRadius: 2,
+    borderRadius: 4,
     alignSelf: "center",
     marginBottom: 8,
   },
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
   checkCircle: {
     width: 26,
     height: 26,
-    borderRadius: 13,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },

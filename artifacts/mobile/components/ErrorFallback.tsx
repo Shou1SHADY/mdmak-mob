@@ -190,15 +190,13 @@ const styles = StyleSheet.create({
     maxWidth: 600,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24, lineHeight: 40,
     fontFamily: "Inter_600SemiBold",
     textAlign: "center",
-    lineHeight: 40,
   },
   message: {
-    fontSize: 16,
+    fontSize: 14, lineHeight: 24,
     textAlign: "center",
-    lineHeight: 24,
   },
   topButton: {
     position: "absolute",
@@ -220,7 +218,7 @@ const styles = StyleSheet.create({
   },
   button: {
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 24,
     minWidth: 200,
     shadowColor: "#0369A1",
@@ -232,7 +230,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: "Inter_600SemiBold",
     textAlign: "center",
-    fontSize: 16,
+    fontSize: 14, lineHeight: 24,
   },
   modalOverlay: {
     flex: 1,
@@ -255,7 +253,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 17, lineHeight: 28,
     fontFamily: "Inter_600SemiBold",
   },
   closeButton: {
@@ -277,8 +275,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   errorText: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 12, lineHeight: 20,
     width: "100%",
   },
 });

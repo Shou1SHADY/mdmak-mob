@@ -481,13 +481,13 @@ export default function MyOffersScreen() {
 
 const styles = StyleSheet.create({
   countBadge: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 3 },
-  countText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  countText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 
   // Error state
   errorCenter: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 },
-  errorMsg: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center" },
+  errorMsg: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", textAlign: "center" },
   retryBtn: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, marginTop: 4 },
-  retryBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  retryBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14, lineHeight: 24 },
 
   // Stats bar
   statsBar: {
@@ -498,17 +498,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   statItem: { flex: 1, alignItems: "center", gap: 2 },
-  statValue: { fontSize: 20 },
-  statLabel: { fontSize: 10, fontFamily: "Inter_400Regular", textTransform: "uppercase" },
+  statValue: { fontSize: 17, lineHeight: 28 },
+  statLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", },
   statDivider: { width: 1, height: 28, marginHorizontal: 8 },
 
   // Filter
   filterBar: { paddingVertical: 10, borderBottomWidth: 1 },
   chipsScroll: { paddingHorizontal: 16, gap: 8 },
   chip: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
-  chipText: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  chipCount: { borderRadius: 10, paddingHorizontal: 6, paddingVertical: 1, minWidth: 18, alignItems: "center" },
-  chipCountText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  chipText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
+  chipCount: { borderRadius: 12, paddingHorizontal: 6, paddingVertical: 1, minWidth: 18, alignItems: "center" },
+  chipCountText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 
   list: { padding: 16 },
 
@@ -525,8 +525,8 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 24,
   },
-  handle: { width: 40, height: 4, borderRadius: 2 },
-  modalTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold" },
+  handle: { width: 40, height: 4, borderRadius: 4 },
+  modalTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
 
   targetPriceBox: {
     flexDirection: "row",
@@ -536,27 +536,27 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
   },
-  targetLabel: { fontSize: 11, fontFamily: "Inter_400Regular", textTransform: "uppercase" },
-  targetValue: { fontSize: 18, fontFamily: "Inter_600SemiBold", marginTop: 2 },
+  targetLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", },
+  targetValue: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold", marginTop: 2 },
 
   noteBox: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 10,
   },
-  noteText: { flex: 1, fontSize: 13, lineHeight: 19, fontFamily: "Inter_400Regular" },
+  noteText: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
 
-  currentLabel: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  newPriceLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginTop: 4 },
+  currentLabel: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
+  newPriceLabel: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", marginTop: 4 },
   priceInput: {
     height: 52,
     borderWidth: 1.5,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 16,
-    fontSize: 18,
+    fontSize: 17, lineHeight: 28,
     fontFamily: "Inter_600SemiBold",
   },
 
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
     elevation: 24,
   },
   withdrawIcon: { width: 60, height: 60, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-  withdrawTitle: { fontSize: 18, fontFamily: "Inter_600SemiBold", textAlign: "center" },
-  withdrawDesc: { fontSize: 14, lineHeight: 21, textAlign: "center", fontFamily: "Inter_400Regular" },
-  withdrawRfqTitle: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
+  withdrawTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold", textAlign: "center" },
+  withdrawDesc: { fontSize: 14, lineHeight: 24, textAlign: "center", fontFamily: "Inter_400Regular" },
+  withdrawRfqTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", textAlign: "center" },
 });

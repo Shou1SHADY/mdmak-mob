@@ -69,8 +69,7 @@ export function moduleTabScreenOptions(colors: ReturnType<typeof useColors>, ins
       // The label has to FIT. Each bar leaves the item 62-66px of usable
       // height; a 32px icon plus a 20px line plus the item's own padding
       // overflowed that and sheared the bottom off every label.
-      fontSize: 12,
-      lineHeight: 16,
+      fontSize: 12, lineHeight: 20,
       fontFamily: "Inter_600SemiBold",
       marginTop: 2,
     } as never,

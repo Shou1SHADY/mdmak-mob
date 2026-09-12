@@ -35,8 +35,20 @@ track orders. Shares the website's Firebase backend; there is no separate mobile
   canonical Firestore values. Keep in sync when the website list changes.
 - `artifacts/mobile/constants/colors.ts` — design tokens matching the website's
   Tailwind theme (primary #0F172A, accent #20CBD5, cta #0369A1, success #12A063)
-- `artifacts/mobile/i18n/` — ar/en dictionaries; parity enforced by the
-  `Translations` type (typecheck fails on missing keys)
+- `artifacts/mobile/i18n/modules/*.ts` — the dictionaries, one file per
+  module (core, auth, profile, procurement, team, crm, projects, inventory,
+  finance), each holding `en` and `ar` side by side with `ar` typed from
+  `en`. `en.ts`/`ar.ts` only assemble them and `Translations` is
+  `typeof en` — add strings in the module file, never in the assemblers.
+- `artifacts/mobile/lib/design.ts` — **the design system.** Four type sizes
+  (`type.caption/body/title/display`, two Inter weights, 1.6x line heights),
+  `space` on the 4pt grid, four `radius` values, and `toneColors()`: a badge,
+  chip or callout is coloured by MEANING (neutral, primary, cta, accent,
+  success, warning, destructive, purple) and resolves to a text colour and a
+  solid soft ground from `constants/colors.ts` in either theme. RFQ/offer
+  statuses carry a `tone` (`statusTone()` in constants/data.ts). No hex
+  literals in screens; `npm run check:contrast` verifies every pairing,
+  including each tone on its soft ground.
 - `artifacts/mobile/lib/contracts.ts` — **the shared Firestore document shapes.**
   `buildRfqDoc` / `buildOfferDoc` write every field the website queries on, and
   `readRfqLineItems` reads line items whichever app wrote them. Screens should

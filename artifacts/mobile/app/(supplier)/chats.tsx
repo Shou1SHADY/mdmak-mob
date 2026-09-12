@@ -206,8 +206,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
   },
-  headerTitle: { fontSize: 18, color: "#FFFFFF" },
-  headerSub: { fontSize: 12, color: "rgba(255,255,255,0.65)", fontFamily: "Inter_400Regular", marginTop: 2 },
+  headerTitle: { fontSize: 17, lineHeight: 28, color: "#FFFFFF" },
+  headerSub: { fontSize: 12, lineHeight: 20, color: "rgba(255,255,255,0.65)", fontFamily: "Inter_400Regular", marginTop: 2 },
 
   list: { padding: 14, paddingTop: 16 },
 
@@ -234,43 +234,42 @@ const styles = StyleSheet.create({
   avatar: {
     width: 50,
     height: 50,
-    borderRadius: 15,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
   },
-  avatarText: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
+  avatarText: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
   unreadDot: {
     position: "absolute",
     top: -3,
     right: -3,
     width: 13,
     height: 13,
-    borderRadius: 7,
+    borderRadius: 8,
     borderWidth: 2,
   },
 
   content: { flex: 1, gap: 5 },
 
   topRow: { alignItems: "center", justifyContent: "space-between", gap: 8 },
-  chatTitle: { fontSize: 14, flex: 1, flexShrink: 1 },
-  time: { fontSize: 11, fontFamily: "Inter_400Regular", flexShrink: 0 },
+  chatTitle: { fontSize: 14, lineHeight: 24, flex: 1, flexShrink: 1 },
+  time: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", flexShrink: 0 },
 
   bottomRow: { alignItems: "center", justifyContent: "space-between", gap: 8 },
   lastMsg: {
-    fontSize: 13,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
     flex: 1,
     flexShrink: 1,
-    lineHeight: 18,
   },
   badge: {
     minWidth: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 6,
   },
-  badgeText: { color: "#fff", fontSize: 10, fontFamily: "Inter_600SemiBold" },
+  badgeText: { color: "#fff", fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 });

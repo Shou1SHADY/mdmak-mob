@@ -393,7 +393,7 @@ export default function ChatScreen() {
           accessibilityRole="button"
         >
           {sending ? (
-            <Text style={{ color: "#FFFFFF", fontSize: 12 }}>…</Text>
+            <Text style={{ color: "#FFFFFF", fontSize: 12, lineHeight: 20 }}>…</Text>
           ) : (
             <Feather
               name={isRTL ? "send" : "send"}
@@ -425,8 +425,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.12)",
   },
   headerInfo: { flex: 1, gap: 2 },
-  headerTitle: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
-  headerSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)" },
+  headerTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
+  headerSub: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)" },
   headerStatusDot: { width: 8, height: 8, borderRadius: 4 },
 
   errorBanner: {
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
   },
-  errorText: { fontSize: 13, fontFamily: "Inter_400Regular", flex: 1 },
+  errorText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", flex: 1 },
 
   messagesArea: { flex: 1, overflow: "hidden" },
   chatBg: { opacity: 1 },
@@ -454,8 +454,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   bubbleText: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
   },
   bubbleMeta: {
@@ -464,7 +463,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   bubbleTime: {
-    fontSize: 10,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_400Regular",
   },
 
@@ -481,7 +480,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
-  dateText: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  dateText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 
   emptyChat: { alignItems: "center", gap: 10, paddingVertical: 60 },
   emptyChatIcon: {
@@ -491,8 +490,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  emptyChatText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  emptyChatSub: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  emptyChatText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  emptyChatSub: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
 
   inputArea: {
     flexDirection: "row",
@@ -508,9 +507,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    fontSize: 15,
+    fontSize: 14, lineHeight: 24,
     maxHeight: 100,
-    lineHeight: 22,
     fontFamily: "Inter_400Regular",
   },
   sendBtn: {
@@ -518,6 +516,6 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
+    borderRadius: 16,
   },
 });

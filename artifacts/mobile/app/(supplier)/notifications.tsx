@@ -165,13 +165,13 @@ const styles = StyleSheet.create({
   unreadBadge: {
     minWidth: 20,
     height: 20,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 5,
   },
   unreadBadgeText: {
-    fontSize: 11,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",
     color: "#FFFFFF",
   },
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   card: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     overflow: "hidden",
   },
@@ -214,17 +214,15 @@ const styles = StyleSheet.create({
   },
   notifTitle: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
-    lineHeight: 20,
   },
   notifBody: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
   },
   time: {
-    fontSize: 11,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_400Regular",
     marginTop: 2,
   },

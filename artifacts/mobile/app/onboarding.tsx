@@ -366,8 +366,8 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
   },
-  appName: { fontSize: 24, color: "#FFFFFF" },
-  tagline: { fontFamily: "Inter_400Regular", fontSize: 13, color: "rgba(248,250,252,0.6)", textAlign: "center" },
+  appName: { fontSize: 24, lineHeight: 40, color: "#FFFFFF" },
+  tagline: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 24, color: "rgba(248,250,252,0.6)", textAlign: "center" },
   scroll: { paddingHorizontal: 20, paddingTop: 4 },
   card: {
     padding: 24,
@@ -375,10 +375,10 @@ const styles = StyleSheet.create({
     gap: 4,
     borderRadius: 24,
   },
-  cardTitle: { fontSize: 20 },
-  cardSub: { fontFamily: "Inter_400Regular", fontSize: 14, marginBottom: 12 },
+  cardTitle: { fontSize: 17, lineHeight: 28 },
+  cardSub: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 24, marginBottom: 12 },
   form: { gap: 14 },
-  label: { fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 6 },
+  label: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 24, marginBottom: 6 },
 
   /* City selector field */
   citySelector: {
@@ -386,13 +386,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1.5,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 13,
   },
   citySelectorLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  citySelectorAr: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
-  citySelectorEn: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 1 },
+  citySelectorAr: { fontFamily: "Inter_600SemiBold", fontSize: 14, lineHeight: 24 },
+  citySelectorEn: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 20, marginTop: 1 },
 
   /* Modal root — full screen, dim bg, sheet at bottom */
   modalRoot: {
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   sheetHandle: {
     width: 40,
     height: 4,
-    borderRadius: 2,
+    borderRadius: 4,
     alignSelf: "center",
     marginTop: 12,
     marginBottom: 2,
@@ -422,11 +422,11 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 14,
   },
-  sheetTitle: { fontSize: 18 },
+  sheetTitle: { fontSize: 17, lineHeight: 28 },
   closeBtn: {
     width: 30,
     height: 30,
-    borderRadius: 15,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -446,12 +446,12 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontFamily: "Inter_400Regular",
-    fontSize: 15,
+    fontSize: 14, lineHeight: 24,
     paddingVertical: 0,
   },
   resultCount: {
     fontFamily: "Inter_400Regular",
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     paddingHorizontal: 20,
     paddingTop: 6,
     paddingBottom: 2,
@@ -471,12 +471,12 @@ const styles = StyleSheet.create({
   cityRowLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
   cityDot: { width: 8, height: 8, borderRadius: 4 },
   cityRowContent: { gap: 2 },
-  cityRowAr: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
-  cityRowEn: { fontFamily: "Inter_400Regular", fontSize: 12 },
-  checkBadge: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  cityRowAr: { fontFamily: "Inter_600SemiBold", fontSize: 14, lineHeight: 24 },
+  cityRowEn: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 20 },
+  checkBadge: { width: 22, height: 22, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   emptyState: { alignItems: "center", gap: 8, paddingVertical: 48 },
-  emptyText: { fontFamily: "Inter_400Regular", fontSize: 15 },
-  emptyHint: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", paddingHorizontal: 32 },
+  emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 24 },
+  emptyHint: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 24, textAlign: "center", paddingHorizontal: 32 },
 
   roleDisplay: {
     flexDirection: "row",
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 1.5,
-    borderRadius: 6,
+    borderRadius: 8,
   },
-  roleText: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  roleText: { fontFamily: "Inter_600SemiBold", fontSize: 14, lineHeight: 24 },
 });

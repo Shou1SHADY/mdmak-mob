@@ -109,7 +109,7 @@ export default function SupplierDashboard() {
         <Feather name="bell" size={18} color={colors.cta} />
         {unreadCount > 0 && (
           <View style={[styles.badge, { backgroundColor: colors.destructive, borderColor: colors.surface }]}>
-            <Text style={[type.captionStrong, { color: colors.destructiveForeground, fontSize: 10, lineHeight: 14 }]}>
+            <Text style={[type.captionStrong, { color: colors.destructiveForeground, fontSize: 12, lineHeight: 20 }]}>
               {unreadCount > 99 ? "99+" : String(unreadCount)}
             </Text>
           </View>

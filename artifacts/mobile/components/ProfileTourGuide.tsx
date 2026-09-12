@@ -318,12 +318,12 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 4,
-    borderRadius: 2,
+    borderRadius: 4,
     overflow: "hidden",
   },
   progressFill: {
     height: 4,
-    borderRadius: 2,
+    borderRadius: 4,
   },
   headerRow: {
     alignItems: "center",
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   stepBadgeText: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",
   },
   closeBtn: {
@@ -353,14 +353,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   stepTitle: {
-    fontSize: 19,
+    fontSize: 17, lineHeight: 28,
     fontFamily: "Inter_600SemiBold",
-    lineHeight: 28,
   },
   stepDesc: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
-    lineHeight: 22,
   },
   dotsRow: {
     flexDirection: "row",
@@ -384,7 +382,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   skipBtnText: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
   },
   prevBtn: {
@@ -394,11 +392,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     paddingVertical: 13,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1.5,
   },
   prevBtnText: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },
   nextBtn: {
@@ -408,10 +406,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 16,
   },
   nextBtnText: {
-    fontSize: 15,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
     color: "#fff",
   },

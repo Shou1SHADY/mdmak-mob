@@ -87,7 +87,7 @@ type Palette = {
   muted: string; mutedForeground: string; border: string;
   primaryText: string; accentBlueSoft: string;
   cta: string; ctaSoft: string;
-  accent: string; accentSoft: string; accentForeground: string;
+  accent: string; accentSoft: string; accentText: string;
   success: string; successSoft: string;
   warning: string; warningSoft: string;
   destructive: string; destructiveSoft: string;
@@ -98,7 +98,7 @@ export function toneColors(colors: Palette, tone: Tone): { fg: string; bg: strin
   switch (tone) {
     case "primary": return { fg: colors.primaryText, bg: colors.accentBlueSoft, border: colors.accentBlueSoft };
     case "cta": return { fg: colors.cta, bg: colors.ctaSoft, border: colors.ctaSoft };
-    case "accent": return { fg: colors.accentForeground, bg: colors.accentSoft, border: colors.accentSoft };
+    case "accent": return { fg: colors.accentText, bg: colors.accentSoft, border: colors.accentSoft };
     case "success": return { fg: colors.success, bg: colors.successSoft, border: colors.successSoft };
     case "warning": return { fg: colors.warning, bg: colors.warningSoft, border: colors.warningSoft };
     case "destructive": return { fg: colors.destructive, bg: colors.destructiveSoft, border: colors.destructiveSoft };

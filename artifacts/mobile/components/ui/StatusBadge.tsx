@@ -56,5 +56,5 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     borderWidth: 1,
   },
-  dot: { width: 6, height: 6, borderRadius: 3 },
+  dot: { width: 6, height: 6, borderRadius: 4 },
 });

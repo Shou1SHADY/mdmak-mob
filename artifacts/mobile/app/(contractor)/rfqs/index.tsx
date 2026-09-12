@@ -409,12 +409,11 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   statValue: {
-    fontSize: 22,
+    fontSize: 24, lineHeight: 40,
   },
   statLabel: {
-    fontSize: 10,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_400Regular",
-    textTransform: "uppercase",
   },
   statDivider: {
     width: 1,
@@ -444,7 +443,7 @@ const styles = StyleSheet.create({
   filterBtn: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
@@ -477,13 +476,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 17,
+    fontSize: 17, lineHeight: 28,
     fontFamily: "Inter_600SemiBold",
   },
   filterLabel: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",
-    textTransform: "uppercase",
     marginBottom: 8,
   },
   optionScroll: {
@@ -497,7 +495,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   optionChipText: {
-    fontSize: 13,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
   },
   modalActions: {
@@ -513,18 +511,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   modalActionText: {
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_400Regular",
   },
   clearIcon: {
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -545,10 +543,10 @@ const styles = StyleSheet.create({
   chipDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: 4,
   },
   chipText: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",
   },
   chipBadge: {
@@ -560,7 +558,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   chipBadgeText: {
-    fontSize: 10,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",
   },
   resultsRow: {
@@ -568,7 +566,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   resultsText: {
-    fontSize: 11,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_400Regular",
   },
   clearBtn: {
@@ -577,7 +575,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   clearText: {
-    fontSize: 12,
+    fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",
   },
   list: {
@@ -595,7 +593,7 @@ const styles = StyleSheet.create({
   },
   fabLabel: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },
 });

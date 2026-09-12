@@ -62,6 +62,16 @@ const PAIRS = [
   ["success", "card", "success text on a card", 4.5],
   ["warningForeground", "warning", "label on a warning fill", 4.5],
   ["warning", "card", "warning text on a card", 4.5],
+  // Tones: a badge's text on its own soft ground (lib/design.ts toneColors).
+  ["cta", "ctaSoft", "cta badge", 4.5],
+  ["success", "successSoft", "success badge", 4.5],
+  ["warning", "warningSoft", "warning badge", 4.5],
+  ["destructive", "destructiveSoft", "destructive badge", 4.5],
+  ["purple", "purpleSoft", "purple badge", 4.5],
+  ["accentText", "accentSoft", "accent badge", 4.5],
+  ["accentText", "card", "accent ink on a card", 4.5],
+  ["primaryText", "accentBlueSoft", "primary badge", 4.5],
+  ["mutedForeground", "muted", "neutral badge", 4.5],
 ];
 
 /**
