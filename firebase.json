@@ -3,7 +3,6 @@
   "hosting": [
     {
       "target": "uat",
-      "site": "mdmak-mobile-uat",
       "public": "artifacts/mobile/dist",
       "//": "Deliberately NO ignore patterns. The conventional Firebase defaults --- ['firebase.json', '**/.*', '**/node_modules/**'] --- silently break this build: Expo's web export copies font assets to paths like assets/__node_modules/.pnpm/<pkg>/node_modules/<pkg>/..., so '**/.*' drops everything under .pnpm and '**/node_modules/**' drops the rest. The deploy still succeeds, index.html and the JS bundle still serve 200, and the app then hangs forever on a blank screen because useFonts() never resolves. dist/ is build output; everything in it is meant to ship.",
       "ignore": [],
@@ -54,7 +53,6 @@
     },
     {
       "target": "prod",
-      "site": "mdmak-mobile",
       "public": "artifacts/mobile/dist",
       "//": "Deliberately NO ignore patterns. The conventional Firebase defaults --- ['firebase.json', '**/.*', '**/node_modules/**'] --- silently break this build: Expo's web export copies font assets to paths like assets/__node_modules/.pnpm/<pkg>/node_modules/<pkg>/..., so '**/.*' drops everything under .pnpm and '**/node_modules/**' drops the rest. The deploy still succeeds, index.html and the JS bundle still serve 200, and the app then hangs forever on a blank screen because useFonts() never resolves. dist/ is build output; everything in it is meant to ship.",
       "ignore": [],
