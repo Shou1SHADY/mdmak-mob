@@ -173,11 +173,11 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
 
   const handleSave = () => {
     if (!draft.description?.trim()) {
-      Alert.alert("", isRTL ? "وصف البند مطلوب" : "Item description is required");
+      Alert.alert("", t.boq.itemDescriptionIsRequired);
       return;
     }
     if (!draft.quantity || draft.quantity <= 0) {
-      Alert.alert("", isRTL ? "الكمية يجب أن تكون أكبر من صفر" : "Quantity must be greater than 0");
+      Alert.alert("", t.boq.quantityMustBeGreaterThan);
       return;
     }
     const item: BOQItem = {
@@ -294,7 +294,7 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
             {/* Handle */}
             <View style={[styles.handle, { backgroundColor: colors.border }]} />
             <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
-              {editingId ? (isRTL ? "تعديل البند" : "Edit Item") : t.boq.addItem}
+              {editingId ? (t.boq.editItem) : t.boq.addItem}
             </Text>
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">

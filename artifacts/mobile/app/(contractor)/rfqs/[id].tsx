@@ -132,7 +132,7 @@ export default function RFQDetailScreen() {
 
       setOffers(offerItems);
     } catch (e: any) {
-      setFetchError(e?.message || (isRTL ? "فشل تحميل التفاصيل" : "Failed to load details"));
+      setFetchError(e?.message || (t.rfq.failedToLoadDetails));
     } finally {
       setLoading(false);
     }
@@ -158,7 +158,7 @@ export default function RFQDetailScreen() {
             Alert.alert(t.common.success ?? "Success", t.rfq.republished);
             fetchData();
           } catch (e: any) {
-            Alert.alert(t.common.error, e?.message || (isRTL ? "فشل إعادة النشر" : "Failed to republish"));
+            Alert.alert(t.common.error, e?.message || (t.rfq.failedToRepublish));
           }
         },
       },
@@ -234,8 +234,8 @@ export default function RFQDetailScreen() {
                 userId: supplierId,
                 type: action === "accept" ? "offer_accepted" : "offer_rejected",
                 title: action === "accept"
-                  ? (isRTL ? "تم قبول عرضك" : "Your offer was accepted")
-                  : (isRTL ? "تم رفض عرضك" : "Your offer was rejected"),
+                  ? (t.rfq.yourOfferWasAccepted)
+                  : (t.rfq.yourOfferWasRejected),
                 message: isRTL
                   ? `${action === "accept" ? "تم قبول" : "تم رفض"} عرضك على مناقصة: ${rfq?.title || ""}`
                   : `Your offer for "${rfq?.title || ""}" was ${action === "accept" ? "accepted" : "rejected"}.`,
@@ -293,7 +293,7 @@ export default function RFQDetailScreen() {
       setReductionNote("");
       fetchData();
     } catch {
-      Alert.alert(t.common.error, isRTL ? "فشل تحديث العرض" : "Failed to update offer");
+      Alert.alert(t.common.error, t.rfq.failedToUpdateOffer);
     } finally {
       setIsReducing(false);
     }
@@ -484,11 +484,8 @@ export default function RFQDetailScreen() {
           </View>
         ) : (
           sortedOffers.map((offer, idx) => {
-            // The per-offer decisions stay on the card; a share-link offer is
-            // flagged so the contractor knows there is no account behind it.
-            const guestBadge = offer.isGuestOffer
-              ? <StatusBadge label={t.rfq.guestOffer} tone="neutral" size="sm" />
-              : null;
+            // The per-offer decisions stay on the card (OfferCard flags a
+            // share-link offer itself, beside its status).
             const decisionRow = offer.status === OFFER_STATUS.UNDER_REVIEW ? (
               <View style={[styles.offerActions, { flexDirection: rowDirection }]}>
                 <Button title={t.rfq.accept} onPress={() => handleAcceptReject(offer, "accept")} size="sm" style={{ flex: 1 }} />
@@ -515,14 +512,7 @@ export default function RFQDetailScreen() {
                 key={offer.id}
                 offer={offer}
                 rank={sortBy === "price" ? idx + 1 : undefined}
-                actions={
-                  guestBadge || decisionRow ? (
-                    <View style={styles.offerFooter}>
-                      {guestBadge && <View style={{ flexDirection: rowDirection }}>{guestBadge}</View>}
-                      {decisionRow}
-                    </View>
-                  ) : undefined
-                }
+                actions={decisionRow ? <View style={styles.offerFooter}>{decisionRow}</View> : undefined}
               />
             );
           })
@@ -585,7 +575,7 @@ export default function RFQDetailScreen() {
             <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
             <Text style={[type.title, { color: colors.foreground, textAlign }]}>
-              {isRTL ? "طلب تخفيض السعر" : "Request Price Reduction"}
+              {t.rfq.requestPriceReduction}
             </Text>
 
             {/* Current price */}
@@ -593,7 +583,7 @@ export default function RFQDetailScreen() {
               <View style={[styles.currentPriceRow, { backgroundColor: colors.muted, borderColor: colors.border, flexDirection: rowDirection }]}>
                 <Feather name="tag" size={14} color={colors.outline} />
                 <Text style={[type.body, { color: colors.outline }]}>
-                  {isRTL ? "السعر الحالي:" : "Current price:"}
+                  {t.rfq.currentPrice}
                   {"  "}
                   <Text style={[type.bodyStrong, { color: colors.foreground }]}>
                     {fmtSar(parseFloat(reduceOffer.price))}
@@ -603,23 +593,23 @@ export default function RFQDetailScreen() {
             )}
 
             <Input
-              label={isRTL ? "السعر المستهدف (ر.س)" : "Target Price (SAR)"}
+              label={t.rfq.targetPriceSar}
               required
               value={targetPrice}
               onChangeText={setTargetPrice}
               keyboardType="numeric"
-              placeholder={isRTL ? "السعر المطلوب" : "Desired price"}
+              placeholder={t.rfq.desiredPrice}
               autoFocus
               isRTL={isRTL}
             />
 
             <Input
-              label={isRTL ? "ملاحظة للمورد (اختياري)" : "Note to supplier (optional)"}
+              label={t.rfq.noteToSupplierOptional}
               value={reductionNote}
               onChangeText={setReductionNote}
               multiline
               numberOfLines={3}
-              placeholder={isRTL ? "اشرح سبب طلب التخفيض..." : "Explain why you need a lower price..."}
+              placeholder={t.rfq.explainWhyYouNeedA}
               isRTL={isRTL}
             />
 
@@ -631,7 +621,7 @@ export default function RFQDetailScreen() {
                 onPress={() => setReduceOffer(null)}
               />
               <Button
-                title={isRTL ? "إرسال الطلب" : "Send Request"}
+                title={t.rfq.sendRequest}
                 style={{ flex: 2 }}
                 loading={isReducing}
                 onPress={handleReduce}

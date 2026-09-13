@@ -182,7 +182,7 @@ export default function SubmitOfferScreen() {
         {rfqTitle ? (
           <View style={{ borderRadius: 16, padding: 16, borderWidth: 1, gap: 4, backgroundColor: colors.card, borderColor: colors.border }}>
             <Text style={{ fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", color: colors.outline, }}>
-              {isRTL ? "المناقصة" : "Tender"}
+              {t.offers.tender}
             </Text>
             <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: colors.foreground }} numberOfLines={2}>
               {rfqTitle}
@@ -222,7 +222,7 @@ export default function SubmitOfferScreen() {
           {/* Execution duration */}
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: colors.foreground, }}>
-              {isRTL ? "مدة التنفيذ (اختياري)" : "Execution Duration (optional)"}
+              {t.offers.executionDurationOptional}
             </Text>
             <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 10 }}>
               <View style={{ flex: 1 }}>
@@ -230,7 +230,7 @@ export default function SubmitOfferScreen() {
                   value={executionDuration}
                   onChangeText={alreadySubmitted ? undefined : setExecutionDuration}
                   keyboardType="numeric"
-                  placeholder={isRTL ? "مثال: ١٤" : "e.g. 14"}
+                  placeholder={t.offers.eG14}
                   leftIcon="clock"
                   isRTL={isRTL}
                   editable={!alreadySubmitted}
@@ -261,10 +261,10 @@ export default function SubmitOfferScreen() {
 
           {/* Delivery location */}
           <Input
-            label={isRTL ? "موقع التسليم (اختياري)" : "Delivery Location (optional)"}
+            label={t.offers.deliveryLocationOptional}
             value={deliveryLocation}
             onChangeText={alreadySubmitted ? undefined : setDeliveryLocation}
-            placeholder={isRTL ? "مثال: حي النرجس، الرياض" : "e.g. Al Narjis, Riyadh"}
+            placeholder={t.offers.eGAlNarjisRiyadh}
             leftIcon="map-pin"
             isRTL={isRTL}
             editable={!alreadySubmitted}
@@ -307,7 +307,7 @@ export default function SubmitOfferScreen() {
                   </View>
                   <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 8, alignItems: "center" }}>
                     <Text style={{ fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", color: colors.outline, flex: 1 }}>
-                      {isRTL ? "الكمية:" : "Qty:"} {item.quantity} {item.unit}
+                      {t.offers.qty} {item.quantity} {item.unit}
                     </Text>
                     <TextInput
                       style={{
@@ -320,7 +320,7 @@ export default function SubmitOfferScreen() {
                       value={boqPricing[item.id] ?? ""}
                       onChangeText={(v) => !alreadySubmitted && setBoqPricing((prev) => ({ ...prev, [item.id]: v }))}
                       keyboardType="numeric"
-                      placeholder={isRTL ? "سعر الوحدة (ر.س)" : "Unit price (SAR)"}
+                      placeholder={t.offers.unitPriceSar}
                       placeholderTextColor={colors.outline}
                       editable={!alreadySubmitted}
                     />

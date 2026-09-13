@@ -132,7 +132,7 @@ export default function MyOffersScreen() {
       setNewPrice("");
       fetchOffers();
     } catch {
-      Alert.alert(t.common.error, isRTL ? "فشل تحديث السعر" : "Failed to update price");
+      Alert.alert(t.common.error, t.offers.failedToUpdatePrice);
     } finally {
       setIsUpdatingPrice(false);
     }
@@ -163,7 +163,7 @@ export default function MyOffersScreen() {
       setWithdrawOffer(null);
       fetchOffers();
     } catch {
-      Alert.alert(t.common.error, isRTL ? "فشل سحب العرض" : "Failed to withdraw offer");
+      Alert.alert(t.common.error, t.offers.failedToWithdrawOffer);
     } finally {
       setIsWithdrawing(false);
     }
@@ -177,7 +177,7 @@ export default function MyOffersScreen() {
       nodes.push(
         <Button
           key="chat"
-          title={isRTL ? "فتح المحادثة" : "Open Chat"}
+          title={t.offers.openChat}
           size="sm"
           variant="outline"
           onPress={() => router.push(`/chat/${item.id}`)}
@@ -188,7 +188,7 @@ export default function MyOffersScreen() {
       nodes.push(
         <Button
           key="update"
-          title={isRTL ? "تحديث السعر" : "Update Price"}
+          title={t.offers.updatePrice}
           size="sm"
           onPress={() => { setUpdatePriceOffer(item); setNewPrice(item.price || ""); }}
         />
@@ -198,7 +198,7 @@ export default function MyOffersScreen() {
       nodes.push(
         <Button
           key="withdraw"
-          title={isRTL ? "سحب العرض" : "Withdraw"}
+          title={t.offers.withdraw}
           size="sm"
           variant="destructive"
           onPress={() => setWithdrawOffer(item)}
@@ -230,17 +230,17 @@ export default function MyOffersScreen() {
         <View style={[styles.statsBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.warning, fontFamily: "Inter_600SemiBold" }]}>{pendingCount}</Text>
-            <Text style={[styles.statLabel, { color: colors.outline }]}>{isRTL ? "قيد المراجعة" : "Pending"}</Text>
+            <Text style={[styles.statLabel, { color: colors.outline }]}>{t.offers.pending}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.success, fontFamily: "Inter_600SemiBold" }]}>{acceptedCount}</Text>
-            <Text style={[styles.statLabel, { color: colors.outline }]}>{isRTL ? "مقبول" : "Accepted"}</Text>
+            <Text style={[styles.statLabel, { color: colors.outline }]}>{t.offers.accepted}</Text>
           </View>
           <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.destructive, fontFamily: "Inter_600SemiBold" }]}>{rejectedCount}</Text>
-            <Text style={[styles.statLabel, { color: colors.outline }]}>{isRTL ? "مرفوض" : "Rejected"}</Text>
+            <Text style={[styles.statLabel, { color: colors.outline }]}>{t.offers.rejected}</Text>
           </View>
         </View>
       )}
@@ -298,7 +298,7 @@ export default function MyOffersScreen() {
             onPress={() => { setLoading(true); fetchOffers(); }}
           >
             <Text style={[styles.retryBtnText, { color: colors.cta }]}>
-              {isRTL ? "إعادة المحاولة" : "Retry"}
+              {t.common.retry}
             </Text>
           </TouchableOpacity>
         </View>
@@ -353,7 +353,7 @@ export default function MyOffersScreen() {
             </View>
 
             <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-              {isRTL ? "تحديث سعر العرض" : "Update Offer Price"}
+              {t.offers.updateOfferPrice}
             </Text>
 
             {/* Show contractor's target price if set */}
@@ -362,7 +362,7 @@ export default function MyOffersScreen() {
                 <Feather name="alert-circle" size={14} color={colors.warning} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.targetLabel, { color: colors.warning }]}>
-                    {isRTL ? "السعر المطلوب من المقاول:" : "Contractor's target price:"}
+                    {t.offers.contractorSTargetPrice}
                   </Text>
                   <Text style={[styles.targetValue, { color: colors.warning }]}>
                     {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format((updatePriceOffer as any).targetPrice)}
@@ -382,7 +382,7 @@ export default function MyOffersScreen() {
             )}
 
             <Text style={[styles.currentLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
-              {isRTL ? "سعرك الحالي:" : "Your current price:"}
+              {t.offers.yourCurrentPrice}
               {"  "}
               <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
                 {updatePriceOffer?.price ? `${Number(updatePriceOffer.price).toLocaleString(isRTL ? "ar-SA" : "en-SA")} ر.س` : "-"}
@@ -390,7 +390,7 @@ export default function MyOffersScreen() {
             </Text>
 
             <Text style={[styles.newPriceLabel, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-              {isRTL ? "السعر الجديد (ر.س) *" : "New Price (SAR) *"}
+              {t.offers.newPriceSar}
             </Text>
             <TextInput
               style={[
@@ -405,7 +405,7 @@ export default function MyOffersScreen() {
               value={newPrice}
               onChangeText={setNewPrice}
               keyboardType="numeric"
-              placeholder={isRTL ? "أدخل السعر الجديد" : "Enter new price"}
+              placeholder={t.offers.enterNewPrice}
               placeholderTextColor={colors.outline}
               autoFocus
             />
@@ -418,7 +418,7 @@ export default function MyOffersScreen() {
                 onPress={() => { setUpdatePriceOffer(null); setNewPrice(""); }}
               />
               <Button
-                title={isRTL ? "تحديث السعر" : "Update Price"}
+                title={t.offers.updatePrice}
                 style={{ flex: 2 }}
                 loading={isUpdatingPrice}
                 onPress={handleUpdatePrice}
@@ -445,7 +445,7 @@ export default function MyOffersScreen() {
               <Feather name="alert-triangle" size={28} color={colors.destructive} />
             </View>
             <Text style={[styles.withdrawTitle, { color: colors.foreground }]}>
-              {isRTL ? "سحب العرض" : "Withdraw Offer"}
+              {t.offers.withdrawOffer}
             </Text>
             <Text style={[styles.withdrawDesc, { color: colors.outline }]}>
               {isRTL
@@ -465,7 +465,7 @@ export default function MyOffersScreen() {
                 onPress={() => setWithdrawOffer(null)}
               />
               <Button
-                title={isRTL ? "سحب العرض" : "Withdraw"}
+                title={t.offers.withdraw}
                 variant="destructive"
                 style={{ flex: 1 }}
                 loading={isWithdrawing}

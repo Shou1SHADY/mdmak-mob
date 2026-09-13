@@ -230,7 +230,7 @@ export default function SupplierRFQDetailScreen() {
           <View style={[styles.closedBanner, { backgroundColor: colors.muted, borderColor: colors.border }]}>
             <Feather name="lock" size={14} color={colors.outline} />
             <Text style={[styles.closedText, { color: colors.outline }]}>
-              {isRTL ? "هذه المناقصة مغلقة ولا تقبل عروضاً" : "This RFQ is closed and no longer accepting offers"}
+              {t.rfq.thisRfqIsClosedAnd}
             </Text>
           </View>
         )}

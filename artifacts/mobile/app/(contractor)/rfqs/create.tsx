@@ -343,7 +343,7 @@ export default function CreateRFQScreen() {
                 <View style={[styles.catHeader, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
                   <Text style={[styles.label, { color: colors.foreground }]}>{t.rfq.district}</Text>
                   <Text style={[{ fontSize: 12, lineHeight: 20, color: colors.outline, fontFamily: "Inter_400Regular" }]}>
-                    {" "}({isRTL ? "اختياري" : "optional"})
+                    {" "}({t.rfq.optional})
                   </Text>
                 </View>
                 {district && (
@@ -415,7 +415,7 @@ export default function CreateRFQScreen() {
             <View style={{ gap: 4 }}>
               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t.boq.title}</Text>
               <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", color: colors.outline }}>
-                {isRTL ? "اختياري — أضف بنوداً لتحديد المواد والكميات التي يحتاجها الموردون" : "Optional — add items so suppliers know exactly what to price"}
+                {t.rfq.optionalAddItemsSoSuppliers}
               </Text>
             </View>
 

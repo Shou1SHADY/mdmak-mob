@@ -85,7 +85,7 @@ export default function CompareScreen() {
         }
         setRfqs(rows);
       } catch (e: any) {
-        setRfqError(e?.message || (isRTL ? "فشل تحميل المناقصات" : "Failed to load RFQs"));
+        setRfqError(e?.message || (t.compare.failedToLoadRfqs));
       } finally {
         setRfqLoading(false);
       }
@@ -106,7 +106,7 @@ export default function CompareScreen() {
       ));
       setOffers(snap.docs.map(d => ({ id: d.id, ...d.data() } as OfferRow)));
     } catch (e: any) {
-      setOffersError(e?.message || (isRTL ? "فشل تحميل العروض" : "Failed to load offers"));
+      setOffersError(e?.message || (t.compare.failedToLoadOffers));
     } finally {
       setOffersLoading(false);
     }
@@ -238,7 +238,7 @@ export default function CompareScreen() {
               onPress={() => { setRfqLoading(true); setRfqError(null); }}
             >
               <Text style={[styles.retryBtnText, { color: colors.cta }]}>
-                {isRTL ? "إعادة المحاولة" : "Retry"}
+                {t.common.retry}
               </Text>
             </TouchableOpacity>
           </View>
@@ -338,7 +338,7 @@ export default function CompareScreen() {
             onPress={() => selectedRfq && loadOffers(selectedRfq)}
           >
             <Text style={[styles.retryBtnText, { color: colors.cta }]}>
-              {isRTL ? "إعادة المحاولة" : "Retry"}
+              {t.common.retry}
             </Text>
           </TouchableOpacity>
         </View>
