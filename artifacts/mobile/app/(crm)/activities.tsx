@@ -161,7 +161,7 @@ export default function CrmActivitiesScreen() {
     try {
       await setActivityDone(activity.id, !activity.done);
     } catch (e: any) {
-      console.warn("[CrmActivities] toggle:", e?.message);
+      if (__DEV__) console.warn("[CrmActivities] toggle:", e?.message);
       Alert.alert(t.common.error, t.crm.saveFailed);
     } finally {
       setBusyId(null);

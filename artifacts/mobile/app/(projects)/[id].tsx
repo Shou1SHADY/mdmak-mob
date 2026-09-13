@@ -97,7 +97,7 @@ export default function ProjectDetailScreen() {
     try {
       await setProjectStatus(project.id, status);
     } catch (e: any) {
-      console.warn("[Project] status:", e?.message);
+      if (__DEV__) console.warn("[Project] status:", e?.message);
       Alert.alert(t.common.error, t.projects.saveFailed);
     } finally {
       setBusy(false);

@@ -52,7 +52,7 @@ export function useNotifications() {
         setError(null);
       },
       (err) => {
-        console.warn("[useNotifications] onSnapshot error:", err.code, err.message);
+        if (__DEV__) console.warn("[useNotifications] onSnapshot error:", err.code, err.message);
         setError(err.message);
         setLoading(false);
       }
@@ -65,7 +65,7 @@ export function useNotifications() {
     try {
       await updateDoc(doc(db, "users", user.uid, "notifications", notifId), { read: true });
     } catch (e: any) {
-      console.warn("[useNotifications] markRead failed:", e.message);
+      if (__DEV__) console.warn("[useNotifications] markRead failed:", e.message);
     }
   }, [user?.uid]);
 
@@ -80,7 +80,7 @@ export function useNotifications() {
       });
       await batch.commit();
     } catch (e: any) {
-      console.warn("[useNotifications] markAllRead failed:", e.message);
+      if (__DEV__) console.warn("[useNotifications] markAllRead failed:", e.message);
     }
   }, [user?.uid, notifications]);
 

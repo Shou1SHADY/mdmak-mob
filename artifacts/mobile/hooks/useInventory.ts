@@ -74,7 +74,7 @@ export function useWarehouses() {
         setIsLoading(false);
       },
       (e) => {
-        console.warn("[useWarehouses]", e.message);
+        if (__DEV__) console.warn("[useWarehouses]", e.message);
         setIsLoading(false);
       }
     );
@@ -111,7 +111,7 @@ export function useInventoryItems(warehouseId: string | undefined | null) {
         setIsLoading(false);
       },
       (e) => {
-        console.warn("[useInventoryItems]", e.message);
+        if (__DEV__) console.warn("[useInventoryItems]", e.message);
         setIsLoading(false);
       }
     );
@@ -146,7 +146,7 @@ export function useWarehouseRequests(centralWarehouseId: string | undefined | nu
         setIsLoading(false);
       },
       (e) => {
-        console.warn("[useWarehouseRequests]", e.message);
+        if (__DEV__) console.warn("[useWarehouseRequests]", e.message);
         setIsLoading(false);
       }
     );

@@ -110,7 +110,7 @@ export default function CrmLeadsScreen() {
       resetForm();
       router.push(`/(crm)/leads/${id}` as never);
     } catch (e: any) {
-      console.warn("[CrmLeads] create:", e?.message);
+      if (__DEV__) console.warn("[CrmLeads] create:", e?.message);
       Alert.alert(t.common.error, t.crm.saveFailed);
     } finally {
       setSaving(false);

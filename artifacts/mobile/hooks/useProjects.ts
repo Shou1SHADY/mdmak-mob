@@ -67,7 +67,7 @@ export function useProjects() {
         setIsLoading(false);
       },
       (e) => {
-        console.warn("[useProjects]", e.message);
+        if (__DEV__) console.warn("[useProjects]", e.message);
         setError(e.message);
         setIsLoading(false);
       }
@@ -108,7 +108,7 @@ export function useProject(projectId: string | undefined | null) {
         setIsLoading(false);
       },
       (e) => {
-        console.warn("[useProject]", e.message);
+        if (__DEV__) console.warn("[useProject]", e.message);
         setIsLoading(false);
       }
     );
@@ -153,7 +153,7 @@ export function useProjectTenders(projectId: string | undefined | null) {
         setIsLoading(false);
       },
       (e) => {
-        console.warn("[useProjectTenders]", e.message);
+        if (__DEV__) console.warn("[useProjectTenders]", e.message);
         setIsLoading(false);
       }
     );

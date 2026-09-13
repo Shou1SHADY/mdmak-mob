@@ -77,7 +77,7 @@ export default function MyRFQsScreen() {
       setRfqs(items);
       applyFilters(items, search, statusFilter, categoryFilter, cityFilter);
     } catch (e: any) {
-      console.warn("[RFQs] Query failed:", e.code, e.message);
+      if (__DEV__) console.warn("[RFQs] Query failed:", e.code, e.message);
       setFetchError(e?.message || t.errors.generic);
     } finally {
       setLoading(false);

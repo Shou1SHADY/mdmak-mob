@@ -80,7 +80,7 @@ export default function GoodsReceivedScreen() {
       setReceiver("");
       Alert.alert(t.common.success, t.goods.confirmedToast);
     } catch (e: any) {
-      console.warn("[GoodsReceived] confirm:", e?.message);
+      if (__DEV__) console.warn("[GoodsReceived] confirm:", e?.message);
       Alert.alert(t.common.error, t.goods.failed);
     } finally {
       setBusy(false);

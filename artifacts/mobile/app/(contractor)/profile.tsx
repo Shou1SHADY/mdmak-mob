@@ -119,7 +119,7 @@ export default function ContractorProfileScreen() {
       }
       setStats({ totalRfqs: rfqs.length, activeRfqs: active, totalOffers: offers });
     } catch (e) {
-      console.warn("[Profile] Stats fetch failed:", e);
+      if (__DEV__) console.warn("[Profile] Stats fetch failed:", e);
     } finally {
       setLoadingStats(false);
     }

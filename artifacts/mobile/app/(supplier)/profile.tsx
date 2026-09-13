@@ -143,7 +143,7 @@ export default function SupplierProfileScreen() {
       const accepted = offers.filter((o) => o.status === "مقبول").length;
       setStats({ totalOffers: offers.length, acceptedOffers: accepted, activeRfqs: 0 });
     } catch (e) {
-      console.warn("[Profile] Stats fetch failed:", e);
+      if (__DEV__) console.warn("[Profile] Stats fetch failed:", e);
     } finally {
       setLoadingStats(false);
     }

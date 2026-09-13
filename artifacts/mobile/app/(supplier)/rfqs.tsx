@@ -125,7 +125,7 @@ export default function BrowseRFQsScreen() {
       );
       setRfqs(items);
     } catch (e: any) {
-      console.warn("[BrowseRFQs]", e.message);
+      if (__DEV__) console.warn("[BrowseRFQs]", e.message);
       setFetchError(e?.message || t.errors.generic);
     } finally {
       setLoading(false);

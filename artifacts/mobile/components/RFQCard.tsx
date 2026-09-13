@@ -220,12 +220,12 @@ const styles = StyleSheet.create({
   topRow: {
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 8,
   },
   categoryRow: {
     alignItems: "center",
     gap: 6,
     flex: 1,
-    marginEnd: 8,
   },
   categoryDot: {
     width: 7,

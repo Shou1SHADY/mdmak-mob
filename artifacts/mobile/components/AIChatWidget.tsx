@@ -122,7 +122,7 @@ function ActionCard({
     <View style={[styles.actionCard, { borderColor: colors.accent + '30', backgroundColor: colors.accent + '08' }]}>
       <View style={styles.actionHeader}>
         <Feather name="zap" size={13} color={colors.accent} />
-        <View style={{ flex: 1, marginStart: 8 }}>
+        <View style={{ flex: 1, marginHorizontal: 8 }}>
           <Text style={[styles.actionLabel, { color: colors.accent }]}>{action.label}</Text>
           <Text style={[styles.actionDesc, { color: colors.mutedForeground }]}>{action.description}</Text>
         </View>

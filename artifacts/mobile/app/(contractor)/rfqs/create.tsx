@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
   View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform,
-  KeyboardAvoidingView, Dimensions,
+  KeyboardAvoidingView, useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { collection, addDoc } from "firebase/firestore";
@@ -22,8 +22,6 @@ import { CATEGORIES, SAUDI_CITIES, CITIES_DISTRICTS, displayCity } from "@/const
 import { ProfileIncompleteGate, useProfileGate } from "@/components/ProfileIncompleteGate";
 import { BOQEditor, type BOQItem } from "@/components/BOQEditor";
 
-const { width: SCREEN_W } = Dimensions.get("window");
-const CARD_W = SCREEN_W > 400 ? 140 : 120;
 const CARD_H = 100;
 
 // Map category icons to Feather icons
@@ -116,6 +114,8 @@ export default function CreateRFQScreen() {
   const totalSteps = 3;
 
   const selectedCat = CATEGORIES.find((c) => c.label === category || c.labelAr === category);
+  const { width: SCREEN_W } = useWindowDimensions();
+  const CARD_W = SCREEN_W > 400 ? 140 : 120;
   const isSmall = SCREEN_W < 375;
 
   if (!isComplete) {

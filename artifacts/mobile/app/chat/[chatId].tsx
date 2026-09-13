@@ -137,7 +137,7 @@ export default function ChatScreen() {
           createdAt: new Date().toISOString(),
         });
       } catch (e) {
-        console.warn("[Chat] auto-create error:", e);
+        if (__DEV__) console.warn("[Chat] auto-create error:", e);
         setChatError(t.chat.notFound);
       } finally {
         creating = false;

@@ -23,10 +23,13 @@ export default function OrdersScreen() {
   const t = useT();
   const [orders, setOrders] = useState<OfferItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const fetchOrders = async () => {
       if (!user?.organizationId) { setLoading(false); return; }
+      setError(false);
       try {
         // No orderBy — avoids composite index requirement; filter + sort client-side
         const snap = await getDocs(
@@ -53,20 +56,22 @@ export default function OrdersScreen() {
             })
         );
         setOrders(items);
-      } catch (e: any) {
-        console.warn("[Orders]", e.message);
+      } catch {
+        setError(true);
       } finally {
         setLoading(false);
       }
     };
     fetchOrders();
-  }, [user?.organizationId]);
+  }, [user?.organizationId, reloadKey]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={t.orders.title} showBack />
       {loading ? (
         <View style={{ padding: 16, gap: 10 }}>{[1, 2].map((k) => <CardSkeleton key={k} />)}</View>
+      ) : error ? (
+        <EmptyState variant="error" icon="package" title={t.errors.somethingWentWrong} actionLabel={t.common.retry} onAction={() => { setLoading(true); setReloadKey((k) => k + 1); }} />
       ) : (
         <FlatList
           data={orders}

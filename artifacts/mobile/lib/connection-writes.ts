@@ -78,7 +78,7 @@ export async function acceptInvitation(input: AcceptInvitationInput): Promise<vo
       });
     }
   } catch (err) {
-    console.warn("[acceptInvitation] inviter notification failed:", err);
+    if (__DEV__) console.warn("[acceptInvitation] inviter notification failed:", err);
   }
 }
 

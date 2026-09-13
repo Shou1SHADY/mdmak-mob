@@ -72,7 +72,7 @@ export default function ConnectionsScreen() {
         setInvLoading(false);
       },
       (e) => {
-        console.warn("[Connections] invitations:", e.message);
+        if (__DEV__) console.warn("[Connections] invitations:", e.message);
         setInvLoading(false);
       }
     );
@@ -123,7 +123,7 @@ export default function ConnectionsScreen() {
       });
       Alert.alert(t.common.success, t.connections.accepted);
     } catch (e: any) {
-      console.warn("[Connections] accept:", e?.message);
+      if (__DEV__) console.warn("[Connections] accept:", e?.message);
       Alert.alert(t.common.error, t.connections.failed);
     } finally {
       setBusyId(null);
@@ -136,7 +136,7 @@ export default function ConnectionsScreen() {
       await declineInvitation(db, inv.id);
       Alert.alert(t.common.success, t.connections.declined);
     } catch (e: any) {
-      console.warn("[Connections] decline:", e?.message);
+      if (__DEV__) console.warn("[Connections] decline:", e?.message);
       Alert.alert(t.common.error, t.connections.failed);
     } finally {
       setBusyId(null);

@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   Dimensions,
+  useWindowDimensions,
   TouchableOpacity,
   ScrollView,
   NativeScrollEvent,
@@ -18,7 +19,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 
-const { width: SW, height: SH } = Dimensions.get("window");
+// The height only picks a size class for the static styles below; the WIDTH
+// drives the pager and is read at render (useWindowDimensions) so a rotation
+// or a resized browser window re-lays the slides out.
+const { height: SH } = Dimensions.get("window");
 const isSmall = SH < 700;
 const IMAGE_H = Math.round(SH * (isSmall ? 0.44 : 0.50));
 
@@ -68,6 +72,7 @@ function PaginationDot({ active, color }: { active: boolean; color: string }) {
 }
 
 export default function WelcomeScreen() {
+  const { width: SW } = useWindowDimensions();
   const colors  = useColors();
   const insets  = useSafeAreaInsets();
   const t       = useT();
@@ -118,7 +123,7 @@ export default function WelcomeScreen() {
         directionalLockEnabled
       >
         {SLIDES.map((s) => (
-          <View key={s.id} style={styles.page}>
+          <View key={s.id} style={[styles.page, { width: SW }]}>
 
             {/* Illustration — no border radius (prevents black line artifact) */}
             <View style={[styles.imageWrap, { height: IMAGE_H }]}>
@@ -261,7 +266,7 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
-  page: { width: SW, flex: 1 },
+  page: { flex: 1 },
 
   /* ── Illustration ── */
   imageWrap: {

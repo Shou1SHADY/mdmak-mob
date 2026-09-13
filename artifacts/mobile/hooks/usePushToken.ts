@@ -48,7 +48,7 @@ function navigateFromNotification(data: Record<string, any>) {
 async function registerDeviceForPush(uid: string) {
   if (Platform.OS === "web") return; // web push is a separate concern
   if (!Device.isDevice) {
-    console.log("[Push] Physical device required for push notifications");
+    if (__DEV__) console.log("[Push] Physical device required for push notifications");
     return;
   }
 
@@ -62,7 +62,7 @@ async function registerDeviceForPush(uid: string) {
     }
 
     if (finalStatus !== "granted") {
-      console.log("[Push] Permission not granted by user");
+      if (__DEV__) console.log("[Push] Permission not granted by user");
       return;
     }
 
@@ -86,13 +86,12 @@ async function registerDeviceForPush(uid: string) {
       (Constants as any).easConfig?.projectId;
 
     if (!projectId) {
-      console.warn("[Push] EAS projectId missing from app.json extra.eas.projectId");
+      if (__DEV__) console.warn("[Push] EAS projectId missing from app.json extra.eas.projectId");
       return;
     }
 
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
-    console.log("[Push] Token acquired:", token.slice(0, 30) + "…");
-
+    if (__DEV__) console.log("[Push] Token acquired:", token.slice(0, 30) + "…");
     // Persist token on the user document so Cloud Function can read it
     await updateDoc(doc(db, "users", uid), {
       expoPushToken: token,
@@ -100,7 +99,7 @@ async function registerDeviceForPush(uid: string) {
       devicePlatform: Platform.OS,
     });
   } catch (e: any) {
-    console.warn("[Push] Registration error:", e.message);
+    if (__DEV__) console.warn("[Push] Registration error:", e.message);
   }
 }
 
@@ -125,7 +124,7 @@ export function usePushToken() {
     foregroundSub.current = Notifications.addNotificationReceivedListener(
       (notification) => {
         const { title, body } = notification.request.content;
-        console.log("[Push] Foreground notification:", title, body);
+        if (__DEV__) console.log("[Push] Foreground notification:", title, body);
       }
     );
 
@@ -133,7 +132,7 @@ export function usePushToken() {
     tapSub.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data as Record<string, any>;
-        console.log("[Push] Tapped:", data?.type);
+        if (__DEV__) console.log("[Push] Tapped:", data?.type);
         navigateFromNotification(data);
       }
     );

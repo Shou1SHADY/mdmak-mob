@@ -168,7 +168,7 @@ export default function CrmLeadDetailScreen() {
     try {
       await setLeadStatus(contact.id, status);
     } catch (e: any) {
-      console.warn("[CrmLead] status:", e?.message);
+      if (__DEV__) console.warn("[CrmLead] status:", e?.message);
       Alert.alert(t.common.error, t.crm.saveFailed);
     } finally {
       setBusy(false);
@@ -200,7 +200,7 @@ export default function CrmLeadDetailScreen() {
       setActivityNotes("");
       setActivityType("call");
     } catch (e: any) {
-      console.warn("[CrmLead] activity:", e?.message);
+      if (__DEV__) console.warn("[CrmLead] activity:", e?.message);
       Alert.alert(t.common.error, t.crm.saveFailed);
     } finally {
       setBusy(false);
@@ -234,7 +234,7 @@ export default function CrmLeadDetailScreen() {
       setDealTrack("tender");
       router.push(`/(crm)/opportunities/${newId}` as never);
     } catch (e: any) {
-      console.warn("[CrmLead] deal:", e?.message);
+      if (__DEV__) console.warn("[CrmLead] deal:", e?.message);
       Alert.alert(t.common.error, t.crm.saveFailed);
     } finally {
       setBusy(false);

@@ -57,6 +57,8 @@ export default function SupplierChatsScreen() {
   const t = useT();
   const { isRTL } = useLanguage();
   const [chats, setChats] = useState<ChatThread[]>([]);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!user?.organizationId) return;
@@ -71,10 +73,11 @@ export default function SupplierChatsScreen() {
         const tb = toMillis(b.lastMessageAt ?? b.updatedAt ?? b.createdAt);
         return tb - ta;
       });
+      setError(false);
       setChats(items);
-    });
+    }, () => setError(true));
     return unsub;
-  }, [user?.organizationId]);
+  }, [user?.organizationId, reloadKey]);
 
   const formatTime = (ts: any) => {
     if (!ts) return "";
@@ -188,11 +191,15 @@ export default function SupplierChatsScreen() {
           );
         }}
         ListEmptyComponent={
-          <EmptyState
-            icon="message-circle"
-            title={t.chat.noConversations}
-            subtitle={t.chat.noConversationsDesc}
-          />
+          error ? (
+            <EmptyState variant="error" icon="message-circle" title={t.errors.somethingWentWrong} actionLabel={t.common.retry} onAction={() => setReloadKey((k) => k + 1)} />
+          ) : (
+            <EmptyState
+              icon="message-circle"
+              title={t.chat.noConversations}
+              subtitle={t.chat.noConversationsDesc}
+            />
+          )
         }
       />
     </View>

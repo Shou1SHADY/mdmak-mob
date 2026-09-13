@@ -79,7 +79,7 @@ export function useCrmData(options?: { opportunities?: boolean; activities?: boo
         setContactsLoading(false);
       },
       (e) => {
-        console.warn("[useCrmData] contacts:", e.message);
+        if (__DEV__) console.warn("[useCrmData] contacts:", e.message);
         setError(e.message);
         setContactsLoading(false);
       }
@@ -100,7 +100,7 @@ export function useCrmData(options?: { opportunities?: boolean; activities?: boo
         setOppsLoading(false);
       },
       (e) => {
-        console.warn("[useCrmData] opportunities:", e.message);
+        if (__DEV__) console.warn("[useCrmData] opportunities:", e.message);
         setError(e.message);
         setOppsLoading(false);
       }
@@ -121,7 +121,7 @@ export function useCrmData(options?: { opportunities?: boolean; activities?: boo
         setActivitiesLoading(false);
       },
       (e) => {
-        console.warn("[useCrmData] activities:", e.message);
+        if (__DEV__) console.warn("[useCrmData] activities:", e.message);
         setError(e.message);
         setActivitiesLoading(false);
       }

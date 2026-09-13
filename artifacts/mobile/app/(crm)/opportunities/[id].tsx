@@ -203,7 +203,7 @@ export default function CrmOpportunityDetailScreen() {
     try {
       await advanceOpportunityStage(opp, target as Exclude<OpportunityStage, "won" | "lost">);
     } catch (e: any) {
-      console.warn("[CrmOpportunity] advance:", e?.message);
+      if (__DEV__) console.warn("[CrmOpportunity] advance:", e?.message);
       Alert.alert(t.common.error, t.crm.saveFailed);
     } finally {
       setBusy(false);
@@ -235,7 +235,7 @@ export default function CrmOpportunityDetailScreen() {
       setActivityDue("");
       setActivityType("call");
     } catch (e: any) {
-      console.warn("[CrmOpportunity] activity:", e?.message);
+      if (__DEV__) console.warn("[CrmOpportunity] activity:", e?.message);
       Alert.alert(t.common.error, t.crm.saveFailed);
     } finally {
       setBusy(false);

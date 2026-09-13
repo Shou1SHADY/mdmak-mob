@@ -44,7 +44,7 @@ export function useOrgCollection<T>(collectionName: string, field = "organizatio
         setIsLoading(false);
       },
       (e) => {
-        console.warn(`[useOrgCollection:${collectionName}]`, e.message);
+        if (__DEV__) console.warn(`[useOrgCollection:${collectionName}]`, e.message);
         setIsLoading(false);
       }
     );

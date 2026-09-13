@@ -35,7 +35,7 @@ export default function SupplierRFQDetailScreen() {
         const rfqDoc = await getDoc(doc(db, "rfqs", id));
         if (rfqDoc.exists()) setRfq({ id: rfqDoc.id, ...rfqDoc.data() } as RFQItem);
       } catch (e) {
-        console.warn("[RFQDetail]", e);
+        if (__DEV__) console.warn("[RFQDetail]", e);
       } finally {
         setLoading(false);
       }

@@ -14,6 +14,7 @@ import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ProfileIncompleteGate, useProfileGate } from "@/components/ProfileIncompleteGate";
 import type { BOQItem } from "@/components/BOQEditor";
 import { buildOfferDoc, readRfqLineItems } from "@/lib/contracts";
@@ -47,6 +48,8 @@ export default function SubmitOfferScreen() {
   // RFQ's organizationId has to be carried onto the offer as contractorOrgId.
   const [contractorOrgId, setContractorOrgId] = useState<string | null>(null);
   const [rfqProjectId, setRfqProjectId] = useState<string | null>(null);
+  const [rfqError, setRfqError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [boqItems, setBoqItems] = useState<BOQItem[]>([]);
   const [boqPricing, setBoqPricing] = useState<Record<string, string>>({}); // boqItemId -> unitPrice string
 
@@ -64,8 +67,10 @@ export default function SubmitOfferScreen() {
         if (!snap.empty) setAlreadySubmitted(true);
       }
       // Load RFQ info
+      setRfqError(false);
       try {
         const rfqDoc = await getDoc(doc(db, "rfqs", rfqId));
+        if (!rfqDoc.exists()) setRfqError(true);
         if (rfqDoc.exists()) {
           const data = rfqDoc.data();
           setRfqTitle(data.title || "");
@@ -75,15 +80,21 @@ export default function SubmitOfferScreen() {
           // Handles both shapes: `boqItems` from this app, `products` from the website.
           setBoqItems(readRfqLineItems(data) as BOQItem[]);
         }
-      } catch (e: any) {
-        console.warn("[SubmitOffer] Failed to load RFQ:", e.message);
+      } catch {
+        setRfqError(true);
       }
     };
     init();
-  }, [rfqId, user?.organizationId]);
+  }, [rfqId, user?.organizationId, reloadKey]);
 
   const handleSubmit = async () => {
     if (alreadySubmitted || !user) return;
+    // Never write an offer the contractor can't see: without the RFQ's owner
+    // fields it reaches no inbox and no work queue on the website.
+    if (rfqError || (!contractorId && !contractorOrgId)) {
+      Alert.alert(t.common.error, t.rfq.detailLoadFailed);
+      return;
+    }
     const priceNum = parseFloat(price);
     if (!price || isNaN(priceNum) || priceNum <= 0) {
       Alert.alert(t.common.error, t.rfq.invalidPrice);
@@ -134,12 +145,12 @@ export default function SubmitOfferScreen() {
             read: false,
           });
         } catch (e: any) {
-          console.warn("[SubmitOffer] Contractor notification failed:", e.message);
+          if (__DEV__) console.warn("[SubmitOffer] Contractor notification failed:", e.message);
         }
         try {
           await updateDoc(doc(db, "rfqs", rfqId), { offersCount: increment(1) });
         } catch (e: any) {
-          console.warn("[SubmitOffer] offersCount increment failed:", e.message);
+          if (__DEV__) console.warn("[SubmitOffer] offersCount increment failed:", e.message);
         }
       }
 
@@ -160,6 +171,15 @@ export default function SubmitOfferScreen() {
         organization={organization ?? null}
         missingFields={missingFields}
       />
+    );
+  }
+
+  if (rfqError) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScreenHeader title={t.rfq.submitOffer} showBack />
+        <EmptyState variant="error" icon="file-text" title={t.rfq.detailLoadFailed} actionLabel={t.common.retry} onAction={() => setReloadKey((k) => k + 1)} />
+      </View>
     );
   }
 

@@ -122,7 +122,7 @@ export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<void
       await receiveDelivery({ firestore, warehouseId: targetWarehouseId, items, organizationId: orgId });
     }
   } catch (receiptErr) {
-    console.error("[confirmDelivery] goods receipt into warehouse failed:", receiptErr);
+    if (__DEV__) console.error("[confirmDelivery] goods receipt into warehouse failed:", receiptErr);
   }
 
   // 3 — tell the supplier. A guest supplier has no user doc to write to; they
@@ -142,6 +142,6 @@ export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<void
       });
     }
   } catch (notifyErr) {
-    console.warn("[confirmDelivery] supplier notification failed:", notifyErr);
+    if (__DEV__) console.warn("[confirmDelivery] supplier notification failed:", notifyErr);
   }
 }

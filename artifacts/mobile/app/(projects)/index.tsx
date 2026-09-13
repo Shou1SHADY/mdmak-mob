@@ -103,7 +103,7 @@ export default function ProjectsListScreen() {
       setStatus("todo");
       router.push(`/(projects)/${id}` as never);
     } catch (e: any) {
-      console.warn("[Projects] create:", e?.message);
+      if (__DEV__) console.warn("[Projects] create:", e?.message);
       Alert.alert(t.common.error, t.projects.saveFailed);
     } finally {
       setSaving(false);

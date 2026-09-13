@@ -50,7 +50,7 @@ export function usePermissions() {
       } catch (e: any) {
         // A member who cannot read the groups keeps the implicit read-only set,
         // which is what the rules would grant them anyway.
-        console.warn("[usePermissions] group load failed:", e?.message);
+        if (__DEV__) console.warn("[usePermissions] group load failed:", e?.message);
         if (!cancelled) setGroups([]);
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -111,7 +111,7 @@ export function useProjectPermissions(projectId: string | undefined | null) {
           setProjectGroupId(seat.exists() ? (seat.data()?.groupId ?? null) : null);
         }
       } catch (e: any) {
-        console.warn("[useProjectPermissions] seat load failed:", e?.message);
+        if (__DEV__) console.warn("[useProjectPermissions] seat load failed:", e?.message);
         if (!cancelled) setProjectGroupId(null);
       }
     })();
