@@ -97,6 +97,8 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
           </View>
         ) : <View />}
         <View style={[styles.badgeRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+          {/* A share-link offer has no account behind it: say so where the status is. */}
+          {offer.isGuestOffer ? <StatusBadge label={t.rfq.guestOffer} tone="neutral" size="sm" /> : null}
           <StatusBadge label={statusInfo.label} tone={tone} />
           {onPress && (
             <Feather
