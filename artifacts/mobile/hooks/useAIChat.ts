@@ -14,7 +14,7 @@ import {
   documentId,
 } from 'firebase/firestore';
 import { router } from 'expo-router';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { SITE_URL } from '@/lib/site-api';
 import { useAuth, type AppUser, type UserRole } from '@/context/AuthContext';
 import type { Language } from '@/context/LanguageContext';
@@ -221,9 +221,14 @@ export function useAIChat() {
     try {
       const context = await ensureContext();
 
+      // The website's route verifies the caller before spending AI tokens.
+      const idToken = await auth.currentUser?.getIdToken();
       const res = await fetch(`${API_BASE}/api/rag/ask`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+        },
         body: JSON.stringify({
           question: question.trim(),
           locale: language,

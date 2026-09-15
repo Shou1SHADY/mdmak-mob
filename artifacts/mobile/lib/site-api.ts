@@ -11,7 +11,11 @@
 //
 // EXPO_PUBLIC_SITE_URL points a UAT build at the UAT site. Without it, production.
 
-const DEFAULT_SITE_URL = "https://mdmaktech.sa";
+// www, NOT the apex: the apex 307-redirects to www, and fetch drops the
+// Authorization header on that cross-origin hop — every authenticated call
+// (invitation accept, rag) would arrive logged-out and 401. Proven live
+// against production on 2026-09-15.
+const DEFAULT_SITE_URL = "https://www.mdmaktech.sa";
 
 // EXPO_PUBLIC_API_URL is the name an earlier build used for the same thing;
 // honoured so an EAS environment that already sets it keeps working.
