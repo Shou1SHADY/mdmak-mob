@@ -102,8 +102,8 @@ function salesItems(prefix: "/contractor" | "/supplier"): NavItem[] {
 // plain members and must reach their tasks.
 function manufacturingItems(prefix: "/contractor" | "/supplier"): NavItem[] {
   return [
-    { titleKey: "mfg_workshop", href: `${prefix}/manufacturing`, icon: "tool", built: false },
-    { titleKey: "mfg_today", href: `${prefix}/manufacturing/today`, icon: "calendar", built: false },
+    { titleKey: "mfg_workshop", href: "/(manufacturing)/orders", icon: "tool", built: true },
+    { titleKey: "mfg_today", href: "/(manufacturing)/today", icon: "calendar", built: true },
     { titleKey: "mfg_requests", href: `${prefix}/manufacturing/requests`, icon: "inbox", built: false },
     { titleKey: "mfg_estimates", href: `${prefix}/manufacturing/estimates`, icon: "percent", built: false },
     { titleKey: "mfg_products", href: `${prefix}/manufacturing/products`, icon: "layers", built: false },

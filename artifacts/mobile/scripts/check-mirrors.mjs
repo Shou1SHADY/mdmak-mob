@@ -52,6 +52,14 @@ const MIRRORS = {
   "lib/accounting/posting-rules.ts": "src/lib/accounting/posting-rules.ts",
   "lib/accounting/post.ts": "src/lib/accounting/post.ts",
   "lib/accounting/hooks.ts": "src/lib/accounting/hooks.ts",
+  "lib/manufacturing-engine.ts": "src/lib/manufacturing-engine.ts",
+  "lib/manufacturing.ts": "src/lib/manufacturing.ts",
+  "lib/delivery-notes.ts": "src/lib/delivery-notes.ts",
+  "lib/manufacturing-writes.ts": "src/lib/manufacturing-writes.ts",
+  "lib/manufacturing-view.ts": "src/lib/manufacturing-view.ts",
+  "lib/manufacturing-requests.ts": "src/lib/manufacturing-requests.ts",
+  "lib/mfg-events.ts": "src/lib/mfg-events.ts",
+  "lib/mfg-outside.ts": "src/lib/mfg-outside.ts",
 };
 
 /**

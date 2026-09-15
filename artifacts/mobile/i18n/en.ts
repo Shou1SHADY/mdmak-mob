@@ -10,6 +10,7 @@ import * as projects from "./modules/projects";
 import * as inventory from "./modules/inventory";
 import * as finance from "./modules/finance";
 import * as sales from "./modules/sales";
+import * as manufacturing from "./modules/manufacturing";
 
 const en = {
   ...core.en,
@@ -22,6 +23,7 @@ const en = {
   ...inventory.en,
   ...finance.en,
   ...sales.en,
+  ...manufacturing.en,
 };
 
 export default en;
