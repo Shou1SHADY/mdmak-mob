@@ -12,6 +12,16 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 
 function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
   switch (type) {
+    case "transfer_notice_reported":
+      return { icon: "dollar-sign" as const, color: colors.cta, nav: () => "/(sales)/payments" };
+    case "transfer_notice_confirmed":
+      return { icon: "check-circle" as const, color: colors.success, nav: () => "/(sales)/payments" };
+    case "transfer_notice_not_found":
+      return { icon: "search" as const, color: colors.destructive, nav: () => "/(sales)/payments" };
+    case "quote_request_created":
+      return { icon: "inbox" as const, color: colors.cta, nav: () => "/(sales)/requests" };
+    case "quote_request_declined":
+      return { icon: "x-circle" as const, color: colors.destructive, nav: () => "/(sales)/requests" };
     case "offer_accepted":
       return { icon: "check-circle" as const, color: colors.success, nav: (n: AppNotification) => n.rfqId ? `/(supplier)/rfq/${n.rfqId}` : null };
     case "offer_rejected":

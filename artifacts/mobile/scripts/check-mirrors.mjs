@@ -44,6 +44,14 @@ const MIRRORS = {
   "lib/finance-audit.ts": "src/lib/finance-audit.ts",
   "lib/warehouse-transfer.ts": "src/lib/warehouse-transfer.ts",
   "lib/warehouse-requests.ts": "src/lib/warehouse-requests.ts",
+  "lib/sales-installments.ts": "src/lib/sales-installments.ts",
+  "lib/sales-orders.ts": "src/lib/sales-orders.ts",
+  "lib/sales-transfers.ts": "src/lib/sales-transfers.ts",
+  "lib/accounting/accounts.ts": "src/lib/accounting/accounts.ts",
+  "lib/accounting/journal.ts": "src/lib/accounting/journal.ts",
+  "lib/accounting/posting-rules.ts": "src/lib/accounting/posting-rules.ts",
+  "lib/accounting/post.ts": "src/lib/accounting/post.ts",
+  "lib/accounting/hooks.ts": "src/lib/accounting/hooks.ts",
 };
 
 /**

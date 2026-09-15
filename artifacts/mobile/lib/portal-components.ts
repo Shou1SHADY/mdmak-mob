@@ -90,10 +90,10 @@ export const SUPPLIER_COMMUNICATION: NavItem[] = [
 function salesItems(prefix: "/contractor" | "/supplier"): NavItem[] {
   return [
     { titleKey: "sales_dashboard", href: `${prefix}/sales`, icon: "grid", requiredPermission: "sales.manage", built: false },
-    { titleKey: "sales_quotations", href: `${prefix}/sales/quotations`, icon: "file-text", requiredPermission: "sales.manage", built: false },
-    { titleKey: "sales_orders", href: `${prefix}/sales/orders`, icon: "clipboard", requiredPermission: "sales.manage", built: false },
+    { titleKey: "sales_quotations", href: "/(sales)/quotations", icon: "file-text", requiredPermission: "sales.manage", built: true },
+    { titleKey: "sales_orders", href: "/(sales)/orders", icon: "clipboard", requiredPermission: "sales.manage", built: true },
     { titleKey: "sales_fulfillment", href: `${prefix}/sales/fulfillment`, icon: "truck", requiredPermission: "sales.manage", built: false },
-    { titleKey: "sales_payments", href: `${prefix}/sales/payments`, icon: "credit-card", requiredPermission: "sales.manage", built: false },
+    { titleKey: "sales_payments", href: "/(sales)/payments", icon: "credit-card", requiredPermission: "sales.manage", built: true },
     { titleKey: "sales_price_list", href: `${prefix}/sales/price-list`, icon: "tag", requiredPermission: "sales.manage", built: false },
   ];
 }

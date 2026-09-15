@@ -9,6 +9,7 @@ import * as crm from "./modules/crm";
 import * as projects from "./modules/projects";
 import * as inventory from "./modules/inventory";
 import * as finance from "./modules/finance";
+import * as sales from "./modules/sales";
 
 const en = {
   ...core.en,
@@ -20,6 +21,7 @@ const en = {
   ...projects.en,
   ...inventory.en,
   ...finance.en,
+  ...sales.en,
 };
 
 export default en;

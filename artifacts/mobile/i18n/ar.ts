@@ -10,6 +10,7 @@ import * as crm from "./modules/crm";
 import * as projects from "./modules/projects";
 import * as inventory from "./modules/inventory";
 import * as finance from "./modules/finance";
+import * as sales from "./modules/sales";
 
 const ar: Translations = {
   ...core.ar,
@@ -21,6 +22,7 @@ const ar: Translations = {
   ...projects.ar,
   ...inventory.ar,
   ...finance.ar,
+  ...sales.ar,
 };
 
 export default ar;
