@@ -3,6 +3,7 @@
 // copy runs unchanged. Stock is money: the two apps MUST agree on these rules
 // exactly, and copying is the only way to guarantee that. Re-copy when the
 // website's changes; never hand-edit here.
+
 import {
   Firestore,
   collection,
@@ -42,10 +43,39 @@ export function validateTransfer(params: {
   return null
 }
 
+/** What a stock row's VALUE rides on — its unit cost and, for manufactured
+ * goods, the marker saying it is finished goods (see inventory-valuation.ts).
+ * A row moved to another warehouse carries these along; without them the
+ * moved stock would land unpriced and read as bought-in material. Absent
+ * fields stay absent, so rows that never had them are written as before. */
+export interface CarriedValueFields {
+  unitCost?: number | null
+  isManufactured?: boolean | null
+  sourceWorkOrderId?: string | null
+  sourceWorkOrderNumber?: number | null
+  /** A stone block / lot — another block is another colour, never merged. */
+  lot?: string | null
+  /** A usable remnant returned by manufacturing. */
+  remnant?: boolean | null
+}
+
+export function carriedValueFields(source: CarriedValueFields | null | undefined): CarriedValueFields {
+  const out: CarriedValueFields = {}
+  if (!source) return out
+  if (source.unitCost != null) out.unitCost = source.unitCost
+  if (source.isManufactured === true) out.isManufactured = true
+  if (source.sourceWorkOrderId) out.sourceWorkOrderId = source.sourceWorkOrderId
+  if (source.sourceWorkOrderNumber != null) out.sourceWorkOrderNumber = source.sourceWorkOrderNumber
+  if (source.lot) out.lot = source.lot
+  if (source.remnant === true) out.remnant = true
+  return out
+}
+
 /** Merge key: the same material in two warehouses is matched by name + unit,
- * so repeated transfers top up one row instead of piling up duplicates. */
-export function itemMergeKey(item: { name: string; unit: string }): string {
-  return `${item.name.trim()}|${item.unit.trim().toLowerCase()}`
+ * so repeated transfers top up one row instead of piling up duplicates. A
+ * block (lot) or a remnant is its own row — merging them would mix colours. */
+export function itemMergeKey(item: { name: string; unit: string; lot?: string | null; remnant?: boolean | null }): string {
+  return `${item.name.trim()}|${item.unit.trim().toLowerCase()}${item.lot ? `|lot:${item.lot.trim()}` : ""}${item.remnant ? "|remnant" : ""}`
 }
 
 export interface RunTransferParams {
@@ -81,7 +111,7 @@ export async function runTransfer(params: RunTransferParams): Promise<void> {
 
   await runTransaction(firestore, async (tx) => {
     const sourceSnap = await tx.get(sourceRef)
-    const source = sourceSnap.exists() ? (sourceSnap.data() as TransferItemState & { name: string; sku?: string | null; unit: string; minStockLevel?: number | null; typeId?: string | null }) : null
+    const source = sourceSnap.exists() ? (sourceSnap.data() as TransferItemState & CarriedValueFields & { name: string; sku?: string | null; unit: string; minStockLevel?: number | null; typeId?: string | null }) : null
     const error = validateTransfer({ sourceItem: source, quantity, fromWarehouseId, toWarehouseId })
     if (error) throw new Error(error)
 
@@ -100,6 +130,7 @@ export async function runTransfer(params: RunTransferParams): Promise<void> {
         minStockLevel: source!.minStockLevel ?? null,
         trackingMode: null,
         typeId: source!.typeId ?? null,
+        ...carriedValueFields(source),
         organizationId,
         warehouseId: toWarehouseId,
         createdAt: serverTimestamp(),
@@ -150,9 +181,9 @@ export async function receiveDelivery(params: ReceiveDeliveryParams): Promise<vo
   const existingSnap = await getDocs(itemsColRef)
   const byMergeKey = new Map<string, string>()
   existingSnap.docs.forEach((d) => {
-    const data = d.data() as { name?: string; unit?: string; trackingMode?: string | null }
+    const data = d.data() as { name?: string; unit?: string; trackingMode?: string | null; lot?: string | null; remnant?: boolean | null }
     if (data.name && data.unit && data.trackingMode !== "unit") {
-      byMergeKey.set(itemMergeKey({ name: data.name, unit: data.unit }), d.id)
+      byMergeKey.set(itemMergeKey({ name: data.name, unit: data.unit, lot: data.lot, remnant: data.remnant }), d.id)
     }
   })
 

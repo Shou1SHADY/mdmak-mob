@@ -22,7 +22,7 @@ import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
-import { RFQ_STATUSES, CATEGORIES, SAUDI_CITIES, displayCity, displayCategory, statusTone } from "@/constants/data";
+import { RFQ_ACCEPTING_OFFERS, RFQ_STATUSES, CATEGORIES, SAUDI_CITIES, displayCity, displayCategory, statusTone } from "@/constants/data";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { FilterSheet, FilterButton, FilterPill, type FilterSection } from "@/components/FilterSheet";
 import { type, space, radius, toneColors, HIT_SLOP, type Tone } from "@/lib/design";
@@ -53,7 +53,7 @@ export default function MyRFQsScreen() {
 
   const stats = {
     total: rfqs.length,
-    active: rfqs.filter((r) => r.status === "New" || r.status === "Active" || r.status === "Under Review").length,
+    active: rfqs.filter((r) => RFQ_ACCEPTING_OFFERS.includes(r.status)).length,
     closed: rfqs.filter((r) => r.status === "Closed").length,
   };
 

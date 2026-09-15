@@ -67,6 +67,7 @@ export default function InvoicesScreen() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const markPaid = (inv: Invoice) => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission); return; }
     Alert.alert(t.finance.markPaid, t.finance.markPaidConfirm.replace("{number}", inv.invoiceNumber), [
       { text: t.common.cancel, style: "cancel" },
       {

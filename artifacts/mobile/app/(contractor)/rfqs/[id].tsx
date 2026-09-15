@@ -148,6 +148,7 @@ export default function RFQDetailScreen() {
   });
 
   const handleRepublish = () => {
+    if (!can("rfq.create")) { Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission); return; }
     Alert.alert(t.rfq.republish, t.rfq.republishConfirm, [
       { text: t.common.cancel, style: "cancel" },
       {
@@ -254,6 +255,7 @@ export default function RFQDetailScreen() {
   };
 
   const handleReduce = async () => {
+    if (!can("offers.accept")) { Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission); return; }
     if (!reduceOffer) return;
     const priceNum = parseFloat(targetPrice);
     if (!targetPrice || isNaN(priceNum) || priceNum <= 0) {

@@ -91,6 +91,12 @@ import type { Tone } from "@/lib/design";
 
 // `tone` is what the UI colours by (see lib/design.ts toneColors); `color` is
 // the legacy hex a few older screens still read and will lose.
+/** The one shared definition of an "open" RFQ: a supplier may still submit
+ * an offer on it. Screens that mean something else (the browse feed also
+ * shows awarded outcomes; the profile stat counts awarded too) say so by
+ * composing this, never by re-typing the list. */
+export const RFQ_ACCEPTING_OFFERS = ["New", "Active", "Under Review"];
+
 export const RFQ_STATUSES: { id: string; label: string; labelAr: string; color: string; tone: Tone }[] = [
   { id: "Draft",        label: "Draft",         labelAr: "مسودة",           color: "#94a3b8", tone: "neutral" },
   { id: "New",          label: "New",            labelAr: "جديد",            color: "#3b82f6", tone: "cta" },

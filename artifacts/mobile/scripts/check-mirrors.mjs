@@ -59,6 +59,34 @@ const REBASED = {
   },
 };
 
+/**
+ * Hand-ADAPTED files. These cannot be byte-compared — they reshape a website
+ * source rather than copying it — so they were previously invisible to this
+ * check, which made them the most likely drift sites. Instead, each records
+ * the SHA-256 of its upstream website file(s) at the last review
+ * (scripts/mirror-lock.json). When an upstream changes, the check fails and
+ * names the adaptation to re-review; refresh the lock with:
+ *
+ *   npm run check:mirrors -- --update-lock
+ *
+ * only AFTER re-reading the adaptation against the changed upstream.
+ */
+const UPSTREAM_PINS = {
+  "lib/contracts.ts": [
+    "src/components/contractor/RfqForm.tsx",
+    "src/components/supplier/SubmitOfferDialog.tsx",
+  ],
+  "lib/crm-writes.ts": [
+    "src/lib/crm-writes.ts",
+    "src/components/crm/CrmContactDialog.tsx",
+    "src/components/crm/CrmOpportunityDialog.tsx",
+    "src/components/crm/CrmActivityDialog.tsx",
+  ],
+  "lib/delivery-writes.ts": ["src/components/contractor/RfqOffersView.tsx"],
+  "lib/connection-writes.ts": ["src/app/[locale]/(supplier)/supplier/connections/page.tsx"],
+  "lib/portal-components.ts": ["src/lib/portal-components.ts"],
+};
+
 /** Drop the mobile copy's leading header comment and normalise line endings. */
 function body(text) {
   const lines = text.replace(/\r\n/g, "\n").split("\n");
@@ -123,9 +151,45 @@ for (const [mobRel, spec] of Object.entries(REBASED)) {
   }
 }
 
+// --- Upstream pins for the hand-adapted files ---
+const LOCK_PATH = path.join(MOB, "scripts", "mirror-lock.json");
+const updateLock = process.argv.includes("--update-lock");
+const lock = fs.existsSync(LOCK_PATH) ? JSON.parse(fs.readFileSync(LOCK_PATH, "utf8")) : {};
+const nextLock = {};
+
+const { createHash } = await import("node:crypto");
+const sha = (text) => createHash("sha256").update(text.replace(/\r\n/g, "\n")).digest("hex");
+
+for (const [mobRel, upstreams] of Object.entries(UPSTREAM_PINS)) {
+  nextLock[mobRel] = {};
+  let changed = [];
+  for (const webRel of upstreams) {
+    const webRaw = read(WEB, webRel);
+    if (webRaw === null) { drift++; continue; }
+    const digest = sha(webRaw);
+    nextLock[mobRel][webRel] = digest;
+    if (lock[mobRel]?.[webRel] !== digest) changed.push(webRel);
+  }
+  if (updateLock) {
+    console.log(`  pinned   ${mobRel}  (${upstreams.length} upstream file(s))`);
+  } else if (changed.length === 0 && lock[mobRel]) {
+    console.log(`  ok       ${mobRel}  (upstreams unchanged since last review)`);
+  } else {
+    drift++;
+    console.log(`  REVIEW   ${mobRel}  — upstream changed since the adaptation was last reviewed:`);
+    for (const c of changed) console.log(`             ${c}`);
+  }
+}
+
+if (updateLock) {
+  fs.writeFileSync(LOCK_PATH, JSON.stringify(nextLock, null, 2) + "\n");
+  console.log(`\nLock refreshed at ${path.relative(MOB, LOCK_PATH)} — commit it with the review.`);
+}
+
 if (drift === 0) {
   console.log("\nAll mirrors match the website.");
   process.exit(0);
 }
-console.log(`\n${drift} file(s) drifted. Re-copy them from the website rather than hand-patching.`);
+if (updateLock) process.exit(0);
+console.log(`\n${drift} file(s) drifted. Re-copy verbatim mirrors from the website; re-review REVIEW items against their upstream, then run with --update-lock.`);
 process.exit(1);

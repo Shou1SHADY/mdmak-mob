@@ -13,6 +13,7 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import type { LegalDoc } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { RFQ_ACCEPTING_OFFERS } from "@/constants/data";
 import { identityDocRef } from "@/lib/org-identity";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -111,7 +112,7 @@ export default function ContractorProfileScreen() {
     try {
       const rfqSnap = await getDocs(query(collection(db, "rfqs"), where("organizationId", "==", user.organizationId)));
       const rfqs = rfqSnap.docs;
-      const active = rfqs.filter((d) => ["New", "Active", "Under Review", "Awarded"].includes(d.data().status)).length;
+      const active = rfqs.filter((d) => [...RFQ_ACCEPTING_OFFERS, "Awarded"].includes(d.data().status)).length;
       let offers = 0;
       for (const rfqDoc of rfqs) {
         const offSnap = await getDocs(query(collection(db, "offers"), where("rfqId", "==", rfqDoc.id)));

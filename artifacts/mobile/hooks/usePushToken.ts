@@ -30,7 +30,7 @@ function navigateFromNotification(data: Record<string, any>) {
     ) {
       router.push(`/chat/${offerId ?? chatId}`);
     } else if (
-      ["new_offer", "price_reduction_requested", "offer_rejected"].includes(type) &&
+      ["new_offer", "price_reduction", "price_reduction_requested", "offer_rejected"].includes(type) &&
       rfqId
     ) {
       router.push(`/(contractor)/rfqs/${rfqId}`);

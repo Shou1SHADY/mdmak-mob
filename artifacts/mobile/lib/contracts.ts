@@ -52,9 +52,9 @@ export interface BuildRfqArgs {
  *    every supplier on the website, no matter its status.
  *  - `allowedSupplierOrgIds` — the private-RFQ counterpart of the above, queried
  *    with `array-contains`. Always present so the field exists to query.
- *  - `products` — the website renders line items from here. The mobile BOQ
- *    editor's rows are mirrored into it (and still written as `boqItems` for
- *    screens in this app that already read that key).
+ *  - `products` — the website renders line items from here (verified: the
+ *    RfqForm reads only `products`; no production RFQ carries the legacy
+ *    `boqItems` key).
  *  - `projectId` — null marks a standalone RFQ. The website's security rules
  *    check ownership of a non-null project, so it must never be a stray id.
  */
@@ -84,8 +84,6 @@ export function buildRfqDoc(args: BuildRfqArgs): Record<string, unknown> {
     category: args.category,
     subCategory: "",
     products,
-    // Kept alongside `products` for this app's own screens, which read it.
-    boqItems: args.items.length > 0 ? args.items : null,
     country: "SA",
     city: args.city,
     district: args.district ?? null,
@@ -106,17 +104,12 @@ export function buildRfqDoc(args: BuildRfqArgs): Record<string, unknown> {
 }
 
 /**
- * Reads an RFQ's line items whichever way they were written.
- *
- * The website stores them as `products`; this app has always stored them as
- * `boqItems`. Screens should call this rather than reading either key directly,
- * so an RFQ published on the website still shows its lines here.
+ * Reads an RFQ's line items from `products` — the one key both apps write and
+ * the website renders. (The legacy `boqItems` fallback was removed after an
+ * Admin-SDK sweep found zero documents carrying it.)
  */
 export function readRfqLineItems(rfq: Record<string, any> | null | undefined): RfqLineItem[] {
   if (!rfq) return [];
-  if (Array.isArray(rfq.boqItems) && rfq.boqItems.length > 0) {
-    return rfq.boqItems as RfqLineItem[];
-  }
   if (Array.isArray(rfq.products) && rfq.products.length > 0) {
     return (rfq.products as Array<Record<string, any>>).map((prod, i) => ({
       id: String(i),

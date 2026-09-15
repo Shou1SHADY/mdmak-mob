@@ -21,6 +21,23 @@
 // Opportunities page can list every deal in one query.
 // `scripts/migrate-crm-subcollections.ts` moves legacy documents over.
 
+// Shared CRM model for BOTH portals. The contractor and supplier CRMs are the
+// same pages over the same collections — every document is scoped by
+// `organizationId`, so a contractor org and a supplier org never see each
+// other's records even though they share the collection.
+//
+// Storage layout (all top-level, all org-scoped):
+//   crmContacts      — the leads/contacts themselves
+//   crmOpportunities — deals, `contactId` back-references a contact
+//   crmQuotations    — offer versions, `opportunityId` back-references a deal
+//   crmActivities    — calls, meetings, site visits, tasks and emails
+//
+// Opportunities and quotations used to be SUBcollections of `crmContacts`,
+// which made them unqueryable org-wide without a collection-group index (the
+// codebase deliberately avoids those). They are top-level now so the
+// Opportunities page can list every deal in one query.
+// `scripts/migrate-crm-subcollections.ts` moves legacy documents over.
+
 export type ContactType = "client" | "supplier" | "partner" | "other"
 export type EntityType = "individual" | "company"
 /**
@@ -774,6 +791,10 @@ export interface CrmOrgProfile {
    * rather than read from Projects — a CRM figure the owner controls beats a
    * derived one nobody can reconcile. */
   underExecution?: number | null
+  /** The logo every new quotation document starts with — set from the Sales
+   * quotation builder. `quotationLogoPath` is its Storage object path. */
+  quotationLogoUrl?: string | null
+  quotationLogoPath?: string | null
   updatedAt?: unknown
 }
 
@@ -1047,9 +1068,31 @@ export interface CrmQuotation {
   paidByUserId?: string | null
   paidByUserName?: string | null
   paymentNote?: string | null
+  /** The printable quotation document, written by the Sales quotation
+   * builder (absent on quotations made in the quick dialog). `amount` keeps
+   * meaning the NET total every other module reads; VAT is presented on the
+   * document and carried to the sales order on acceptance. */
+  validUntil?: string | null
+  terms?: string | null
+  vatPercent?: number | null
+  /** Snapshot of the letterhead the document was issued under, so its PDF
+   * reprints the same even after the company changes its logo or details. */
+  branding?: QuotationBranding | null
   organizationId: string
   createdAt?: unknown
   updatedAt?: unknown
+}
+
+/** The company block printed at the top of a quotation document. */
+export interface QuotationBranding {
+  logoUrl: string | null
+  companyName: string
+  crNumber: string
+  vatNumber: string
+  address: string
+  phone: string
+  email: string
+  website: string
 }
 
 export function generateQuotationNumber(): string {

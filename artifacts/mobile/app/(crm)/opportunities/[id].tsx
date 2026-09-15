@@ -144,6 +144,7 @@ export default function CrmOpportunityDetailScreen() {
   };
 
   const handleSaveEdit = async () => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (!editTitle.trim()) { Alert.alert(t.common.error, t.crm.titleRequired); return; }
     const value = parseFloat(editValue.replace(/,/g, ""));
     const probability = editProbability.trim() ? Math.min(100, Math.max(0, parseFloat(editProbability) || 0)) : null;
@@ -211,6 +212,7 @@ export default function CrmOpportunityDetailScreen() {
   };
 
   const handleLogActivity = async () => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (!activityTitle.trim()) {
       Alert.alert(t.common.error, t.crm.titleRequired);
       return;

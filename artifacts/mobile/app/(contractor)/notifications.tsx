@@ -23,6 +23,7 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
       return { icon: "check-circle" as const, color: colors.success, nav: (n: AppNotification) => n.rfqId ? `/(contractor)/rfqs/${n.rfqId}` : null };
     case "offer_rejected":
       return { icon: "x-circle" as const, color: colors.destructive, nav: (n: AppNotification) => n.rfqId ? `/(contractor)/rfqs/${n.rfqId}` : null };
+    case "price_reduction":
     case "price_reduction_requested":
       return { icon: "trending-down" as const, color: colors.warning, nav: (n: AppNotification) => n.rfqId ? `/(contractor)/rfqs/${n.rfqId}` : null };
     case "price_updated":

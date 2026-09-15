@@ -145,6 +145,7 @@ export default function CrmLeadDetailScreen() {
   };
 
   const handleSaveEdit = async () => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (!editName.trim()) { Alert.alert(t.common.error, t.crm.titleRequired); return; }
     if (!orgId) return;
     setBusy(true);
@@ -176,6 +177,7 @@ export default function CrmLeadDetailScreen() {
   };
 
   const handleLogActivity = async () => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (!activityTitle.trim()) {
       Alert.alert(t.common.error, t.crm.titleRequired);
       return;
@@ -208,6 +210,7 @@ export default function CrmLeadDetailScreen() {
   };
 
   const handleCreateDeal = async () => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (!dealTitle.trim()) {
       Alert.alert(t.common.error, t.crm.titleRequired);
       return;

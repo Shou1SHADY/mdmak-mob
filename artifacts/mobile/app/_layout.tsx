@@ -20,9 +20,10 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { installWebAlert } from "@/lib/web-alert";
-// Push registration intentionally disabled for now — re-enable after `eas init`
-// and push credentials are configured (see DEPLOYMENT.md).
-// import { usePushToken } from "@/hooks/usePushToken";
+// Push registration: the hook is fully guarded — with no EAS projectId it
+// warns once and bails, and starts working the moment `eas init` writes the
+// real id and push credentials exist (see DEPLOYMENT.md).
+import { usePushToken } from "@/hooks/usePushToken";
 
 SplashScreen.preventAutoHideAsync();
 // On the web target Alert.alert is a no-op; give it the browser's dialogs.
@@ -31,7 +32,7 @@ installWebAlert();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  // usePushToken();
+  usePushToken();
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />

@@ -81,7 +81,6 @@ export default function ContractorLayout() {
       <Tabs.Screen name="rfqs/[id]" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="team" options={{ href: null }} />
-      <Tabs.Screen name="suppliers" options={{ href: null }} />
     </Tabs>
     </View>
   );

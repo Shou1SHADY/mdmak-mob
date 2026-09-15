@@ -78,6 +78,7 @@ export default function CrmActivitiesScreen() {
     setSheetOpen(true);
   };
   const saveSheet = async () => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (!formTitle.trim()) { Alert.alert(t.common.error, t.crm.titleRequired); return; }
     setSaving(true);
     try {
@@ -100,6 +101,7 @@ export default function CrmActivitiesScreen() {
     }
   };
   const removeActivity = () => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (!editing) return;
     Alert.alert(t.crm.deleteActivity, t.crm.deleteActivityConfirm, [
       { text: t.common.cancel, style: "cancel" },

@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -43,6 +44,8 @@ export default function CrmLeadsScreen() {
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { can } = usePermissions();
+  const canManage = can("crm.manage");
   const { contacts, orgId, isLoading } = useCrmData();
 
   const [search, setSearch] = useState("");
@@ -87,6 +90,7 @@ export default function CrmLeadsScreen() {
   };
 
   const handleCreate = async () => {
+    if (!canManage) { Alert.alert(t.errors.noPermissionTitle, t.crm.readOnly); return; }
     if (!name.trim()) {
       Alert.alert(t.common.error, t.crm.nameRequired);
       return;

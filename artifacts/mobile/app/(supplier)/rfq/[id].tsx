@@ -15,7 +15,7 @@ import { RFQItem } from "@/components/RFQCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
-import { RFQ_STATUSES } from "@/constants/data";
+import { RFQ_ACCEPTING_OFFERS, RFQ_STATUSES } from "@/constants/data";
 import { BOQEditor } from "@/components/BOQEditor";
 import { headerTopPadding } from "@/lib/layout";
 
@@ -90,7 +90,7 @@ export default function SupplierRFQDetailScreen() {
 
   const deadline = formatDate(rfq.deadline);
   const createdAt = formatDate(rfq.createdAt);
-  const canSubmitOffer = ["New", "Active", "Under Review"].includes(rfq.status);
+  const canSubmitOffer = RFQ_ACCEPTING_OFFERS.includes(rfq.status);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

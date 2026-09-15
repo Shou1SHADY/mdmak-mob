@@ -78,6 +78,7 @@ export default function ProjectsListScreen() {
   }, [projects, search, statusFilter]);
 
   const handleCreate = async () => {
+    if (!canCreate) { Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission); return; }
     if (!name.trim()) {
       Alert.alert(t.common.error, t.projects.nameRequired);
       return;
