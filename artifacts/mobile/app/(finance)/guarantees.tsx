@@ -1,15 +1,21 @@
-import React, { useMemo } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import React, { useMemo, useState } from "react";
+import { View, Text, FlatList, StyleSheet, Alert, Linking, Pressable } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
+import { Button } from "@/components/ui/Button";
 import { useGuarantees } from "@/hooks/useOrgCollection";
+import { usePermissions } from "@/hooks/usePermissions";
+import { canAnswerGuarantee, reviewGuarantee } from "@/lib/guarantee-writes";
 import { daysUntil } from "@/lib/crm-display";
 import { labelFor } from "@/lib/labels";
+import { db } from "@/lib/firebase";
 
 type GuaranteeStatus = "none" | "pending_review" | "accepted" | "rejected";
 
@@ -20,24 +26,64 @@ interface Guarantee {
   expirationDate?: string | null;
   rfqTitle?: string | null;
   supplierName?: string | null;
+  itemName?: string | null;
+  itemNameEn?: string | null;
+  fileUrl?: string | null;
   contractorOrgId?: string;
   supplierOrgId?: string;
 }
 
 /**
- * Guarantees, read-only.
+ * Guarantees — spot the expiry, and give the answer.
  *
- * Accepting or rejecting one is a contractor decision the website gates behind
- * `deliveries.confirm`, and submitting one is a supplier upload — both need a
- * file in hand, so neither belongs here. What a phone is good for is spotting an
- * expiry before it bites, which is what the list sorts on.
+ * The list sorts on what a phone is best at noticing: an expiry before it
+ * bites. It now also carries the contractor's decision, which was left off
+ * earlier on the grounds that reviewing needs the file in hand. That was one
+ * step too cautious — having the file open is the reviewer's option, not a
+ * precondition, so the file is a tap away and the answer sits beside it.
+ *
+ * Only the contractor side of a guarantee may answer, and only with
+ * `deliveries.confirm`, which is what the rules require. Submitting one stays
+ * with the supplier on the website: it is a file upload with an expiry date,
+ * not a decision.
  */
 export default function GuaranteesScreen() {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { items, isLoading } = useGuarantees<Guarantee>();
+  const { user } = useAuth();
+  const { items, isLoading, orgId } = useGuarantees<Guarantee>();
+  const { can } = usePermissions();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const mayReview = can("deliveries.confirm");
+
+  const decide = (g: Guarantee, decision: "accepted" | "rejected") => {
+    if (!user) return;
+    Alert.alert(
+      decision === "accepted" ? t.guarantee.confirmAccept : t.guarantee.confirmReject,
+      decision === "accepted" ? t.guarantee.onceAccepted : undefined,
+      [
+        { text: t.common.cancel, style: "cancel" },
+        {
+          text: decision === "accepted" ? t.guarantee.accept : t.guarantee.reject,
+          style: decision === "rejected" ? "destructive" : "default",
+          onPress: async () => {
+            setBusy(g.id);
+            try {
+              await reviewGuarantee(db, g.id, decision, user.uid);
+              Alert.alert(t.guarantee.reviewDone);
+            } catch {
+              Alert.alert(t.guarantee.reviewFailed);
+            } finally {
+              setBusy(null);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const sorted = useMemo(
     () =>
@@ -86,7 +132,8 @@ export default function GuaranteesScreen() {
           renderItem={({ item }) => {
             const tint = statusColor(item.status);
             const days = daysUntil(item.expirationDate);
-            const expiring = days !== null && days <= 30;
+            const expired = days !== null && days < 0;
+            const expiring = days !== null && days >= 0 && days <= 30;
             return (
               <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text
@@ -111,13 +158,50 @@ export default function GuaranteesScreen() {
                     <Text
                       style={[
                         styles.expiry,
-                        { color: expiring ? colors.destructive : colors.outline },
+                        { color: expired ? colors.destructive : expiring ? colors.warning : colors.outline },
                       ]}
                     >
-                      {t.finance.expires} {item.expirationDate}
+                      {expired ? t.guarantee.expired : `${t.finance.expires} ${item.expirationDate}`}
                     </Text>
                   ) : null}
                 </View>
+
+                {item.fileUrl ? (
+                  <Pressable
+                    onPress={() => Linking.openURL(item.fileUrl as string).catch(() => {})}
+                    accessibilityRole="link"
+                    style={[styles.fileRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}
+                  >
+                    <Feather name="paperclip" size={14} color={colors.cta} />
+                    <Text style={[styles.fileText, { color: colors.cta }]}>{t.guarantee.openFile}</Text>
+                  </Pressable>
+                ) : null}
+
+                {item.status === "pending_review" && item.contractorOrgId === orgId && (
+                  canAnswerGuarantee(item, orgId, mayReview) ? (
+                    <View style={[styles.actions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                      <Button
+                        title={t.guarantee.reject}
+                        size="sm"
+                        variant="secondary"
+                        onPress={() => decide(item, "rejected")}
+                        loading={busy === item.id}
+                        style={{ flex: 1 }}
+                      />
+                      <Button
+                        title={t.guarantee.accept}
+                        size="sm"
+                        onPress={() => decide(item, "accepted")}
+                        loading={busy === item.id}
+                        style={{ flex: 1 }}
+                      />
+                    </View>
+                  ) : (
+                    <Text style={[styles.hint, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
+                      {t.guarantee.cannotReview}
+                    </Text>
+                  )
+                )}
               </View>
             );
           }}
@@ -142,4 +226,8 @@ const styles = StyleSheet.create({
   pill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
   pillText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   expiry: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  fileRow: { alignItems: "center", gap: 6, marginTop: 2, minHeight: 32 },
+  fileText: { fontSize: 12.5, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  actions: { gap: 10, marginTop: 6 },
+  hint: { fontSize: 11.5, lineHeight: 18, fontFamily: "Inter_400Regular", marginTop: 4 },
 });

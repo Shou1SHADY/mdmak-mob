@@ -77,11 +77,13 @@ export interface PortalComponentDef {
 // be talked to. Mirrors the website's CONTRACTOR/SUPPLIER_COMMUNICATION_SECTION.
 export const CONTRACTOR_COMMUNICATION: NavItem[] = [
   { titleKey: "chats", href: "/(contractor)/chats", icon: "message-circle", built: true },
+  { titleKey: "team_room", href: "/team-room", icon: "message-square", built: true },
   { titleKey: "notifications", href: "/(contractor)/notifications", icon: "bell", built: true },
 ];
 
 export const SUPPLIER_COMMUNICATION: NavItem[] = [
   { titleKey: "chats", href: "/(supplier)/chats", icon: "message-circle", built: true },
+  { titleKey: "team_room", href: "/team-room", icon: "message-square", built: true },
   { titleKey: "notifications", href: "/(supplier)/notifications", icon: "bell", built: true },
 ];
 
