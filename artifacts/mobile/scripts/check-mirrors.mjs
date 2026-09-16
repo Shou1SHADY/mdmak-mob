@@ -38,6 +38,7 @@ const MIRRORS = {
   "lib/permissions.ts": "src/lib/permissions.ts",
   "lib/project-status.ts": "src/lib/project-status.ts",
   "lib/project-sections.ts": "src/lib/project-sections.ts",
+  "lib/ipc.ts": "src/lib/ipc.ts",
   "lib/inventory-units.ts": "src/lib/inventory-units.ts",
   "lib/waste-reasons.ts": "src/lib/waste-reasons.ts",
   "lib/invoice-utils.ts": "src/utils/invoice-utils.ts",

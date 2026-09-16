@@ -12,6 +12,7 @@ import * as finance from "./modules/finance";
 import * as sales from "./modules/sales";
 import * as manufacturing from "./modules/manufacturing";
 import * as accounting from "./modules/accounting";
+import * as site from "./modules/site";
 
 const en = {
   ...core.en,
@@ -26,6 +27,7 @@ const en = {
   ...sales.en,
   ...manufacturing.en,
   ...accounting.en,
+  ...site.en,
 };
 
 export default en;

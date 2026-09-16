@@ -13,6 +13,7 @@ import * as finance from "./modules/finance";
 import * as sales from "./modules/sales";
 import * as manufacturing from "./modules/manufacturing";
 import * as accounting from "./modules/accounting";
+import * as site from "./modules/site";
 
 const ar: Translations = {
   ...core.ar,
@@ -27,6 +28,7 @@ const ar: Translations = {
   ...sales.ar,
   ...manufacturing.ar,
   ...accounting.ar,
+  ...site.ar,
 };
 
 export default ar;

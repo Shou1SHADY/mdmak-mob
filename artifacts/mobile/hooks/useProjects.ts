@@ -39,6 +39,9 @@ export interface BoqItem {
   quantity?: number | null;
   unitPrice?: number | null;
   drawnQuantity?: number | null;
+  /** Cumulative site measurement. Accumulates even on a line locked into a
+   * tender — being drawn doesn't stop work on site. */
+  executedQuantity?: number | null;
   isEditable?: boolean;
   tenderId?: string | null;
   divisionNameAr?: string | null;

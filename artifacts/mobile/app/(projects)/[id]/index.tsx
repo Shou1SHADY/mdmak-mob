@@ -231,11 +231,41 @@ export default function ProjectDetailScreen() {
               })}
               {boqItems.length > 6 && (
                 <Text style={[styles.hint, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
-                  +{boqItems.length - 6} · {t.projects.boqOnWeb}
+                  +{boqItems.length - 6}
                 </Text>
               )}
             </>
           )}
+        </View>
+
+        {/* The project's own ledgers — measuring, claiming, deciding, and who
+            is seated here. Each is a screen of its own because each is a
+            different job, done by a different person, on a different day. */}
+        <View style={{ gap: 8 }}>
+          {(
+            [
+              [`/(projects)/${id}/boq`, "list", t.site.boq],
+              [`/(projects)/${id}/claims`, "file-text", t.site.claims],
+              [`/(projects)/${id}/requests`, "inbox", t.site.requests],
+              [`/(projects)/${id}/team`, "users", t.site.team],
+            ] as const
+          ).map(([href, icon, label]) => (
+            <TouchableOpacity
+              key={href}
+              onPress={() => router.push(href as never)}
+              accessibilityRole="button"
+              style={[
+                styles.navRow,
+                { flexDirection: isRTL ? "row-reverse" : "row", backgroundColor: colors.card, borderColor: colors.border },
+              ]}
+            >
+              <Feather name={icon} size={16} color={colors.cta} />
+              <Text style={[styles.navText, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+                {label}
+              </Text>
+              <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={16} color={colors.outline} />
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Tenders */}
@@ -320,6 +350,8 @@ const styles = StyleSheet.create({
   stat: { flex: 1, gap: 4 },
   statValue: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
   statLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
+  navRow: { alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, minHeight: 52 },
+  navText: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold" },
   boqRow: {
     alignItems: "center",
     gap: 8,
