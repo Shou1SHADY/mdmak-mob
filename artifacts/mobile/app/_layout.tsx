@@ -50,6 +50,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(finance)" />
       <Stack.Screen name="(sales)" />
       <Stack.Screen name="(manufacturing)" />
+      <Stack.Screen name="(accounting)" />
       <Stack.Screen name="(goods)" />
       <Stack.Screen name="(connections)" />
       <Stack.Screen name="apps" />

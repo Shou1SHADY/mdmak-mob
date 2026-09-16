@@ -113,15 +113,15 @@ function manufacturingItems(prefix: "/contractor" | "/supplier"): NavItem[] {
 
 function accountingItems(prefix: "/contractor" | "/supplier"): NavItem[] {
   return [
-    { titleKey: "acc_dashboard", href: `${prefix}/accounting`, icon: "grid", requiredPermission: "accounting.view", built: false },
+    { titleKey: "acc_dashboard", href: "/(accounting)/books", icon: "grid", requiredPermission: "accounting.view", built: true },
     { titleKey: "acc_locked", href: `${prefix}/accounting/locked`, icon: "lock", requiredPermission: "accounting.view", built: false },
-    { titleKey: "acc_income", href: `${prefix}/accounting/income-statement`, icon: "trending-up", requiredPermission: "accounting.view", built: false },
-    { titleKey: "acc_balance", href: `${prefix}/accounting/balance-sheet`, icon: "bar-chart-2", requiredPermission: "accounting.view", built: false },
-    { titleKey: "acc_cashflow", href: `${prefix}/accounting/cash-flow`, icon: "dollar-sign", requiredPermission: "accounting.view", built: false },
+    { titleKey: "acc_income", href: "/(accounting)/income", icon: "trending-up", requiredPermission: "accounting.view", built: true },
+    { titleKey: "acc_balance", href: "/(accounting)/balance", icon: "bar-chart-2", requiredPermission: "accounting.view", built: true },
+    { titleKey: "acc_cashflow", href: "/(accounting)/cashflow", icon: "dollar-sign", requiredPermission: "accounting.view", built: true },
     { titleKey: "acc_equity", href: `${prefix}/accounting/equity`, icon: "pie-chart", requiredPermission: "accounting.view", built: false },
     { titleKey: "acc_coa", href: `${prefix}/accounting/chart-of-accounts`, icon: "list", requiredPermission: "accounting.view", built: false },
-    { titleKey: "acc_trial_balance", href: `${prefix}/accounting/trial-balance`, icon: "bar-chart-2", requiredPermission: "accounting.view", built: false },
-    { titleKey: "acc_journal", href: `${prefix}/accounting/journal`, icon: "book-open", requiredPermission: "accounting.view", built: false },
+    { titleKey: "acc_trial_balance", href: "/(accounting)/trial-balance", icon: "bar-chart-2", requiredPermission: "accounting.view", built: true },
+    { titleKey: "acc_journal", href: "/(accounting)/journal", icon: "book-open", requiredPermission: "accounting.view", built: true },
     { titleKey: "acc_ledger", href: `${prefix}/accounting/ledger`, icon: "file-text", requiredPermission: "accounting.view", built: false },
     { titleKey: "acc_checks", href: `${prefix}/accounting/checks`, icon: "shield", requiredPermission: "accounting.view", built: false },
     { titleKey: "acc_periods", href: `${prefix}/accounting/periods`, icon: "clock", requiredPermission: "accounting.close", built: false },
