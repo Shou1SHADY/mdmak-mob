@@ -183,7 +183,7 @@ export default function RegisterScreen() {
   useEffect(() => {
     if (user && pendingRef.current) {
       pendingRef.current = false;
-      if (!user.profileCompleted) {
+      if (user.needsOnboarding) {
         router.replace("/onboarding");
       } else {
         router.replace(user.role === "Supplier" ? "/(supplier)/dashboard" : "/(contractor)/dashboard");

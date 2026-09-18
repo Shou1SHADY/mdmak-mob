@@ -62,6 +62,7 @@ export const PREVIEW_USER: AppUser = {
   city: "الرياض",
   emailVerified: true,
   profileCompleted: true,
+  needsOnboarding: false,
 };
 
 const iso = (daysFromNow: number) =>

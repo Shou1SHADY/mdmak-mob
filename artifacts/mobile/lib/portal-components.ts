@@ -96,7 +96,9 @@ function salesItems(prefix: "/contractor" | "/supplier"): NavItem[] {
     { titleKey: "sales_orders", href: "/(sales)/orders", icon: "clipboard", requiredPermission: "sales.manage", built: true },
     { titleKey: "sales_fulfillment", href: `${prefix}/sales/fulfillment`, icon: "truck", requiredPermission: "sales.manage", built: false },
     { titleKey: "sales_payments", href: "/(sales)/payments", icon: "credit-card", requiredPermission: "sales.manage", built: true },
+    { titleKey: "sales_reports", href: `${prefix}/sales/reports`, icon: "bar-chart-2", requiredPermission: "sales.manage", built: false },
     { titleKey: "sales_price_list", href: `${prefix}/sales/price-list`, icon: "tag", requiredPermission: "sales.manage", built: false },
+    { titleKey: "sales_settings", href: `${prefix}/sales/settings`, icon: "sliders", requiredPermission: "sales.manage", built: false },
   ];
 }
 
@@ -117,6 +119,7 @@ function accountingItems(prefix: "/contractor" | "/supplier"): NavItem[] {
   return [
     { titleKey: "acc_dashboard", href: "/(accounting)/books", icon: "grid", requiredPermission: "accounting.view", built: true },
     { titleKey: "acc_locked", href: `${prefix}/accounting/locked`, icon: "lock", requiredPermission: "accounting.view", built: false },
+    { titleKey: "acc_sales_desk", href: `${prefix}/accounting/sales-desk`, icon: "dollar-sign", requiredPermission: "invoices.manage", built: false },
     { titleKey: "acc_income", href: "/(accounting)/income", icon: "trending-up", requiredPermission: "accounting.view", built: true },
     { titleKey: "acc_balance", href: "/(accounting)/balance", icon: "bar-chart-2", requiredPermission: "accounting.view", built: true },
     { titleKey: "acc_cashflow", href: "/(accounting)/cashflow", icon: "dollar-sign", requiredPermission: "accounting.view", built: true },

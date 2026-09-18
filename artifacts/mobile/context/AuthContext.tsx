@@ -63,6 +63,16 @@ export interface AppUser {
   city?: string;
   emailVerified: boolean;
   profileCompleted: boolean;
+  /**
+   * Whether the first-run screen (company name + city) should open. The
+   * website creates EVERY invited account with `profileCompleted: false` and
+   * then only shows a banner — it never blocks. This app used to redirect
+   * everyone with the flag to onboarding, which stranded every team member
+   * (the company identity is the owner's; a member cannot "complete" it) and
+   * every invited owner on UAT, where the website does not even nudge.
+   * So: only the owner of a primary company whose company still has no name.
+   */
+  needsOnboarding: boolean;
 }
 
 export interface LegalDoc {
@@ -191,6 +201,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       city: identity.city,
       emailVerified: firebaseUser.emailVerified,
       profileCompleted: identity.profileCompleted ?? data.profileCompleted ?? true,
+      needsOnboarding:
+        organizationRole !== "member" &&
+        orgId === firebaseUser.uid &&
+        !(identity.profileCompleted ?? data.profileCompleted ?? true) &&
+        !(identity.companyName ?? identity.orgName ?? "").trim(),
     };
     setUser(appUser);
     devLog("[Auth] User state set, orgId:", appUser.organizationId, "role:", appUser.role, "orgRole:", organizationRole);

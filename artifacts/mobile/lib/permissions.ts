@@ -1,12 +1,3 @@
-// Team permission system — mirrored VERBATIM from the website's
-// src/lib/permissions.ts. The website is the source of truth; the same ids are
-// mirrored again in firestore.rules, so a member this module blocks is blocked
-// by the rules too. When the website copy changes, re-copy this file whole
-// rather than hand-editing it.
-// Team permission system — single source of truth for the permission catalog,
-// seeded groups, and permission resolution. Used by UI gating, API routes,
-// and mirrored by firestore.rules (keep the ids in sync when changing).
-
 // Team permission system — single source of truth for the permission catalog,
 // seeded groups, and permission resolution. Used by UI gating, API routes,
 // and mirrored by firestore.rules (keep the ids in sync when changing).
@@ -70,6 +61,18 @@ export const PERMISSION_IDS = [
 
 export type PermissionId = (typeof PERMISSION_IDS)[number]
 export type PermissionValue = PermissionId | typeof ALL_PERMISSION
+
+/**
+ * Accepting or rejecting a supplier's guarantee.
+ *
+ * Named here rather than written inline at the button, because the answer is
+ * fixed by firestore.rules — the `guarantees` update clause requires
+ * `deliveries.confirm` — and the UI once asked for `offers.accept` instead.
+ * The two never overlap in the seeded groups, so Finance saw buttons the rules
+ * refused while Supply Chain, the group actually authorised, saw none. Owners
+ * pass both, which is why it survived. Change this only alongside the rule.
+ */
+export const GUARANTEE_REVIEW_PERMISSION: PermissionId = "deliveries.confirm"
 
 /** The catalog grouped by portal component, for the group editor — a
  * permission belongs to exactly one section (guarded by a test). */

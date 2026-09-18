@@ -246,7 +246,7 @@ export default function Index() {
   }
 
   if (!user) return <Redirect href={"/welcome" as any} />;
-  if (user && !user.profileCompleted) return <Redirect href="/onboarding" />;
+  if (user.needsOnboarding) return <Redirect href="/onboarding" />;
   if (user.role === "Contractor") return <Redirect href="/(contractor)/dashboard" />;
   if (user.role === "Supplier") return <Redirect href="/(supplier)/dashboard" />;
 

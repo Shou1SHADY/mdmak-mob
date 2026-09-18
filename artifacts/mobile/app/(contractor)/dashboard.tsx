@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -21,6 +21,10 @@ import { DashboardHeader, WelcomeHeroCard, QuickActionCard } from "@/components/
 import { useNotifications } from "@/hooks/useNotifications";
 import { RFQ_STATUSES } from "@/constants/data";
 import { AIChatWidget } from "@/components/AIChatWidget";
+import * as WebBrowser from "expo-web-browser";
+import { usePermissions } from "@/hooks/usePermissions";
+import { siteUrl } from "@/lib/site-api";
+import { componentsForRole, hasBuiltScreens, visibleComponents, visibleItems, type PortalComponentDef } from "@/lib/portal-components";
 
 /**
  * The contractor's home. Every number appears once: the hero says what needs
@@ -150,7 +154,45 @@ export default function ContractorDashboard() {
     }
   };
 
-  useEffect(() => { fetchData(); }, [user?.organizationId]);
+  // The dashboard used to be the Procurement screen for everyone: a member whose
+  // role is Sales or Manufacturing landed on RFQ statistics that were not
+  // theirs. The modules come first now, for everyone; the RFQ sections stay
+  // only for a role that includes Procurement.
+  const { can, isLoading: permsLoading } = usePermissions();
+  const modules = useMemo(() => visibleComponents(componentsForRole(user?.role), can), [user?.role, can]);
+  const procurementVisible = !permsLoading && modules.some((m) => m.id === "procurement");
+  const openModule = (mod: PortalComponentDef) => {
+    const items = visibleItems(mod.items, can);
+    const home = items.find((i) => i.href === mod.homeHref && i.built) ?? items.find((i) => i.built);
+    if (!home) {
+      void WebBrowser.openBrowserAsync(siteUrl(mod.homeHref));
+      return;
+    }
+    router.push(home.href as never);
+  };
+  const moduleLabel = (mod: PortalComponentDef) => t.modules.labels[mod.labelKey as keyof typeof t.modules.labels];
+  const accentOf = (mod: PortalComponentDef): string => {
+    const map: Record<PortalComponentDef["accentToken"], string> = {
+      primary: colors.primaryText,
+      secondary: colors.secondary,
+      accent: colors.accent,
+      success: colors.success,
+      cta: colors.cta,
+      warning: colors.warning,
+      destructive: colors.destructive,
+    };
+    return map[mod.accentToken];
+  };
+
+  useEffect(() => {
+    if (permsLoading) return;
+    if (!procurementVisible) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+    fetchData();
+  }, [user?.organizationId, permsLoading, procurementVisible]);
 
   const countFor: Record<string, number> = {
     Draft: stats.draft, New: stats.newRfqs, Active: stats.active,
@@ -210,6 +252,59 @@ export default function ContractorDashboard() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.cta} />}
           showsVerticalScrollIndicator={false}
         >
+          {/* Your modules — the same registry and permission checks as the launcher */}
+          {!permsLoading && modules.length > 0 && (
+            <View style={styles.modulesBlock}>
+              <View style={[styles.cardHeader, { flexDirection: row }]}>
+                <View style={[styles.cardHeaderTitle, { flexDirection: row }]}>
+                  <View style={[styles.cardHeaderIcon, { backgroundColor: colors.ctaSoft }]}>
+                    <Feather name="grid" size={14} color={colors.cta} />
+                  </View>
+                  <Text style={[type.title, { color: colors.foreground }]}>{t.modules.yourModules}</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.linkPill, { flexDirection: row, backgroundColor: colors.ctaSoft }]}
+                  onPress={() => router.push("/apps")}
+                  accessibilityRole="button"
+                >
+                  <Text style={[type.captionStrong, { color: colors.cta }]}>{t.dashboard.viewAll}</Text>
+                  <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={12} color={colors.cta} />
+                </TouchableOpacity>
+              </View>
+              <View style={[styles.modulesGrid, { flexDirection: row }]}>
+                {modules.map((mod) => {
+                  const tint = accentOf(mod);
+                  const onPhone = hasBuiltScreens(mod, can);
+                  return (
+                    <TouchableOpacity
+                      key={mod.id}
+                      onPress={() => openModule(mod)}
+                      activeOpacity={0.8}
+                      accessibilityRole={onPhone ? "button" : "link"}
+                      accessibilityLabel={moduleLabel(mod)}
+                      style={[styles.moduleTile, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: row }]}
+                    >
+                      <View style={[styles.moduleTileIcon, { backgroundColor: tint + "1A" }]}>
+                        <Feather name={mod.icon} size={18} color={tint} />
+                      </View>
+                      <Text style={[type.captionStrong, { flex: 1, color: colors.foreground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={2}>
+                        {moduleLabel(mod)}
+                      </Text>
+                      {!onPhone && <Feather name="external-link" size={12} color={colors.outline} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {!procurementVisible && (
+                <Text style={[type.caption, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left", marginTop: space.sm }]}>
+                  {t.modules.noProcurementHint}
+                </Text>
+              )}
+            </View>
+          )}
+
+          {procurementVisible && (
+          <>
           <WelcomeHeroCard
             userName={user?.displayName}
             activeRfqs={stats.inProgress}
@@ -292,6 +387,8 @@ export default function ContractorDashboard() {
             : rfqs.slice(0, 5).map((rfq) => (
               <RFQCard key={rfq.id} rfq={rfq} onPress={() => router.push(`/(contractor)/rfqs/${rfq.id}`)} showOffers />
             ))}
+          </>
+          )}
         </ScrollView>
       )}
       {/* The assistant floats here only: on the list screens it sat on top of the primary action. */}
@@ -301,6 +398,19 @@ export default function ContractorDashboard() {
 }
 
 const styles = StyleSheet.create({
+  modulesBlock: { marginBottom: space.md },
+  modulesGrid: { flexWrap: "wrap", gap: space.sm },
+  moduleTile: {
+    width: "48%",
+    flexGrow: 1,
+    alignItems: "center",
+    gap: space.sm,
+    padding: space.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    minHeight: MIN_TOUCH,
+  },
+  moduleTileIcon: { width: 36, height: 36, borderRadius: radius.control, alignItems: "center", justifyContent: "center" },
   scroll: { padding: space.lg, gap: space.lg },
   iconBtn: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radius.control, alignItems: "center", justifyContent: "center" },
   badge: {

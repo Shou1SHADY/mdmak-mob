@@ -67,7 +67,7 @@ export default function LoginScreen() {
   useEffect(() => {
     if (user && pendingRef.current) {
       pendingRef.current = false;
-      if (!user.profileCompleted) {
+      if (user.needsOnboarding) {
         router.replace("/onboarding");
       } else {
         const dashboard =
