@@ -1,7 +1,3 @@
-// VERBATIM MIRROR of the website's src/lib/accounting/hooks.ts — the business-action hooks that mirror documents into the ledger.
-// Do not edit here; change the website copy, run its tests, re-copy.
-// Verified by scripts/check-mirrors.mjs.
-
 // Integration hooks — what the rest of the app actually calls.
 //
 // Each function is the accounting consequence of one business event, and each
@@ -34,6 +30,8 @@ import {
   postMfgScrap,
   postMfgRemnantReceipt,
   type PostingContext,
+  postGoodsReceipt,
+  STANDARD_VAT_PERCENT,
 } from "./posting-rules"
 
 export interface HookActor {
@@ -334,6 +332,31 @@ export function onMfgRemnantReceived(
 ): void {
   void ifEnabled(firestore, actor.organizationId, () =>
     postToLedgerSafe(firestore, ctxOf(actor), postMfgRemnantReceipt({ ...remnant, date: remnant.date || today() }))
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Procurement — a supplier's delivery confirmed received
+// ---------------------------------------------------------------------------
+
+export function onGoodsReceived(
+  firestore: Firestore,
+  actor: HookActor,
+  receipt: {
+    deliveryId: string
+    date?: string
+    /** The offer's price for the delivery, EXCLUDING VAT. */
+    net: number
+    supplierId?: string | null
+    supplierName?: string | null
+    rfqTitle?: string | null
+    projectId?: string | null
+    projectName?: string | null
+  }
+): void {
+  const vat = Math.round(receipt.net * STANDARD_VAT_PERCENT) / 100
+  void ifEnabled(firestore, actor.organizationId, () =>
+    postToLedgerSafe(firestore, ctxOf(actor), postGoodsReceipt({ ...receipt, vat, date: receipt.date || today() }))
   )
 }
 

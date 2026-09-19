@@ -138,6 +138,8 @@ export default function SubmitOfferScreen() {
           await addDoc(collection(db, "users", contractorId, "notifications"), {
             userId: contractorId,
             type: "new_offer",
+            // Rendered in the READER's language by the website's notification screens.
+            i18n: { title: "pn_new_offer_title", message: "pn_new_offer", params: { supplier: user?.orgName || user?.displayName || "", price: Number(price).toLocaleString("en-US"), rfq: rfqTitle || "" } },
             title: "عرض سعر جديد",
             message: `قدم المورد ${user?.orgName || user?.displayName || "مورد"} عرضاً بمبلغ ${Number(price).toLocaleString("ar-SA")} ر.س على مناقصة: ${rfqTitle}`,
             rfqId,

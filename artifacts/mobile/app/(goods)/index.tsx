@@ -65,11 +65,12 @@ export default function GoodsReceivedScreen() {
     }
     setBusy(true);
     try {
-      await confirmDelivery({
+      const { stockLanded } = await confirmDelivery({
         firestore: db,
         delivery: target,
         receiverName: receiver,
         uid: user.uid,
+        userName: user.displayName || user.email || "",
         centralLabels: {
           name: t.goods.centralName,
           location: t.goods.centralLocation,
@@ -78,7 +79,7 @@ export default function GoodsReceivedScreen() {
       });
       setTarget(null);
       setReceiver("");
-      Alert.alert(t.common.success, t.goods.confirmedToast);
+      Alert.alert(t.common.success, stockLanded ? t.goods.confirmedToast : t.goods.stockNotLanded);
     } catch (e: any) {
       if (__DEV__) console.warn("[GoodsReceived] confirm:", e?.message);
       Alert.alert(t.common.error, t.goods.failed);

@@ -9,6 +9,8 @@ import {
   type Firestore,
 } from "firebase/firestore";
 import { receiveDelivery } from "@/lib/warehouse-transfer";
+import { onGoodsReceived } from "@/lib/accounting/hooks";
+import { markPurchaseArrived } from "@/lib/manufacturing-writes";
 
 // Confirming a delivery, mirroring the website's handleConfirmDelivery in
 // src/components/contractor/RfqOffersView.tsx.
@@ -65,11 +67,20 @@ export interface ConfirmDeliveryInput {
   delivery: DeliveryDoc;
   receiverName: string;
   uid: string;
+  /** Who confirms — the name on the journal entry and the purchase request. */
+  userName?: string;
   centralLabels: CentralWarehouseLabels;
 }
 
-export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<void> {
+/** Mirrors the website's delivery confirmation (RfqOffersView, 19 Sep 2026):
+ * the receipt is priced from the awarded offer — quoted EXCLUDING VAT — and
+ * posted to the books; stock carries the unit cost when it is exact; an RFQ
+ * that answered a Manufacturing purchase request closes it. Returns whether the
+ * stock actually landed, so the screen can say so when it did not. */
+export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<{ stockLanded: boolean }> {
   const { firestore, delivery, receiverName, uid, centralLabels } = input;
+  const userName = input.userName || "";
+  let stockLanded = true;
 
   // 1 — the confirmation itself.
   await updateDoc(doc(firestore, "deliveries", delivery.id), {
@@ -84,15 +95,27 @@ export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<void
   // otherwise the org's central warehouse, created here with the SAME
   // deterministic id the website uses (`central_{orgId}`) so both apps land on
   // one warehouse rather than two.
+  const orgId = delivery.contractorOrgId;
+  let net = 0;
   try {
-    const orgId = delivery.contractorOrgId;
-    const items = (delivery.items ?? [])
+    if (delivery.offerId) {
+      const offerSnap = await getDoc(doc(firestore, "offers", delivery.offerId));
+      const o = offerSnap.data() as { price?: string | number; totalBatchesPrice?: number } | undefined;
+      net = Math.max(0, Number(o?.totalBatchesPrice ?? o?.price) || 0);
+    }
+  } catch {
+    net = 0;
+  }
+  try {
+    const rawItems = (delivery.items ?? [])
       .map((it) => ({
         name: it.name || "",
         unit: it.unitOfMeasure || it.unit || "",
         quantity: Number(it.quantity) || 0,
       }))
       .filter((it) => it.name && it.unit && it.quantity > 0);
+    // A unit cost only when it is exact: one line, one price.
+    const items = rawItems.map((it) => ({ ...it, unitCost: rawItems.length === 1 && net > 0 ? Math.round((net / it.quantity) * 100) / 100 : null }));
 
     if (orgId && items.length > 0) {
       let targetWarehouseId: string | null = null;
@@ -122,7 +145,35 @@ export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<void
       await receiveDelivery({ firestore, warehouseId: targetWarehouseId, items, organizationId: orgId });
     }
   } catch (receiptErr) {
+    stockLanded = false;
     if (__DEV__) console.error("[confirmDelivery] goods receipt into warehouse failed:", receiptErr);
+  }
+
+  // 2b — the books, and Manufacturing's purchase request, once stock is in.
+  if (orgId && stockLanded) {
+    onGoodsReceived(
+      firestore,
+      { organizationId: orgId, userId: uid, userName },
+      {
+        deliveryId: delivery.id,
+        net,
+        supplierId: delivery.supplierOrgId && delivery.supplierOrgId !== "guest" ? delivery.supplierOrgId : null,
+        supplierName: delivery.supplierName || null,
+        rfqTitle: delivery.rfqTitle || null,
+        projectId: delivery.projectId || null,
+      }
+    );
+    try {
+      if (delivery.rfqId) {
+        const rfqSnap = await getDoc(doc(firestore, "rfqs", delivery.rfqId));
+        const src = (rfqSnap.data() as { purchaseSource?: { kind?: string; workOrderId?: string; purchaseRequestId?: string } } | undefined)?.purchaseSource;
+        if (src?.kind === "mfg_purchase" && src.workOrderId && src.purchaseRequestId) {
+          await markPurchaseArrived(firestore, { orderId: src.workOrderId, purchaseRequestId: src.purchaseRequestId, actor: { id: uid, name: userName } });
+        }
+      }
+    } catch (linkErr) {
+      if (__DEV__) console.warn("[confirmDelivery] purchase request not closed:", linkErr);
+    }
   }
 
   // 3 — tell the supplier. A guest supplier has no user doc to write to; they
@@ -133,6 +184,7 @@ export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<void
         userId: delivery.supplierId,
         organizationId: delivery.supplierOrgId || delivery.supplierId,
         type: "delivery_confirmed",
+        i18n: { title: "pn_delivery_confirmed_title", message: "pn_delivery_confirmed", params: { rfq: delivery.rfqTitle || "" } },
         title: "✅ تم تأكيد الاستلام",
         message: `أكد المقاول استلام الشحنة لطلب عروض الأسعار: ${delivery.rfqTitle || ""}`,
         offerId: delivery.offerId ?? null,
@@ -144,4 +196,5 @@ export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<void
   } catch (notifyErr) {
     if (__DEV__) console.warn("[confirmDelivery] supplier notification failed:", notifyErr);
   }
+  return { stockLanded };
 }

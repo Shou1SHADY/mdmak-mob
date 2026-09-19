@@ -72,6 +72,7 @@ export const en = {
     centralName: "Central Warehouse",
     centralLocation: "Head office",
     centralDesc: "The company's master stock — project warehouses draw from it and return to it",
+    stockNotLanded: "Receipt confirmed, but the quantities were not booked into the warehouse — add them in Inventory by hand.",
   },
 };
 
@@ -142,5 +143,6 @@ export const ar: typeof en = {
     centralName: "المستودع المركزي",
     centralLocation: "المقر الرئيسي",
     centralDesc: "المخزون الرئيسي للشركة — مستودعات المشاريع تسحب منه وتُرجع إليه",
+    stockNotLanded: "تم تأكيد الاستلام، لكن الكميات لم تُسجَّل في المستودع — أضفها من المخزون يدوياً.",
   },
 };
