@@ -149,8 +149,8 @@ export default function WelcomeScreen() {
                     <View
                       key={chip.labelKey}
                       style={[styles.chip, {
-                        backgroundColor: "rgba(255,255,255,0.94)",
-                        borderColor: "rgba(3,105,161,0.12)",
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
                       }]}
                     >
                       <Feather name={chip.icon} size={12} color={colors.cta} />
@@ -204,20 +204,20 @@ export default function WelcomeScreen() {
 
         {/* CTA button */}
         {isLast ? (
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             style={[styles.ctaBtn, { backgroundColor: colors.cta }]}
             onPress={() => router.replace("/auth/login" as any)}
             activeOpacity={0.82}
           >
-            {isRTL && <Feather name="arrow-left" size={18} color="#FFF" />}
-            <Text style={styles.ctaBtnText}>{t.welcome.getStarted}</Text>
-            {!isRTL && <Feather name="arrow-right" size={18} color="#FFF" />}
+            {isRTL && <Feather name="arrow-left" size={18} color={colors.ctaForeground} />}
+            <Text style={[styles.ctaBtnText, { color: colors.ctaForeground }]}>{t.welcome.getStarted}</Text>
+            {!isRTL && <Feather name="arrow-right" size={18} color={colors.ctaForeground} />}
           </TouchableOpacity>
         ) : (
           <View style={[styles.navRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             {/* Back button — only visible after first slide */}
             {page > 0 ? (
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.common.back}
                 style={[styles.backBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
                 onPress={() => goTo(page - 1)}
                 activeOpacity={0.8}
@@ -233,21 +233,21 @@ export default function WelcomeScreen() {
             )}
 
             {/* Next button */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[styles.nextBtn, { backgroundColor: colors.cta }]}
               onPress={() => goTo(page + 1)}
               activeOpacity={0.82}
             >
-              {isRTL && <Feather name="arrow-left" size={18} color="#FFF" />}
-              <Text style={styles.ctaBtnText}>{t.welcome.nextStep}</Text>
-              {!isRTL && <Feather name="arrow-right" size={18} color="#FFF" />}
+              {isRTL && <Feather name="arrow-left" size={18} color={colors.ctaForeground} />}
+              <Text style={[styles.ctaBtnText, { color: colors.ctaForeground }]}>{t.welcome.nextStep}</Text>
+              {!isRTL && <Feather name="arrow-right" size={18} color={colors.ctaForeground} />}
             </TouchableOpacity>
           </View>
         )}
 
         {/* Skip link — only shown on non-last slides */}
         {!isLast && (
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             style={styles.skipBtn}
             onPress={() => router.replace("/auth/login" as any)}
             activeOpacity={0.6}
@@ -377,8 +377,8 @@ const styles = StyleSheet.create({
   },
   ctaBtnText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
-    color: "#FFFFFF",
+    fontSize: 17,
+    lineHeight: 28,
   },
   navRow: {
     gap: 12,

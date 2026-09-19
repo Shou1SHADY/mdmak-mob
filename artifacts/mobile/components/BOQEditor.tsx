@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import {
   View, Text, TouchableOpacity, TextInput, ScrollView, StyleSheet,
-  Modal, Pressable, Alert,
-} from "react-native";
+  Modal, Pressable, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
@@ -16,17 +15,17 @@ export interface BOQItem {
 }
 
 const BOQ_UNITS = [
-  { id: "طن",   labelAr: "طن",   labelEn: "Ton"   },
-  { id: "م²",   labelAr: "م²",   labelEn: "m²"    },
-  { id: "م³",   labelAr: "م³",   labelEn: "m³"    },
-  { id: "م.ط", labelAr: "م.ط",  labelEn: "LM"    },
-  { id: "قطعة",labelAr: "قطعة", labelEn: "Piece" },
-  { id: "كجم",  labelAr: "كجم",  labelEn: "KG"    },
-  { id: "لتر",  labelAr: "لتر",  labelEn: "Liter" },
-  { id: "متر",  labelAr: "متر",  labelEn: "Meter" },
-  { id: "كيس",  labelAr: "كيس",  labelEn: "Bag"   },
-  { id: "طقم",  labelAr: "طقم",  labelEn: "Set"   },
-  { id: "وحدة",labelAr: "وحدة", labelEn: "Unit"  },
+  { id: "طن",   labelAr: "طن",   labelEn: "Ton"   },  // ui-ok: stored unit id with its own labels
+  { id: "م²",   labelAr: "م²",   labelEn: "m²"    },  // ui-ok: stored unit id with its own labels
+  { id: "م³",   labelAr: "م³",   labelEn: "m³"    },  // ui-ok: stored unit id with its own labels
+  { id: "م.ط", labelAr: "م.ط",  labelEn: "LM"    },  // ui-ok: stored unit id with its own labels
+  { id: "قطعة",labelAr: "قطعة", labelEn: "Piece" },  // ui-ok: stored unit id with its own labels
+  { id: "كجم",  labelAr: "كجم",  labelEn: "KG"    },  // ui-ok: stored unit id with its own labels
+  { id: "لتر",  labelAr: "لتر",  labelEn: "Liter" },  // ui-ok: stored unit id with its own labels
+  { id: "متر",  labelAr: "متر",  labelEn: "Meter" },  // ui-ok: stored unit id with its own labels
+  { id: "كيس",  labelAr: "كيس",  labelEn: "Bag"   },  // ui-ok: stored unit id with its own labels
+  { id: "طقم",  labelAr: "طقم",  labelEn: "Set"   },  // ui-ok: stored unit id with its own labels
+  { id: "وحدة",labelAr: "وحدة", labelEn: "Unit"  },  // ui-ok: stored unit id with its own labels
 ];
 
 function generateId() {
@@ -83,7 +82,7 @@ function ItemForm({ item, onChange, isRTL, colors, t }: ItemFormProps) {
           <Text style={[styles.fieldLabel, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
             {t.boq.unit}
           </Text>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             style={[styles.input, styles.unitBtn, { borderColor: colors.border, backgroundColor: colors.background, flexDirection: isRTL ? "row-reverse" : "row" }]}
             onPress={() => setUnitModal(true)}
             activeOpacity={0.75}
@@ -114,14 +113,14 @@ function ItemForm({ item, onChange, isRTL, colors, t }: ItemFormProps) {
 
       {/* Unit picker modal */}
       <Modal visible={unitModal} transparent animationType="fade" onRequestClose={() => setUnitModal(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setUnitModal(false)}>
+        <Pressable accessible={false} style={styles.modalOverlay} onPress={() => setUnitModal(false)}>
           <View style={[styles.unitPickerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.unitPickerTitle, { color: colors.foreground }]}>{t.boq.unit}</Text>
-            <ScrollView style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
+            <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 320 }} showsVerticalScrollIndicator={false}>
               {BOQ_UNITS.map((u, i) => {
                 const active = item.unit === u.id;
                 return (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     key={u.id}
                     style={[
                       styles.unitRow,
@@ -160,7 +159,7 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
   const [addModalVisible, setAddModalVisible] = useState(false);
 
   const openAdd = () => {
-    setDraft({ unit: "قطعة", quantity: 1 });
+    setDraft({ unit: "قطعة", quantity: 1 });  // ui-ok: stored unit id default
     setEditingId(null);
     setAddModalVisible(true);
   };
@@ -215,13 +214,13 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
           </View>
         </View>
         {!readonly && (
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             style={[styles.addBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
             onPress={openAdd}
             activeOpacity={0.8}
           >
-            <Feather name="plus" size={14} color="#FFF" />
-            <Text style={styles.addBtnText}>{t.boq.addItem}</Text>
+            <Feather name="plus" size={14} color={colors.primaryForeground} />
+            <Text style={[styles.addBtnText, { color: colors.primaryForeground }]}>{t.boq.addItem}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -254,10 +253,10 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
                 </Text>
                 {!readonly && (
                   <View style={[styles.itemActions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                    <TouchableOpacity onPress={() => openEdit(item)} style={styles.iconBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.edit} onPress={() => openEdit(item)} style={styles.iconBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                       <Feather name="edit-2" size={14} color={colors.cta} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleRemove(item.id)} style={styles.iconBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.delete} onPress={() => handleRemove(item.id)} style={styles.iconBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                       <Feather name="trash-2" size={14} color={colors.destructive} />
                     </TouchableOpacity>
                   </View>
@@ -286,31 +285,33 @@ export function BOQEditor({ items, onChange, readonly = false }: Props) {
 
       {/* Add/Edit modal */}
       <Modal visible={addModalVisible} transparent animationType="slide" onRequestClose={() => setAddModalVisible(false)}>
-        <Pressable style={styles.sheetOverlay} onPress={() => setAddModalVisible(false)}>
-          <Pressable
-            style={[styles.sheet, { backgroundColor: colors.card }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            {/* Handle */}
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
-              {editingId ? (t.boq.editItem) : t.boq.addItem}
-            </Text>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <Pressable accessible={false} style={styles.sheetOverlay} onPress={() => setAddModalVisible(false)}>
+            <Pressable accessible={false}
+              style={[styles.sheet, { backgroundColor: colors.card }]}
+              onPress={(e) => e.stopPropagation()}
+            >
+              {/* Handle */}
+              <View style={[styles.handle, { backgroundColor: colors.border }]} />
+              <Text style={[styles.sheetTitle, { color: colors.foreground }]}>
+                {editingId ? (t.boq.editItem) : t.boq.addItem}
+              </Text>
 
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <ItemForm item={draft} onChange={setDraft} isRTL={isRTL} colors={colors} t={t} />
-            </ScrollView>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <ItemForm item={draft} onChange={setDraft} isRTL={isRTL} colors={colors} t={t} />
+              </ScrollView>
 
-            <View style={[styles.sheetActions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <TouchableOpacity style={[styles.sheetBtn, { borderWidth: 1, borderColor: colors.border }]} onPress={() => setAddModalVisible(false)}>
-                <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: colors.outline }}>{t.common.cancel}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.sheetBtn, { backgroundColor: colors.primary, flex: 2 }]} onPress={handleSave}>
-                <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: "#FFF" }}>{t.common.save}</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={[styles.sheetActions, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+                <TouchableOpacity accessibilityRole="button" style={[styles.sheetBtn, { borderWidth: 1, borderColor: colors.border }]} onPress={() => setAddModalVisible(false)}>
+                  <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: colors.outline }}>{t.common.cancel}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity accessibilityRole="button" style={[styles.sheetBtn, { backgroundColor: colors.primary, flex: 2 }]} onPress={handleSave}>
+                  <Text style={{ fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: colors.primaryForeground }}>{t.common.save}</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -326,7 +327,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 7,
     borderRadius: 12, borderWidth: 1,
   },
-  addBtnText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  addBtnText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 
   emptyBox: { borderRadius: 16, borderWidth: 1, borderStyle: "dashed", padding: 28, alignItems: "center", gap: 8 },
   emptyTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },

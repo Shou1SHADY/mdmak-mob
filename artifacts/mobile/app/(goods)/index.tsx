@@ -98,7 +98,7 @@ export default function GoodsReceivedScreen() {
           <CardSkeleton />
         </View>
       ) : (
-        <SectionList
+        <SectionList keyboardShouldPersistTaps="handled"
           sections={sections}
           keyExtractor={(item) => item.id}
           stickySectionHeadersEnabled={false}

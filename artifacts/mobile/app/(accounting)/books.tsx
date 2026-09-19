@@ -188,15 +188,15 @@ export default function BooksScreen() {
 
 const styles = StyleSheet.create({
   alert: { alignItems: "flex-start", gap: 10, borderWidth: 1, borderRadius: 12, padding: 12 },
-  alertTitle: { fontSize: 13.5, fontFamily: "Inter_700Bold" },
+  alertTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_700Bold" },
   alertBody: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2, lineHeight: 18 },
   grid: { gap: 12 },
   card: { borderWidth: 1, borderRadius: 14, padding: 14, gap: 8 },
   cardTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   expense: { alignItems: "center", justifyContent: "space-between", gap: 10 },
-  expenseName: { flex: 1, fontSize: 12.5, fontFamily: "Inter_400Regular" },
-  expenseValue: { fontSize: 13, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
+  expenseName: { flex: 1, fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
+  expenseValue: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
   link: { alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, minHeight: 52 },
   linkText: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  footnote: { fontSize: 11.5, fontFamily: "Inter_400Regular", lineHeight: 18, marginTop: 4 },
+  footnote: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 20, marginTop: 4 },
 });

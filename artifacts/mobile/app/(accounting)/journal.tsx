@@ -81,7 +81,7 @@ export default function JournalScreen() {
       ) : gate ? (
         gate
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={visible}
           keyExtractor={(e) => e.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
@@ -155,13 +155,13 @@ const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 6 },
   cardTop: { alignItems: "center", justifyContent: "space-between", gap: 8 },
   ref: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  desc: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
+  desc: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 24 },
   metaRow: { alignItems: "center", gap: 10, flexWrap: "wrap" },
-  meta: { fontSize: 11.5, fontFamily: "Inter_400Regular" },
-  amount: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginStart: "auto", fontVariant: ["tabular-nums"] },
+  meta: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
+  amount: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", marginStart: "auto", fontVariant: ["tabular-nums"] },
   lines: { borderTopWidth: 1, paddingTop: 8, marginTop: 2, gap: 6 },
   line: { alignItems: "center", gap: 8 },
   lineName: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular" },
-  lineNum: { width: 84, fontSize: 12, fontFamily: "Inter_500Medium", textAlign: "right", fontVariant: ["tabular-nums"] },
-  footnote: { fontSize: 11.5, fontFamily: "Inter_400Regular", lineHeight: 18, paddingVertical: 12 },
+  lineNum: { width: 84, fontSize: 12, fontFamily: "Inter_500Medium", textAlign: "right", fontVariant: ["tabular-nums"] },  // ui-ok: numbers align on their units digit in both languages
+  footnote: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 20, paddingVertical: 12 },
 });

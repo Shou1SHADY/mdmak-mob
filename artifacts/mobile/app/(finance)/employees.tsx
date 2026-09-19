@@ -82,7 +82,7 @@ export default function EmployeesScreen() {
           <CardSkeleton />
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{

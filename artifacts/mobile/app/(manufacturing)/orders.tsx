@@ -66,13 +66,13 @@ export default function MfgOrdersScreen() {
         </View>
       </View>
 
-      <ScrollView
+      <ScrollView keyboardShouldPersistTaps="handled"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[styles.filters, { flexDirection: row }]}
       >
         {WORKSHOP_FILTERS.map((f) => (
-          <Pressable
+          <Pressable accessibilityRole="button"
             key={f}
             onPress={() => setFilter(f)}
             style={[
@@ -96,7 +96,7 @@ export default function MfgOrdersScreen() {
           <CardSkeleton />
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={visible}
           keyExtractor={(v) => v.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
@@ -149,12 +149,12 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 10 },
   filters: { paddingHorizontal: 16, gap: 8, paddingBottom: 10 },
   filter: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, minHeight: 40, justifyContent: "center" },
-  filterText: { fontSize: 12.5, fontFamily: "Inter_600SemiBold" },
+  filterText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 6 },
   cardTop: { alignItems: "center", justifyContent: "space-between", gap: 8 },
-  ref: { flex: 1, fontSize: 14.5, fontFamily: "Inter_600SemiBold" },
-  meta: { fontSize: 12.5, fontFamily: "Inter_400Regular" },
+  ref: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  meta: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   metaRow: { alignItems: "center", gap: 8, flexWrap: "wrap" },
   due: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  cost: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginStart: "auto" },
+  cost: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", marginStart: "auto" },
 });

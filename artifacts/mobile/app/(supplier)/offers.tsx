@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, RefreshControl,
-  Platform, StyleSheet, ScrollView, Modal, Alert, TextInput, Pressable,
-} from "react-native";
+  Platform, StyleSheet, ScrollView, Modal, Alert, TextInput, Pressable, KeyboardAvoidingView } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -119,8 +118,9 @@ export default function MyOffersScreen() {
           await addDoc(collection(db, "users", contractorId, "notifications"), {
             userId: contractorId,
             type: "price_updated",
-            title: "قام المورد بتحديث سعر عرضه",
-            message: `تم تحديث السعر لمناقصة: ${updatePriceOffer.rfqTitle || ""}. السعر الجديد: ${newPrice} ر.س`,
+            i18n: { title: "pn_price_updated_title", message: "pn_price_updated", params: { rfq: updatePriceOffer.rfqTitle || "", price: String(newPrice) } },
+            title: "قام المورد بتحديث سعر عرضه",  // ui-ok: fallback text for push; readers get i18n
+            message: `تم تحديث السعر لمناقصة: ${updatePriceOffer.rfqTitle || ""}. السعر الجديد: ${newPrice} ر.س`,  // ui-ok: fallback text for push; readers get i18n
             offerId: updatePriceOffer.id,
             rfqId: updatePriceOffer.rfqId,
             createdAt: new Date().toISOString(),
@@ -150,9 +150,10 @@ export default function MyOffersScreen() {
           await addDoc(collection(db, "users", contractorId, "notifications"), {
             userId: contractorId,
             type: "offer_withdrawn",
-            title: isRTL ? "تم سحب العرض" : "Offer Withdrawn",
+            i18n: { title: "pn_offer_withdrawn_title", message: "pn_offer_withdrawn", params: { rfq: rfqTitle || "" } },
+            title: isRTL ? "تم سحب العرض" : "Offer Withdrawn",  // ui-ok: fallback text for push; readers get i18n
             message: isRTL
-              ? `قام المورد بسحب عرضه على مناقصة: ${rfqTitle}`
+              ? `قام المورد بسحب عرضه على مناقصة: ${rfqTitle}`  // ui-ok: fallback text for push; readers get i18n
               : `The supplier withdrew their offer for: ${rfqTitle}`,
             rfqId: withdrawOffer.rfqId,
             createdAt: new Date().toISOString(),
@@ -247,7 +248,7 @@ export default function MyOffersScreen() {
 
       {/* Status filter chips */}
       <View style={[styles.filterBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipsScroll}
@@ -269,12 +270,12 @@ export default function MyOffersScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >
-                <Text style={[styles.chipText, { color: active ? "#FFFFFF" : colors.onSurfaceVariant }]}>
+                <Text style={[styles.chipText, { color: active ? colors.ctaForeground : colors.onSurfaceVariant }]}>
                   {label}
                 </Text>
                 {statusCount > 0 && (
                   <View style={[styles.chipCount, { backgroundColor: active ? "rgba(255,255,255,0.25)" : colors.border }]}>
-                    <Text style={[styles.chipCountText, { color: active ? "#FFFFFF" : colors.outline }]}>
+                    <Text style={[styles.chipCountText, { color: active ? colors.ctaForeground : colors.outline }]}>
                       {statusCount}
                     </Text>
                   </View>
@@ -293,7 +294,7 @@ export default function MyOffersScreen() {
         <View style={styles.errorCenter}>
           <Feather name="alert-triangle" size={30} color={colors.destructive} />
           <Text style={[styles.errorMsg, { color: colors.destructive }]}>{fetchError}</Text>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             style={[styles.retryBtn, { borderColor: colors.cta }]}
             onPress={() => { setLoading(true); fetchOffers(); }}
           >
@@ -303,7 +304,7 @@ export default function MyOffersScreen() {
           </TouchableOpacity>
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={filtered}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
@@ -342,91 +343,93 @@ export default function MyOffersScreen() {
         animationType="slide"
         onRequestClose={() => setUpdatePriceOffer(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setUpdatePriceOffer(null)}>
-          <Pressable
-            style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            {/* Handle */}
-            <View style={{ alignItems: "center", paddingBottom: 8 }}>
-              <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            </View>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <Pressable accessible={false} style={styles.modalOverlay} onPress={() => setUpdatePriceOffer(null)}>
+            <Pressable accessible={false}
+              style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
+              onPress={(e) => e.stopPropagation()}
+            >
+              {/* Handle */}
+              <View style={{ alignItems: "center", paddingBottom: 8 }}>
+                <View style={[styles.handle, { backgroundColor: colors.border }]} />
+              </View>
 
-            <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-              {t.offers.updateOfferPrice}
-            </Text>
+              <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+                {t.offers.updateOfferPrice}
+              </Text>
 
-            {/* Show contractor's target price if set */}
-            {(updatePriceOffer as any)?.targetPrice && (
-              <View style={[styles.targetPriceBox, { backgroundColor: colors.warning + "12", borderColor: colors.warning + "40" }]}>
-                <Feather name="alert-circle" size={14} color={colors.warning} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.targetLabel, { color: colors.warning }]}>
-                    {t.offers.contractorSTargetPrice}
-                  </Text>
-                  <Text style={[styles.targetValue, { color: colors.warning }]}>
-                    {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format((updatePriceOffer as any).targetPrice)}
+              {/* Show contractor's target price if set */}
+              {(updatePriceOffer as any)?.targetPrice && (
+                <View style={[styles.targetPriceBox, { backgroundColor: colors.warning + "12", borderColor: colors.warning + "40" }]}>
+                  <Feather name="alert-circle" size={14} color={colors.warning} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.targetLabel, { color: colors.warning }]}>
+                      {t.offers.contractorSTargetPrice}
+                    </Text>
+                    <Text style={[styles.targetValue, { color: colors.warning }]}>
+                      {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format((updatePriceOffer as any).targetPrice)}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Show contractor's note if present */}
+              {(updatePriceOffer as any)?.reductionNote && (
+                <View style={[styles.noteBox, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+                  <Feather name="message-square" size={13} color={colors.outline} />
+                  <Text style={[styles.noteText, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
+                    {(updatePriceOffer as any).reductionNote}
                   </Text>
                 </View>
-              </View>
-            )}
+              )}
 
-            {/* Show contractor's note if present */}
-            {(updatePriceOffer as any)?.reductionNote && (
-              <View style={[styles.noteBox, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-                <Feather name="message-square" size={13} color={colors.outline} />
-                <Text style={[styles.noteText, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
-                  {(updatePriceOffer as any).reductionNote}
+              <Text style={[styles.currentLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
+                {t.offers.yourCurrentPrice}
+                {"  "}
+                <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
+                  {updatePriceOffer?.price ? `${Number(updatePriceOffer.price).toLocaleString(isRTL ? "ar-SA" : "en-SA")} ${t.offers.sarUnit}` : "-"}
                 </Text>
-              </View>
-            )}
-
-            <Text style={[styles.currentLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
-              {t.offers.yourCurrentPrice}
-              {"  "}
-              <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
-                {updatePriceOffer?.price ? `${Number(updatePriceOffer.price).toLocaleString(isRTL ? "ar-SA" : "en-SA")} ر.س` : "-"}
               </Text>
-            </Text>
 
-            <Text style={[styles.newPriceLabel, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-              {t.offers.newPriceSar}
-            </Text>
-            <TextInput
-              style={[
-                styles.priceInput,
-                {
-                  color: colors.foreground,
-                  backgroundColor: colors.background,
-                  borderColor: colors.border,
-                  textAlign: isRTL ? "right" : "left",
-                },
-              ]}
-              value={newPrice}
-              onChangeText={setNewPrice}
-              keyboardType="numeric"
-              placeholder={t.offers.enterNewPrice}
-              placeholderTextColor={colors.outline}
-              autoFocus
-            />
+              <Text style={[styles.newPriceLabel, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+                {t.offers.newPriceSar}
+              </Text>
+              <TextInput
+                style={[
+                  styles.priceInput,
+                  {
+                    color: colors.foreground,
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                    textAlign: isRTL ? "right" : "left",
+                  },
+                ]}
+                value={newPrice}
+                onChangeText={setNewPrice}
+                keyboardType="numeric"
+                placeholder={t.offers.enterNewPrice}
+                placeholderTextColor={colors.outline}
+                autoFocus
+              />
 
-            <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 10, marginTop: 16 }}>
-              <Button
-                title={t.common.cancel}
-                variant="outline"
-                style={{ flex: 1 }}
-                onPress={() => { setUpdatePriceOffer(null); setNewPrice(""); }}
-              />
-              <Button
-                title={t.offers.updatePrice}
-                style={{ flex: 2 }}
-                loading={isUpdatingPrice}
-                onPress={handleUpdatePrice}
-                disabled={!newPrice.trim()}
-              />
-            </View>
+              <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 10, marginTop: 16 }}>
+                <Button
+                  title={t.common.cancel}
+                  variant="outline"
+                  style={{ flex: 1 }}
+                  onPress={() => { setUpdatePriceOffer(null); setNewPrice(""); }}
+                />
+                <Button
+                  title={t.offers.updatePrice}
+                  style={{ flex: 2 }}
+                  loading={isUpdatingPrice}
+                  onPress={handleUpdatePrice}
+                  disabled={!newPrice.trim()}
+                />
+              </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Withdraw Confirm Modal ── */}
@@ -436,8 +439,8 @@ export default function MyOffersScreen() {
         animationType="fade"
         onRequestClose={() => setWithdrawOffer(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setWithdrawOffer(null)}>
-          <Pressable
+        <Pressable accessible={false} style={styles.modalOverlay} onPress={() => setWithdrawOffer(null)}>
+          <Pressable accessible={false}
             style={[styles.withdrawSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
             onPress={(e) => e.stopPropagation()}
           >
@@ -448,9 +451,7 @@ export default function MyOffersScreen() {
               {t.offers.withdrawOffer}
             </Text>
             <Text style={[styles.withdrawDesc, { color: colors.outline }]}>
-              {isRTL
-                ? "هل أنت متأكد من سحب هذا العرض؟ سيتم حذفه نهائياً وإشعار المقاول."
-                : "Are you sure you want to withdraw this offer? It will be permanently deleted and the contractor will be notified."}
+              {t.offers.withdrawConfirm}
             </Text>
             {withdrawOffer?.rfqTitle && (
               <Text style={[styles.withdrawRfqTitle, { color: colors.mutedForeground }]} numberOfLines={2}>

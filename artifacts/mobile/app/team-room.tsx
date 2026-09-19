@@ -129,7 +129,7 @@ export default function TeamRoomScreen() {
         ) : messages.length === 0 ? (
           <EmptyState icon="message-square" title={t.room.empty} subtitle={t.room.emptyHint} />
         ) : (
-          <FlatList
+          <FlatList keyboardShouldPersistTaps="handled"
             inverted
             data={rows}
             keyExtractor={(r) => r.id}
@@ -294,13 +294,13 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   bubbleRow: { flexDirection: "row", marginBottom: 8 },
   bubble: { maxWidth: "82%", borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, gap: 2 },
-  sender: { fontSize: 11.5, fontFamily: "Inter_600SemiBold" },
-  text: { fontSize: 14.5, lineHeight: 22, fontFamily: "Inter_400Regular" },
-  time: { fontSize: 10, fontFamily: "Inter_400Regular", opacity: 0.75, marginTop: 2 },
+  sender: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  text: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
+  time: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", opacity: 0.75, marginTop: 2 },
   dateWrap: { alignItems: "center", marginVertical: 10 },
-  dateLabel: { fontSize: 11, fontFamily: "Inter_500Medium", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, overflow: "hidden" },
-  footnote: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", paddingVertical: 10 },
+  dateLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_500Medium", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, overflow: "hidden" },
+  footnote: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", textAlign: "center", paddingVertical: 10 },
   composer: { alignItems: "flex-end", gap: 8, borderTopWidth: 1, paddingHorizontal: 12, paddingTop: 10 },
-  input: { flex: 1, maxHeight: 120, minHeight: MIN_TOUCH, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 11, fontSize: 14.5, fontFamily: "Inter_400Regular" },
+  input: { flex: 1, maxHeight: 120, minHeight: MIN_TOUCH, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingTop: 11, paddingBottom: 11, fontSize: 14, fontFamily: "Inter_400Regular" },
   sendBtn: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: MIN_TOUCH / 2, alignItems: "center", justifyContent: "center" },
 });

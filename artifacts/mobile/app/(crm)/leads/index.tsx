@@ -201,7 +201,7 @@ export default function CrmLeadsScreen() {
             style={[styles.searchInput, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
           />
         </View>
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           horizontal
           // Hug the content: a horizontal scroller left to flex would stretch
           // to the parent's height and stretch its chips with it.
@@ -245,7 +245,7 @@ export default function CrmLeadsScreen() {
           <CardSkeleton />
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={filtered}
           keyExtractor={(item) => item.id}
           renderItem={renderLead}

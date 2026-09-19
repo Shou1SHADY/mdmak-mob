@@ -211,7 +211,7 @@ export default function CrmActivitiesScreen() {
           chip into a full-height box — which is what the type filter was doing.
           A content-sized parent pins it, matching the other filtered lists. */}
       <View>
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={[styles.chipRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}
@@ -252,7 +252,7 @@ export default function CrmActivitiesScreen() {
           <CardSkeleton />
         </View>
       ) : (
-        <SectionList
+        <SectionList keyboardShouldPersistTaps="handled"
           sections={sections}
           keyExtractor={(item) => item.id}
           stickySectionHeadersEnabled={false}

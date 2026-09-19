@@ -206,6 +206,8 @@ export const en = {
     reduction: "Price Reduction",
   },
   offers: {
+    sarUnit: "SAR",
+    withdrawConfirm: "Are you sure you want to withdraw this offer? It will be permanently deleted and the contractor will be notified.",
     tender: "Tender",
     executionDurationOptional: "Execution Duration (optional)",
     eG14: "e.g. 14",
@@ -445,6 +447,8 @@ export const ar: typeof en = {
     reduction: "مطلوب تخفيض",
   },
   offers: {
+    sarUnit: "ر.س",
+    withdrawConfirm: "هل أنت متأكد من سحب هذا العرض؟ سيتم حذفه نهائياً وإشعار المقاول.",
     tender: "المناقصة",
     executionDurationOptional: "مدة التنفيذ (اختياري)",
     eG14: "مثال: ١٤",

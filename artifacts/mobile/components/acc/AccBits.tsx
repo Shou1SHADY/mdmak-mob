@@ -217,16 +217,16 @@ const styles = StyleSheet.create({
   bar: { borderBottomWidth: 1, paddingVertical: 6, gap: 2 },
   strip: { paddingHorizontal: 16, gap: 8, paddingVertical: 4 },
   chip: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, minHeight: MIN_TOUCH - 8, justifyContent: "center" },
-  chipText: { fontSize: 12.5, fontFamily: "Inter_600SemiBold" },
+  chipText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 
   kpi: { flex: 1, minWidth: 150, borderWidth: 1, borderRadius: 14, padding: 12, gap: 3 },
   kpiLabel: { fontSize: 12, fontFamily: "Inter_500Medium" },
-  kpiValue: { fontSize: 19, fontFamily: "Inter_700Bold", fontVariant: ["tabular-nums"] },
-  kpiHint: { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 15 },
+  kpiValue: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_700Bold", fontVariant: ["tabular-nums"] },
+  kpiHint: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 20 },
 
   treeRow: { alignItems: "center", justifyContent: "space-between", gap: 10, borderBottomWidth: 1, paddingEnd: 14, minHeight: MIN_TOUCH },
-  treeLabel: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular" },
+  treeLabel: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
   treeLabelStrong: { fontFamily: "Inter_600SemiBold" },
-  treeValue: { fontSize: 13.5, fontFamily: "Inter_500Medium", fontVariant: ["tabular-nums"] },
+  treeValue: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_500Medium", fontVariant: ["tabular-nums"] },
   treeValueStrong: { fontFamily: "Inter_700Bold" },
 });

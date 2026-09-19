@@ -138,15 +138,15 @@ function ActionCard({
       )}
 
       <View style={styles.actionBtns}>
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           style={[styles.confirmBtn, { backgroundColor: colors.accent }]}
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onConfirm(); }}
           activeOpacity={0.8}
         >
-          <Feather name="check" size={13} color="#fff" />
-          <Text style={styles.confirmBtnText}>{strings.confirm}</Text>
+          <Feather name="check" size={13} color={colors.accentForeground} />
+          <Text style={[styles.confirmBtnText, { color: colors.accentForeground }]}>{strings.confirm}</Text>
         </TouchableOpacity>
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           style={[styles.dismissBtn, { borderColor: colors.border }]}
           onPress={onDismiss}
           activeOpacity={0.7}
@@ -168,7 +168,7 @@ function NavLinkChips({
   return (
     <View style={styles.navLinks}>
       {links.map(link => (
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           key={link.path}
           style={[styles.navChip, { borderColor: colors.accent + '40', backgroundColor: colors.accent + '10' }]}
           onPress={() => {
@@ -263,7 +263,8 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
-  const S = useT().assistant;
+  const t = useT();
+  const S = t.assistant;
   const { messages, isLoading, sendMessage, confirmAction, dismissAction, clear } = useAIChat();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -341,7 +342,7 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
         pointerEvents={isOpen ? 'auto' : 'none'}
         style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdropOpacity }]}
       >
-        <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
+        <Pressable accessible={false} style={StyleSheet.absoluteFill} onPress={closeSheet} />
       </Animated.View>
 
       {/* Bottom sheet */}
@@ -382,7 +383,7 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
           </View>
           <View style={styles.headerActions}>
             {hasMessages && (
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.clearChat}
                 style={styles.headerBtn}
                 onPress={() => { clear(); setActionError(null); }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -390,7 +391,7 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
                 <Feather name="trash-2" size={15} color="rgba(255,255,255,0.55)" />
               </TouchableOpacity>
             )}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.common.close}
               style={styles.headerBtn}
               onPress={closeSheet}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -418,7 +419,7 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
               </Text>
               <View style={styles.promptsWrap}>
                 {S.prompts[userRole].map(p => (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     key={p}
                     style={[styles.promptChip, { borderColor: colors.accent + '40' }]}
                     onPress={() => setInput(p)}
@@ -475,7 +476,7 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
             editable={!isLoading}
             returnKeyType="send"
           />
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.common.send}
             style={[
               styles.sendBtn,
               { backgroundColor: input.trim() && !isLoading ? colors.accent : colors.muted },
@@ -490,7 +491,7 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
               <Feather
                 name="send"
                 size={16}
-                color={input.trim() ? '#fff' : colors.mutedForeground}
+                color={input.trim() ? colors.accentForeground : colors.mutedForeground}
                 style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
               />
             )}
@@ -526,7 +527,7 @@ export function AIChatWidget({ userRole }: AIChatWidgetProps) {
           end={{ x: 1, y: 1 }}
           style={styles.fabGradient}
         >
-          <Feather name={isOpen ? 'x' : 'cpu'} size={22} color="#fff" />
+          <Feather name={isOpen ? 'x' : 'cpu'} size={22} color={colors.ctaForeground} />
         </LinearGradient>
       </TouchableOpacity>
     </>
@@ -585,12 +586,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: 'rgba(32,203,213,0.15)',
+    backgroundColor: 'rgba(32,203,213,0.15)', // ui-ok: teal tint on the always-dark header
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    color: '#fff',
+    color: '#fff', // ui-ok: on the always-dark header gradient
     fontSize: 14, lineHeight: 24,
     fontFamily: 'Inter_600SemiBold',
   },
@@ -604,7 +605,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 4,
-    backgroundColor: '#4ade80',
+    backgroundColor: '#4ade80', // ui-ok: live-status green, bright enough on the dark header
   },
   headerSub: {
     color: 'rgba(255,255,255,0.5)',
@@ -786,7 +787,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   confirmBtnText: {
-    color: '#fff',
     fontSize: 12, lineHeight: 20,
     fontFamily: 'Inter_600SemiBold',
   },

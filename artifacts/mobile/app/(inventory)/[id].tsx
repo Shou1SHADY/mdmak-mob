@@ -223,7 +223,7 @@ export default function WarehouseDetailScreen() {
           <ActivityIndicator size="large" color={colors.cta} />
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={filtered}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}

@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 17, lineHeight: 28,
-    fontWeight: "bold",
+    fontFamily: "Inter_600SemiBold",
   },
   link: {
     marginTop: 15,

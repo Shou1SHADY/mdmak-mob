@@ -259,7 +259,7 @@ export default function CrmOpportunityDetailScreen() {
           </TouchableOpacity>
         ) : undefined}
       />
-      <ScrollView
+      <ScrollView keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
         showsVerticalScrollIndicator={false}
       >

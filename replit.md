@@ -13,6 +13,11 @@ track orders. Shares the website's Firebase backend; there is no separate mobile
   touches them. On drift, RE-COPY the whole file; never hand-patch the diff.
   The website is expected as a sibling checkout; pass its path as an argument
   or set `MDMAK_WEB_DIR` when it lives elsewhere.
+- `cd artifacts/mobile && npm run check:ui` — design-system, RTL, a11y and
+  hard-coded-text rules for every screen (a line opts out with `// ui-ok: <reason>`).
+- `cd artifacts/mobile && npm run sync:notifications [-- --check]` — copies the
+  website's notification messages into `i18n/notifications.generated.ts`, so a
+  notification reads in the reader's language. Re-run when the website's change.
 - `cd artifacts/mobile && pnpm run build:web` — static web export to `dist/`
 - `cd artifacts/mobile && pnpm run eas:preview` / `eas:prod` — EAS native builds
 - See `artifacts/mobile/DEPLOYMENT.md` for the full deployment checklist

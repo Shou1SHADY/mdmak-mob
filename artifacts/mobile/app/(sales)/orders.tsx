@@ -82,7 +82,7 @@ export default function SalesOrdersScreen() {
           <CardSkeleton />
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
@@ -136,9 +136,9 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 10 },
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 6 },
   cardTop: { alignItems: "center", justifyContent: "space-between", gap: 8 },
-  number: { flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  amount: { fontSize: 15, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
-  client: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  number: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  amount: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
+  client: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
   metaRow: { alignItems: "center", gap: 8, flexWrap: "wrap" },
   payLine: { fontSize: 12, fontFamily: "Inter_400Regular", flexShrink: 1 },
   due: { fontSize: 12, fontFamily: "Inter_400Regular" },

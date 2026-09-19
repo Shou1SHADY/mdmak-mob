@@ -85,6 +85,6 @@ export default function ProjectTeamScreen() {
 const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 4 },
   cardTop: { alignItems: "center", justifyContent: "space-between", gap: 8 },
-  name: { flex: 1, fontSize: 14.5, fontFamily: "Inter_600SemiBold" },
-  seat: { fontSize: 12.5, fontFamily: "Inter_400Regular" },
+  name: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  seat: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 });

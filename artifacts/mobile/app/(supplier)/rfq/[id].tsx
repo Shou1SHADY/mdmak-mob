@@ -62,7 +62,7 @@ export default function SupplierRFQDetailScreen() {
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         {/* Back button while loading */}
         <View style={[styles.loadingHeader, { paddingTop: topPad + 12 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.common.back} onPress={() => router.back()} style={styles.backBtn}>
             <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
           </TouchableOpacity>
         </View>
@@ -81,7 +81,7 @@ export default function SupplierRFQDetailScreen() {
         <Text style={{ color: colors.outline, marginTop: 12, fontFamily: "Inter_400Regular" }}>
           {t.rfq.detail}
         </Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+        <TouchableOpacity accessibilityRole="button" onPress={() => router.back()} style={{ marginTop: 16 }}>
           <Text style={{ color: colors.cta, fontFamily: "Inter_600SemiBold" }}>{t.common.back}</Text>
         </TouchableOpacity>
       </View>
@@ -102,12 +102,12 @@ export default function SupplierRFQDetailScreen() {
         style={[styles.hero, { paddingTop: topPad + 12 }]}
       >
         {/* Back button */}
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.common.back}
           onPress={() => router.back()}
           style={[styles.heroBackBtn, { backgroundColor: "rgba(255,255,255,0.12)" }]}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={20} color="#FFFFFF" />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={20} color={colors.textWhite} />
         </TouchableOpacity>
 
         {/* Category + status */}
@@ -234,7 +234,7 @@ export default function SupplierRFQDetailScreen() {
             </Text>
           </View>
         )}
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           style={[styles.msgBtn, { borderColor: colors.border }]}
           onPress={() => router.push("/(supplier)/chats")}
           activeOpacity={0.75}
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 24, lineHeight: 40,
     fontFamily: "Inter_600SemiBold",
-    color: "#FFFFFF",
+    color: "#FFFFFF", // ui-ok: on the always-dark hero gradient
   },
   heroStats: {
     gap: 16,

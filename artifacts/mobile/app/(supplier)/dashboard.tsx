@@ -108,7 +108,7 @@ export default function SupplierDashboard() {
       >
         <Feather name="bell" size={18} color={colors.cta} />
         {unreadCount > 0 && (
-          <View style={[styles.badge, { backgroundColor: colors.destructive, borderColor: colors.surface }]}>
+          <View style={[styles.badge, isRTL ? { left: -4 } : { right: -4 }, { backgroundColor: colors.destructive, borderColor: colors.surface }]}>
             <Text style={[type.captionStrong, { color: colors.destructiveForeground, fontSize: 12, lineHeight: 20 }]}>
               {unreadCount > 99 ? "99+" : String(unreadCount)}
             </Text>
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   scroll: { padding: space.lg, gap: space.lg },
   iconBtn: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radius.control, alignItems: "center", justifyContent: "center" },
   badge: {
-    position: "absolute", top: -4, right: -4,
+    position: "absolute", top: -4,
     minWidth: 18, height: 18, borderRadius: radius.pill, borderWidth: 1.5,
     alignItems: "center", justifyContent: "center", paddingHorizontal: 4,
   },

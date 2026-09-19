@@ -121,7 +121,7 @@ export function DateField({ label, value, onChange, granularity = "day", isRTL =
 
       {Platform.OS === "ios" && (
         <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-          <Pressable style={[styles.backdrop, { backgroundColor: colors.overlay }]} onPress={() => setOpen(false)} />
+          <Pressable accessible={false} style={[styles.backdrop, { backgroundColor: colors.overlay }]} onPress={() => setOpen(false)} />
           <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[type.title, { color: colors.foreground, textAlign: "center" }]}>{label}</Text>
             <DateTimePicker

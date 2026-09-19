@@ -129,7 +129,7 @@ export function DashboardHeader({
             <TouchableOpacity
               style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => setShowSheet(true)}
-              accessibilityLabel={language === "ar" ? "تغيير اللغة" : "Change language"}
+              accessibilityLabel={t.a11y.changeLanguage}
               accessibilityRole="button"
               activeOpacity={0.75}
             >
@@ -153,7 +153,7 @@ export function DashboardHeader({
       >
         <View style={[styles.modalOuter, { backgroundColor: colors.overlay }]}>
           {/* Backdrop */}
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setShowSheet(false)} />
+          <Pressable accessible={false} style={StyleSheet.absoluteFillObject} onPress={() => setShowSheet(false)} />
 
           {/* Sheet */}
           <View style={[styles.sheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + space.lg }]}>
@@ -162,11 +162,11 @@ export function DashboardHeader({
 
             {/* Title */}
             <Text style={[type.title, styles.sheetTitle, { color: colors.foreground }]}>
-              {language === "ar" ? "اختر اللغة" : "Select Language"}
+              {t.a11y.selectLanguage}
             </Text>
 
             {/* Arabic option */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 styles.langOption,
                 {
@@ -181,6 +181,7 @@ export function DashboardHeader({
                 <SaudiArabiaFlag width={52} height={34} />
               </View>
               <Text style={[type.bodyStrong, { color: colors.foreground }]}>
+                {/* ui-ok: a language is named in its own script */}
                 عربي
               </Text>
               <View style={{ flex: 1 }} />
@@ -192,7 +193,7 @@ export function DashboardHeader({
             </TouchableOpacity>
 
             {/* English option */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 styles.langOption,
                 {

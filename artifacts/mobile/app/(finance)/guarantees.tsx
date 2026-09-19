@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   pillText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   expiry: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   fileRow: { alignItems: "center", gap: 6, marginTop: 2, minHeight: 32 },
-  fileText: { fontSize: 12.5, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  fileText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   actions: { gap: 10, marginTop: 6 },
-  hint: { fontSize: 11.5, lineHeight: 18, fontFamily: "Inter_400Regular", marginTop: 4 },
+  hint: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", marginTop: 4 },
 });

@@ -164,7 +164,7 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
       ) : null}
 
       {/* Price reduction info — shown when contractor has set a target price */}
-      {offer.status === "مطلوب تخفيض" && (offer.targetPrice || offer.reductionNote) && (
+      {offer.status === "مطلوب تخفيض" && (offer.targetPrice || offer.reductionNote) && (  // ui-ok: stored offer status value
         <View style={[styles.reductionBox, { backgroundColor: colors.warningSoft, borderColor: colors.warningSoft }]}>
           {offer.targetPrice ? (
             <View style={[styles.reductionRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>

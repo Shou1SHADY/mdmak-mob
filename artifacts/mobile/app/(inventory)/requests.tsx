@@ -213,7 +213,7 @@ export default function WarehouseRequestsScreen() {
         ) : undefined}
       />
 
-      <SectionList
+      <SectionList keyboardShouldPersistTaps="handled"
         sections={sections}
         keyExtractor={(item) => item.id}
         stickySectionHeadersEnabled={false}

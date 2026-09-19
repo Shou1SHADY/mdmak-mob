@@ -243,7 +243,7 @@ export default function ChatScreen() {
           accessibilityLabel={t.common.back}
           accessibilityRole="button"
         >
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color="#FFFFFF" />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.textWhite} />
         </TouchableOpacity>
         <View style={[styles.headerInfo, { alignItems: isRTL ? "flex-end" : "flex-start" }]}>
           <Text style={styles.headerTitle} numberOfLines={1} ellipsizeMode="tail">
@@ -267,7 +267,7 @@ export default function ChatScreen() {
         {/* Subtle dot pattern overlay for chat area */}
         <View style={[StyleSheet.absoluteFillObject, styles.chatBg, { backgroundColor: colors.muted + "30" }]} pointerEvents="none" />
 
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={listItems}
           keyExtractor={(item) => item.id}
           inverted
@@ -321,7 +321,7 @@ export default function ChatScreen() {
                   ]}
                   accessibilityRole="text"
                 >
-                  <Text style={[styles.bubbleText, { color: isMe ? "#FFFFFF" : colors.foreground }]}>
+                  <Text style={[styles.bubbleText, { color: isMe ? colors.primaryForeground : colors.foreground }]}>
                     {msg.text}
                   </Text>
                   <View style={[styles.bubbleMeta, { justifyContent: isRTL ? "flex-start" : "flex-end" }]}>
@@ -395,12 +395,12 @@ export default function ChatScreen() {
           accessibilityRole="button"
         >
           {sending ? (
-            <Text style={{ color: "#FFFFFF", fontSize: 12, lineHeight: 20 }}>…</Text>
+            <Text style={{ color: colors.ctaForeground, fontSize: 12, lineHeight: 20 }}>…</Text>
           ) : (
             <Feather
               name={isRTL ? "send" : "send"}
               size={17}
-              color={text.trim() ? "#FFFFFF" : colors.outline}
+              color={text.trim() ? colors.ctaForeground : colors.outline}
               style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}
             />
           )}
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.12)",
   },
   headerInfo: { flex: 1, gap: 2 },
-  headerTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
+  headerTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" }, // ui-ok: on the always-dark header gradient
   headerSub: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.55)" },
   headerStatusDot: { width: 8, height: 8, borderRadius: 4 },
 

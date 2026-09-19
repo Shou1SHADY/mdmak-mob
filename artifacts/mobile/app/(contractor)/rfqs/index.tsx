@@ -194,7 +194,7 @@ export default function MyRFQsScreen() {
         </View>
 
         {/* Status filter chips — horizontal scroll */}
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           horizontal
           showsHorizontalScrollIndicator={false}
           style={{ flexGrow: 0, flexShrink: 0 }}
@@ -283,7 +283,7 @@ export default function MyRFQsScreen() {
           {[1, 2, 3, 4].map((k) => <CardSkeleton key={k} />)}
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={filtered}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
@@ -352,8 +352,8 @@ export default function MyRFQsScreen() {
         accessibilityLabel={t.dashboard.newRfq}
         accessibilityRole="button"
       >
-        <Feather name="plus" size={20} color="#fff" />
-        <Text style={styles.fabLabel}>{t.dashboard.newRfq}</Text>
+        <Feather name="plus" size={20} color={colors.ctaForeground} />
+        <Text style={[styles.fabLabel, { color: colors.ctaForeground }]}>{t.dashboard.newRfq}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -435,7 +435,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   fabLabel: {
-    color: "#fff",
     fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
   },

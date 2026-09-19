@@ -20,9 +20,9 @@ import type { BOQItem } from "@/components/BOQEditor";
 import { buildOfferDoc, readRfqLineItems } from "@/lib/contracts";
 
 const DURATION_UNITS = [
-  { id: "أيام", labelAr: "أيام", labelEn: "Days" },
-  { id: "أسابيع", labelAr: "أسابيع", labelEn: "Weeks" },
-  { id: "أشهر", labelAr: "أشهر", labelEn: "Months" },
+  { id: "أيام", labelAr: "أيام", labelEn: "Days" },  // ui-ok: stored unit id with its own labels
+  { id: "أسابيع", labelAr: "أسابيع", labelEn: "Weeks" },  // ui-ok: stored unit id with its own labels
+  { id: "أشهر", labelAr: "أشهر", labelEn: "Months" },  // ui-ok: stored unit id with its own labels
 ];
 
 export default function SubmitOfferScreen() {
@@ -38,7 +38,7 @@ export default function SubmitOfferScreen() {
   const [notes, setNotes] = useState("");
   const [deliveryLocation, setDeliveryLocation] = useState("");
   const [executionDuration, setExecutionDuration] = useState("");
-  const [executionDurationUnit, setExecutionDurationUnit] = useState("أيام");
+  const [executionDurationUnit, setExecutionDurationUnit] = useState("أيام");  // ui-ok: stored unit id default
   const [unitPickerVisible, setUnitPickerVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
@@ -140,8 +140,8 @@ export default function SubmitOfferScreen() {
             type: "new_offer",
             // Rendered in the READER's language by the website's notification screens.
             i18n: { title: "pn_new_offer_title", message: "pn_new_offer", params: { supplier: user?.orgName || user?.displayName || "", price: Number(price).toLocaleString("en-US"), rfq: rfqTitle || "" } },
-            title: "عرض سعر جديد",
-            message: `قدم المورد ${user?.orgName || user?.displayName || "مورد"} عرضاً بمبلغ ${Number(price).toLocaleString("ar-SA")} ر.س على مناقصة: ${rfqTitle}`,
+            title: "عرض سعر جديد",  // ui-ok: fallback text for push; readers get i18n
+            message: `قدم المورد ${user?.orgName || user?.displayName || "مورد"} عرضاً بمبلغ ${Number(price).toLocaleString("ar-SA")} ر.س على مناقصة: ${rfqTitle}`,  // ui-ok: fallback text for push; readers get i18n
             rfqId,
             createdAt: new Date().toISOString(),
             read: false,
@@ -258,7 +258,7 @@ export default function SubmitOfferScreen() {
                   editable={!alreadySubmitted}
                 />
               </View>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 onPress={() => !alreadySubmitted && setUnitPickerVisible(true)}
                 style={{
                   height: 52,
@@ -378,10 +378,10 @@ export default function SubmitOfferScreen() {
 
       {/* Duration unit picker modal */}
       <Modal visible={unitPickerVisible} transparent animationType="fade" onRequestClose={() => setUnitPickerVisible(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" }} onPress={() => setUnitPickerVisible(false)}>
+        <Pressable accessible={false} style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center" }} onPress={() => setUnitPickerVisible(false)}>
           <View style={{ backgroundColor: colors.card, borderRadius: 20, width: 220, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
             {DURATION_UNITS.map((unit, i) => (
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 key={unit.id}
                 style={{
                   paddingVertical: 16,

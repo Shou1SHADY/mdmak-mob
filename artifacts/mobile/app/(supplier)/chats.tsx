@@ -43,11 +43,13 @@ function initials(str?: string) {
   return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
 }
 
-const AVATAR_COLORS = ["#0369A1", "#0891B2", "#7C3AED", "#059669", "#D97706", "#DC2626"];
-function avatarColor(str: string) {
+// Avatar tints are theme tones, so the initials stay readable on the dark
+// card too (fixed mid-tones fell to ~3:1 there).
+const AVATAR_TONES = ["cta", "accentText", "purple", "success", "warning", "destructive"] as const;
+function avatarTone(str: string): (typeof AVATAR_TONES)[number] {
   let h = 0;
   for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) & 0xffffffff;
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+  return AVATAR_TONES[Math.abs(h) % AVATAR_TONES.length];
 }
 
 export default function SupplierChatsScreen() {
@@ -104,7 +106,7 @@ export default function SupplierChatsScreen() {
       >
         <View style={{ width: 44 }} />
         <View style={{ flex: 1, alignItems: "center" }}>
-          <Text style={[styles.headerTitle, { fontFamily: "Inter_600SemiBold" }]}>
+          <Text style={[styles.headerTitle, { fontFamily: "Inter_600SemiBold", color: colors.textWhite }]}>
             {t.tabs.messages}
           </Text>
           {totalUnread > 0 && (
@@ -126,10 +128,10 @@ export default function SupplierChatsScreen() {
           const hasUnread = Array.isArray(item.unreadFor) && item.unreadFor.includes(user?.uid ?? "");
           const unread = item.unreadCounts?.[user?.uid ?? ""] ?? (hasUnread ? 1 : 0);
           const title = item.rfqTitle ?? `RFQ #${item.rfqId?.slice(0, 8)}`;
-          const color = avatarColor(item.id);
+          const color = colors[avatarTone(item.id)];
 
           return (
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 styles.card,
                 {
@@ -142,13 +144,13 @@ export default function SupplierChatsScreen() {
               activeOpacity={0.72}
             >
               {hasUnread && (
-                <View style={[styles.accentBar, { backgroundColor: colors.accent }]} />
+                <View style={[styles.accentBar, isRTL ? { right: 0 } : { left: 0 }, { backgroundColor: colors.accent }]} />
               )}
 
               <View style={[styles.avatar, { backgroundColor: color + "20", borderColor: color + "30" }]}>
                 <Text style={[styles.avatarText, { color }]}>{initials(title)}</Text>
                 {hasUnread && (
-                  <View style={[styles.unreadDot, { backgroundColor: colors.accent, borderColor: colors.card }]} />
+                  <View style={[styles.unreadDot, isRTL ? { left: -3 } : { right: -3 }, { backgroundColor: colors.accent, borderColor: colors.card }]} />
                 )}
               </View>
 
@@ -180,7 +182,7 @@ export default function SupplierChatsScreen() {
                   </Text>
                   {hasUnread ? (
                     <View style={[styles.badge, { backgroundColor: colors.accent }]}>
-                      <Text style={styles.badgeText}>{unread > 99 ? "99+" : unread}</Text>
+                      <Text style={[styles.badgeText, { color: colors.accentForeground }]}>{unread > 99 ? "99+" : unread}</Text>
                     </View>
                   ) : (
                     <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={14} color={colors.outline} />
@@ -213,7 +215,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
   },
-  headerTitle: { fontSize: 17, lineHeight: 28, color: "#FFFFFF" },
+  headerTitle: { fontSize: 17, lineHeight: 28 },
   headerSub: { fontSize: 12, lineHeight: 20, color: "rgba(255,255,255,0.65)", fontFamily: "Inter_400Regular", marginTop: 2 },
 
   list: { padding: 14, paddingTop: 16 },
@@ -230,7 +232,6 @@ const styles = StyleSheet.create({
 
   accentBar: {
     position: "absolute",
-    left: 0,
     top: 0,
     bottom: 0,
     width: 4,
@@ -250,7 +251,6 @@ const styles = StyleSheet.create({
   unreadDot: {
     position: "absolute",
     top: -3,
-    right: -3,
     width: 13,
     height: 13,
     borderRadius: 8,
@@ -278,5 +278,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 6,
   },
-  badgeText: { color: "#fff", fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  badgeText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
 });

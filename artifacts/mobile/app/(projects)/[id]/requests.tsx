@@ -178,10 +178,10 @@ function statusTone(status: string): Tone {
 const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 6 },
   cardTop: { alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
-  ref: { flex: 1, fontSize: 14.5, fontFamily: "Inter_600SemiBold", lineHeight: 22 },
-  line: { fontSize: 12.5, fontFamily: "Inter_400Regular" },
+  ref: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold", lineHeight: 24 },
+  line: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   note: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   metaRow: { alignItems: "center", gap: 8, flexWrap: "wrap" },
-  by: { fontSize: 11.5, fontFamily: "Inter_400Regular" },
+  by: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   actions: { gap: 10, marginTop: 4 },
 });

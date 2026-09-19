@@ -203,7 +203,7 @@ export function ProfileTourGuide({
             <View style={[styles.stepBadge, { backgroundColor: colors.primaryText + "14" }]}>
               <Text style={[styles.stepBadgeText, { color: colors.primaryText }]}>{stepLabel}</Text>
             </View>
-            <Pressable onPress={onDismiss} style={styles.closeBtn} hitSlop={12}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t.a11y.closeTour} onPress={onDismiss} style={styles.closeBtn} hitSlop={12}>
               <Feather name="x" size={18} color={colors.outline} />
             </Pressable>
           </View>
@@ -236,7 +236,7 @@ export function ProfileTourGuide({
           {/* Step dots */}
           <View style={styles.dotsRow}>
             {steps.map((_, i) => (
-              <Pressable key={i} onPress={() => animateStep(() => setStep(i))} hitSlop={8}>
+              <Pressable accessibilityRole="button" accessibilityLabel={`${t.a11y.step} ${i + 1}`} key={i} onPress={() => animateStep(() => setStep(i))} hitSlop={8}>
                 <View
                   style={[
                     styles.dot,
@@ -253,7 +253,7 @@ export function ProfileTourGuide({
           {/* Navigation buttons */}
           <View style={[styles.btnRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             {step > 0 ? (
-              <Pressable
+              <Pressable accessibilityRole="button"
                 onPress={handlePrev}
                 style={[styles.prevBtn, { borderColor: colors.border }]}
               >
@@ -267,29 +267,29 @@ export function ProfileTourGuide({
                 </Text>
               </Pressable>
             ) : (
-              <Pressable onPress={onDismiss} style={styles.skipBtn}>
+              <Pressable accessibilityRole="button" onPress={onDismiss} style={styles.skipBtn}>
                 <Text style={[styles.skipBtnText, { color: colors.outline }]}>
                   {t.profileTour.skip}
                 </Text>
               </Pressable>
             )}
 
-            <Pressable
+            <Pressable accessibilityRole="button"
               onPress={handleNext}
               style={[styles.nextBtn, { backgroundColor: colors.primary }]}
             >
-              <Text style={styles.nextBtnText}>
+              <Text style={[styles.nextBtnText, { color: colors.primaryForeground }]}>
                 {step === totalSteps - 1 ? t.profileTour.finish : t.profileTour.next}
               </Text>
               {step < totalSteps - 1 && (
                 <Feather
                   name={isRTL ? "chevron-left" : "chevron-right"}
                   size={16}
-                  color="#fff"
+                  color={colors.primaryForeground}
                 />
               )}
               {step === totalSteps - 1 && (
-                <Feather name="check-circle" size={16} color="#fff" />
+                <Feather name="check-circle" size={16} color={colors.primaryForeground} />
               )}
             </Pressable>
           </View>
@@ -411,6 +411,5 @@ const styles = StyleSheet.create({
   nextBtnText: {
     fontSize: 14, lineHeight: 24,
     fontFamily: "Inter_600SemiBold",
-    color: "#fff",
   },
 });

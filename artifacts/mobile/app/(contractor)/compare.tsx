@@ -143,9 +143,11 @@ export default function CompareScreen() {
         await addDoc(collection(db, "users", offer.supplierId, "notifications"), {
           userId: offer.supplierId,
           type: "offer_accepted",
-          title: isRTL ? "تم قبول عرضك" : "Your offer was accepted",
+          // Keys: the reader sees it in their own language (web and phone).
+          i18n: { title: "pn_offer_accepted_title", message: "pn_offer_accepted", params: { rfq: offer.rfqTitle ?? selectedRfq.title ?? "" } },
+          title: isRTL ? "تم قبول عرضك" : "Your offer was accepted",  // ui-ok: fallback text for push; readers get i18n
           message: isRTL
-            ? `تم قبول عرضك لـ "${offer.rfqTitle ?? selectedRfq.title}"`
+            ? `تم قبول عرضك لـ "${offer.rfqTitle ?? selectedRfq.title}"`  // ui-ok: fallback text for push; readers get i18n
             : `Your offer for "${offer.rfqTitle ?? selectedRfq.title}" was accepted`,
           offerId: offer.id,
           rfqId: selectedRfq.id,
@@ -166,7 +168,7 @@ export default function CompareScreen() {
     const n = parseInt(o.executionDuration ?? "") || 0;
     if (!n) return Infinity;
     const u = o.executionDurationUnit ?? "";
-    return n * (u === "أشهر" ? 30 : u === "أسابيع" ? 7 : 1);
+    return n * (u === "أشهر" ? 30 : u === "أسابيع" ? 7 : 1);  // ui-ok: stored duration unit values
   };
 
   const fmtDurUnit = (unit?: string) => {
@@ -196,15 +198,15 @@ export default function CompareScreen() {
   };
 
   const statusLabel = (s: string) => {
-    if (s === "مقبول") return t.compare.accepted;
-    if (s === "مرفوض") return t.compare.rejected;
-    if (s === "مطلوب تخفيض") return t.compare.reduction;
+    if (s === "مقبول") return t.compare.accepted;  // ui-ok: stored offer status value
+    if (s === "مرفوض") return t.compare.rejected;  // ui-ok: stored offer status value
+    if (s === "مطلوب تخفيض") return t.compare.reduction;  // ui-ok: stored offer status value
     return t.compare.pending;
   };
   const statusColor = (s: string) => {
-    if (s === "مقبول") return colors.success;
-    if (s === "مرفوض") return colors.destructive;
-    if (s === "مطلوب تخفيض") return colors.warning;
+    if (s === "مقبول") return colors.success;  // ui-ok: stored offer status value
+    if (s === "مرفوض") return colors.destructive;  // ui-ok: stored offer status value
+    if (s === "مطلوب تخفيض") return colors.warning;  // ui-ok: stored offer status value
     return colors.cta;
   };
 
@@ -233,7 +235,7 @@ export default function CompareScreen() {
           <View style={styles.centered}>
             <Feather name="alert-triangle" size={32} color={colors.destructive} />
             <Text style={[styles.errorText, { color: colors.destructive }]}>{rfqError}</Text>
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[styles.retryBtn, { borderColor: colors.cta }]}
               onPress={() => { setRfqLoading(true); setRfqError(null); }}
             >
@@ -251,7 +253,7 @@ export default function CompareScreen() {
             contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={() => loadOffers(item)}
                 activeOpacity={0.75}
@@ -293,7 +295,7 @@ export default function CompareScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: topPad, backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
+        <TouchableOpacity accessibilityRole="button"
           style={[styles.backRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}
           onPress={() => { setSelectedRfq(null); setOffers([]); }}
           activeOpacity={0.7}
@@ -312,7 +314,7 @@ export default function CompareScreen() {
       {/* Sort bar */}
       <View style={[styles.sortBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         {(["price", "duration", "date"] as SortKey[]).map(key => (
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             key={key}
             style={[styles.sortChip, sortBy === key && { backgroundColor: colors.cta + "18" }]}
             onPress={() => setSortBy(key)}
@@ -333,7 +335,7 @@ export default function CompareScreen() {
         <View style={styles.centered}>
           <Feather name="alert-triangle" size={32} color={colors.destructive} />
           <Text style={[styles.errorText, { color: colors.destructive }]}>{offersError}</Text>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button"
             style={[styles.retryBtn, { borderColor: colors.cta }]}
             onPress={() => selectedRfq && loadOffers(selectedRfq)}
           >
@@ -351,8 +353,8 @@ export default function CompareScreen() {
         >
           {sortedOffers.map((offer, idx) => {
             const price = parseFloat(String(offer.price)) || 0;
-            const isBest = price === lowestPrice && offer.status !== "مرفوض";
-            const isPending = offer.status === "قيد المراجعة";
+            const isBest = price === lowestPrice && offer.status !== "مرفوض";  // ui-ok: stored offer status value
+            const isPending = offer.status === "قيد المراجعة";  // ui-ok: stored offer status value
             const sColor = statusColor(offer.status);
 
             return (
@@ -370,7 +372,7 @@ export default function CompareScreen() {
                 {/* Rank + Best badge */}
                 <View style={[styles.offerCardTop, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
                   <View style={[styles.rankBadge, { backgroundColor: isBest ? colors.success : colors.border }]}>
-                    <Text style={[styles.rankText, { color: isBest ? "#fff" : colors.outline }]}>
+                    <Text style={[styles.rankText, { color: isBest ? colors.successForeground : colors.outline }]}>
                       {isBest ? t.compare.bestLabel : `#${idx + 1}`}
                     </Text>
                   </View>
@@ -417,17 +419,17 @@ export default function CompareScreen() {
 
                 {/* Accept button — only for pending offers */}
                 {isPending && (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     style={[styles.acceptBtn, { backgroundColor: isBest ? colors.success : colors.cta }]}
                     onPress={() => handleAccept(offer)}
                     disabled={processing === offer.id}
                     activeOpacity={0.8}
                   >
                     {processing === offer.id
-                      ? <ActivityIndicator size="small" color="#fff" />
-                      : <Feather name="check-circle" size={15} color="#fff" />
+                      ? <ActivityIndicator size="small" color={isBest ? colors.successForeground : colors.ctaForeground} />
+                      : <Feather name="check-circle" size={15} color={isBest ? colors.successForeground : colors.ctaForeground} />
                     }
-                    <Text style={styles.acceptText}>{t.compare.accept}</Text>
+                    <Text style={[styles.acceptText, { color: isBest ? colors.successForeground : colors.ctaForeground }]}>{t.compare.accept}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -602,6 +604,5 @@ const styles = StyleSheet.create({
   acceptText: {
     fontFamily: "Inter_600SemiBold",
     fontSize: 14, lineHeight: 24,
-    color: "#fff",
   },
 });

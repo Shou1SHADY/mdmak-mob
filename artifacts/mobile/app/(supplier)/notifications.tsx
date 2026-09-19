@@ -6,6 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
+import { notificationText } from "@/lib/notification-copy";
 import { useNotifications, AppNotification } from "@/hooks/useNotifications";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -58,7 +59,7 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
 export default function SupplierNotificationsScreen() {
   const colors = useColors();
   const t = useT();
-  const { isRTL } = useLanguage();
+  const { isRTL, language } = useLanguage();
   const insets = useSafeAreaInsets();
   const { notifications, loading, markRead, unreadCount } = useNotifications();
 
@@ -87,7 +88,7 @@ export default function SupplierNotificationsScreen() {
         right={
           unreadCount > 0 ? (
             <View style={[styles.unreadBadge, { backgroundColor: colors.destructive }]}>
-              <Text style={styles.unreadBadgeText}>{unreadCount > 99 ? "99+" : String(unreadCount)}</Text>
+              <Text style={[styles.unreadBadgeText, { color: colors.destructiveForeground }]}>{unreadCount > 99 ? "99+" : String(unreadCount)}</Text>
             </View>
           ) : undefined
         }
@@ -103,8 +104,10 @@ export default function SupplierNotificationsScreen() {
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const { icon, color: iconColor } = notifMeta(item.type, colors);
+          // In the reader's language when the notification carries keys; its stored text otherwise.
+          const copy = notificationText(item, language);
           return (
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[
                 styles.card,
                 {
@@ -137,17 +140,17 @@ export default function SupplierNotificationsScreen() {
                       ]}
                       numberOfLines={2}
                     >
-                      {item.title || (item.type === "new_chat_message" || item.type === "new_message" ? t.chat.newMessage : t.tabs.notifications)}
+                      {copy.title || (item.type === "new_chat_message" || item.type === "new_message" ? t.chat.newMessage : t.tabs.notifications)}
                     </Text>
                     {!item.read && <View style={[styles.dot, { backgroundColor: colors.cta }]} />}
                   </View>
 
-                  {(item.message ?? item.body) ? (
+                  {copy.message ? (
                     <Text
                       style={[styles.notifBody, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}
                       numberOfLines={2}
                     >
-                      {item.message ?? item.body}
+                      {copy.message}
                     </Text>
                   ) : null}
 
@@ -183,7 +186,6 @@ const styles = StyleSheet.create({
   unreadBadgeText: {
     fontSize: 12, lineHeight: 20,
     fontFamily: "Inter_600SemiBold",
-    color: "#FFFFFF",
   },
   list: {
     padding: 16,

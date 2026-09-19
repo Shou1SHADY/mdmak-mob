@@ -145,7 +145,7 @@ export default function CreateRFQScreen() {
           },
         ]}
       >
-        <TouchableOpacity onPress={() => (step > 1 ? setStep(step - 1) : router.back())} style={styles.backBtn}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.common.back} onPress={() => (step > 1 ? setStep(step - 1) : router.back())} style={styles.backBtn}>
           <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>{t.dashboard.createRfq}</Text>
@@ -197,7 +197,7 @@ export default function CreateRFQScreen() {
                   <Text style={[styles.selectedChipText, { color: colors.primaryText }]}>
                     {isRTL ? selectedCat.labelAr : selectedCat.label}
                   </Text>
-                  <TouchableOpacity onPress={() => setCategory("")} style={{ padding: 2 }}>
+                  <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.removeItem} onPress={() => setCategory("")} style={{ padding: 2 }}>
                     <Feather name="x" size={14} color={colors.primaryText} />
                   </TouchableOpacity>
                 </View>
@@ -205,7 +205,7 @@ export default function CreateRFQScreen() {
             </View>
 
             {/* Horizontal scrollable category cards */}
-            <ScrollView
+            <ScrollView keyboardShouldPersistTaps="handled"
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.catScroll}
@@ -215,7 +215,7 @@ export default function CreateRFQScreen() {
                 const isActive = category === cat.labelAr;
                 const icon = ICON_MAP[cat.id] || "tag";
                 return (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     key={cat.id}
                     style={[
                       styles.catCard,
@@ -246,8 +246,8 @@ export default function CreateRFQScreen() {
                       {isRTL ? cat.labelAr : cat.label}
                     </Text>
                     {isActive && (
-                      <View style={[styles.checkMark, { backgroundColor: colors.primary }]}>
-                        <Feather name="check" size={10} color="#FFFFFF" />
+                      <View style={[styles.checkMark, isRTL ? { left: 8 } : { right: 8 }, { backgroundColor: colors.primary }]}>
+                        <Feather name="check" size={10} color={colors.primaryForeground} />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -284,14 +284,14 @@ export default function CreateRFQScreen() {
                 <View style={[styles.selectedChip, { backgroundColor: colors.cta + "12", borderColor: colors.cta }]}>
                   <Feather name="map-pin" size={14} color={colors.cta} />
                   <Text style={[styles.selectedChipText, { color: colors.cta }]}>{displayCity(city, isRTL)}</Text>
-                  <TouchableOpacity onPress={() => setCity("")} style={{ padding: 2 }}>
+                  <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.removeItem} onPress={() => setCity("")} style={{ padding: 2 }}>
                     <Feather name="x" size={14} color={colors.cta} />
                   </TouchableOpacity>
                 </View>
               )}
             </View>
 
-            <ScrollView
+            <ScrollView keyboardShouldPersistTaps="handled"
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.cityScroll}
@@ -300,7 +300,7 @@ export default function CreateRFQScreen() {
               {SAUDI_CITIES.map((c) => {
                 const isActive = city === c;
                 return (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     key={c}
                     style={[
                       styles.cityCard,
@@ -328,8 +328,8 @@ export default function CreateRFQScreen() {
                       {displayCity(c, isRTL)}
                     </Text>
                     {isActive && (
-                      <View style={[styles.checkMark, { backgroundColor: colors.cta }]}>
-                        <Feather name="check" size={10} color="#FFFFFF" />
+                      <View style={[styles.checkMark, isRTL ? { left: 8 } : { right: 8 }, { backgroundColor: colors.cta }]}>
+                        <Feather name="check" size={10} color={colors.ctaForeground} />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -350,12 +350,12 @@ export default function CreateRFQScreen() {
                   <View style={[styles.selectedChip, { backgroundColor: colors.purpleAccent + "15", borderColor: colors.purpleAccent }]}>
                     <Feather name="navigation" size={14} color={colors.purpleAccent} />
                     <Text style={[styles.selectedChipText, { color: colors.purpleAccent }]}>{district}</Text>
-                    <TouchableOpacity onPress={() => setDistrict("")} style={{ padding: 2 }}>
+                    <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.removeItem} onPress={() => setDistrict("")} style={{ padding: 2 }}>
                       <Feather name="x" size={14} color={colors.purpleAccent} />
                     </TouchableOpacity>
                   </View>
                 )}
-                <ScrollView
+                <ScrollView keyboardShouldPersistTaps="handled"
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.cityScroll}
@@ -364,7 +364,7 @@ export default function CreateRFQScreen() {
                   {(CITIES_DISTRICTS[city] ?? []).map((dist) => {
                     const isDistActive = district === dist;
                     return (
-                      <TouchableOpacity
+                      <TouchableOpacity accessibilityRole="button"
                         key={dist}
                         style={[
                           styles.cityCard,
@@ -388,8 +388,8 @@ export default function CreateRFQScreen() {
                           {dist}
                         </Text>
                         {isDistActive && (
-                          <View style={[styles.checkMark, { backgroundColor: colors.purpleAccent }]}>
-                            <Feather name="check" size={10} color="#FFFFFF" />
+                          <View style={[styles.checkMark, isRTL ? { left: 8 } : { right: 8 }, { backgroundColor: colors.purpleAccent }]}>
+                            <Feather name="check" size={10} color={colors.card} />
                           </View>
                         )}
                       </TouchableOpacity>
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   // Category cards
   catScroll: {
     gap: 10,
-    paddingRight: 20,
+    paddingRight: 20,  // ui-ok: a horizontal scroller's trailing padding — the scroller does not reverse
   },
   catCard: {
     borderRadius: 16,
@@ -545,7 +545,6 @@ const styles = StyleSheet.create({
   checkMark: {
     position: "absolute",
     top: 8,
-    right: 8,
     width: 18,
     height: 18,
     borderRadius: 12,
@@ -556,7 +555,7 @@ const styles = StyleSheet.create({
   // City cards
   cityScroll: {
     gap: 8,
-    paddingRight: 20,
+    paddingRight: 20,  // ui-ok: a horizontal scroller's trailing padding — the scroller does not reverse
   },
   cityCard: {
     flexDirection: "row",

@@ -123,9 +123,9 @@ export default function TrialBalanceScreen() {
 
 const styles = StyleSheet.create({
   head: { alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1 },
-  headText: { fontSize: 10.5, fontFamily: "Inter_600SemiBold" },
+  headText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   row: { alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1 },
   account: { width: 170, fontSize: 12, fontFamily: "Inter_400Regular" },
-  num: { width: 92, fontSize: 12, fontFamily: "Inter_500Medium", textAlign: "right", fontVariant: ["tabular-nums"] },
+  num: { width: 92, fontSize: 12, fontFamily: "Inter_500Medium", textAlign: "right", fontVariant: ["tabular-nums"] },  // ui-ok: numbers align on their units digit in both languages
   numStrong: { fontFamily: "Inter_700Bold" },
 });

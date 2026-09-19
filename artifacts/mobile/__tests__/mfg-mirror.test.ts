@@ -273,7 +273,7 @@ describe("every word the engine can say has both languages", () => {
   const CANDIDATE_KEYS: Record<CandidateKey, true> = {
     qc_decision: true, scrap_review: true, scrap_clarify: true, remake_scrap: true,
     remake_breakage: true, apply_change: true, down_payment: true, survey: true,
-    release: true, shortage: true, purchase_wait: true, submit_drawing: true,
+    release: true, shortage: true, purchase_wait: true, arrived_wait: true, submit_drawing: true,
     drawing_wait: true, slab: true, gate: true, issue_wait: true,
     confirm_receipt: true, request_materials: true, output: true, qc_release: true,
     close: true, deliver: true, receipt_wait: true, remnant_wait: true,

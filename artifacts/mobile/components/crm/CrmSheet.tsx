@@ -56,7 +56,7 @@ export function CrmSheet({
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Pressable style={[styles.backdrop, { backgroundColor: colors.overlay }]} onPress={onClose} />
+        <Pressable accessible={false} style={[styles.backdrop, { backgroundColor: colors.overlay }]} onPress={onClose} />
         <View
           style={[
             styles.sheet,

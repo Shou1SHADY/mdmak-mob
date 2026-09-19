@@ -255,7 +255,7 @@ export function TeamScreen({ role }: { role: "Contractor" | "Supplier" }) {
       ) : loading ? (
         <View style={{ padding: space.lg }}>{[1, 2, 3].map((k) => <CardSkeleton key={k} />)}</View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={sorted}
           keyExtractor={(item) => item.uid}
           renderItem={renderMember}

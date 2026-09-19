@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, FlatList, StyleSheet, Modal, Pressable, Alert, ScrollView } from "react-native";
+import { View, Text, FlatList, StyleSheet, Modal, Pressable, Alert, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
@@ -131,9 +131,14 @@ export default function SalesPaymentsScreen() {
         actor: { id: user.uid, name: user.displayName || user.email },
         recipients,
         notification: {
-          title: isRTL ? "إشعار حوالة جديد" : "New transfer notice",
+          i18n: {
+            title: "sales_tn_notif_reported_title",
+            message: "sales_tn_notif_reported_msg",
+            params: { contact: report.quotation.contactName || "—", amount: formatSar(parsed, false), number: report.quotation.quotationNumber },
+          },
+          title: isRTL ? "إشعار حوالة جديد" : "New transfer notice",  // ui-ok: fallback text for push; readers get i18n
           message: (isRTL
-            ? "{contact} يقول إنه حوّل {amount} على {number} — تحقق من الإيداع وردّ بالنتيجة"
+            ? "{contact} يقول إنه حوّل {amount} على {number} — تحقق من الإيداع وردّ بالنتيجة"  // ui-ok: fallback text for push; readers get i18n
             : "{contact} says they transferred {amount} on {number} — verify the deposit and answer"
           )
             .replace("{contact}", report.quotation.contactName || "—")
@@ -167,16 +172,21 @@ export default function SalesPaymentsScreen() {
         message,
         actor: { id: user.uid, name: user.displayName || user.email },
         notification: {
+          i18n: {
+            title: result === "confirmed" ? "sales_tn_notif_confirmed_title" : "sales_tn_notif_not_found_title",
+            message: result === "confirmed" ? "sales_tn_notif_confirmed_msg" : "sales_tn_notif_not_found_msg",
+            params: { amount: formatSar(answer.amountStated, false), number: answer.quotationNumber },
+          },
           title:
             result === "confirmed"
-              ? isRTL ? "المالية أكّدت الإيداع" : "Finance confirmed the deposit"
-              : isRTL ? "المالية لم تجد الإيداع" : "Finance could not find the deposit",
+              ? isRTL ? "المالية أكّدت الإيداع" : "Finance confirmed the deposit"  // ui-ok: fallback text for push; readers get i18n
+              : isRTL ? "المالية لم تجد الإيداع" : "Finance could not find the deposit",  // ui-ok: fallback text for push; readers get i18n
           message: (result === "confirmed"
             ? isRTL
-              ? "أكّدت المالية إيداع {amount} على {number}"
+              ? "أكّدت المالية إيداع {amount} على {number}"  // ui-ok: fallback text for push; readers get i18n
               : "Finance confirmed the {amount} deposit on {number}"
             : isRTL
-              ? "لم تجد المالية حوالة {amount} على {number} — راجع العميل وأعد الإبلاغ"
+              ? "لم تجد المالية حوالة {amount} على {number} — راجع العميل وأعد الإبلاغ"  // ui-ok: fallback text for push; readers get i18n
               : "Finance found no {amount} transfer on {number} — check with the client and report again"
           )
             .replace("{amount}", formatSar(answer.amountStated, isRTL))
@@ -213,7 +223,7 @@ export default function SalesPaymentsScreen() {
 
       <View style={[styles.segments, { flexDirection: row }]}>
         {(["due", "notices"] as const).map((s) => (
-          <Pressable
+          <Pressable accessibilityRole="button"
             key={s}
             onPress={() => setSegment(s)}
             style={[
@@ -239,7 +249,7 @@ export default function SalesPaymentsScreen() {
           <CardSkeleton />
         </View>
       ) : segment === "due" ? (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={due}
           keyExtractor={(d) => `${d.quotation.id}:${d.installment.id}`}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
@@ -272,7 +282,7 @@ export default function SalesPaymentsScreen() {
           ListEmptyComponent={<EmptyState icon="check-circle" title={t.sales.noDue} subtitle={t.sales.noticesHint} />}
         />
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={sortedNotices}
           keyExtractor={(n) => n.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
@@ -317,91 +327,95 @@ export default function SalesPaymentsScreen() {
 
       {/* ── Report a transfer ── */}
       <Modal visible={!!report} transparent animationType="slide" onRequestClose={() => setReport(null)}>
-        <Pressable style={styles.modalOverlay} onPress={() => !busy && setReport(null)}>
-          <Pressable
-            style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={{ alignItems: "center", paddingBottom: 8 }}>
-              <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            </View>
-            <ScrollView keyboardShouldPersistTaps="handled">
-              <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: align }]}>
-                {t.sales.reportTransferTitle}
-              </Text>
-              <Text style={[styles.modalHint, { color: colors.mutedForeground, textAlign: align }]}>
-                {report?.quotation.quotationNumber} · {report?.quotation.contactName || "—"} —{" "}
-                {t.sales.reportTransferHint}
-              </Text>
-              <Input
-                label={t.sales.amountStated}
-                value={amount}
-                onChangeText={setAmount}
-                keyboardType="decimal-pad"
-                isRTL={isRTL}
-              />
-              {report && parseFloat(amount) > 0 && Math.abs(parseFloat(amount) - report.installment.remaining) > 0.005 && (
-                <Text style={[styles.mismatch, { color: colors.warning, textAlign: align }]}>
-                  {t.sales.amountMismatch.replace("{amount}", formatSar(report.installment.remaining, isRTL))}
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <Pressable accessible={false} style={[styles.modalOverlay, { backgroundColor: colors.overlay }]} onPress={() => !busy && setReport(null)}>
+            <Pressable accessible={false}
+              style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={{ alignItems: "center", paddingBottom: 8 }}>
+                <View style={[styles.handle, { backgroundColor: colors.border }]} />
+              </View>
+              <ScrollView keyboardShouldPersistTaps="handled">
+                <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: align }]}>
+                  {t.sales.reportTransferTitle}
                 </Text>
-              )}
-              <DateField label={t.sales.transferDate} value={transferDate} onChange={setTransferDate} isRTL={isRTL} />
-              <Input label={t.sales.bankRef} value={bankRef} onChangeText={setBankRef} isRTL={isRTL} />
-              <Input label={t.sales.note} value={note} onChangeText={setNote} isRTL={isRTL} />
-              <Button
-                title={t.sales.sendNotice}
-                onPress={submitReport}
-                loading={busy === "report"}
-                fullWidth
-                style={{ marginTop: 12 }}
-              />
-            </ScrollView>
+                <Text style={[styles.modalHint, { color: colors.mutedForeground, textAlign: align }]}>
+                  {report?.quotation.quotationNumber} · {report?.quotation.contactName || "—"} —{" "}
+                  {t.sales.reportTransferHint}
+                </Text>
+                <Input
+                  label={t.sales.amountStated}
+                  value={amount}
+                  onChangeText={setAmount}
+                  keyboardType="decimal-pad"
+                  isRTL={isRTL}
+                />
+                {report && parseFloat(amount) > 0 && Math.abs(parseFloat(amount) - report.installment.remaining) > 0.005 && (
+                  <Text style={[styles.mismatch, { color: colors.warning, textAlign: align }]}>
+                    {t.sales.amountMismatch.replace("{amount}", formatSar(report.installment.remaining, isRTL))}
+                  </Text>
+                )}
+                <DateField label={t.sales.transferDate} value={transferDate} onChange={setTransferDate} isRTL={isRTL} />
+                <Input label={t.sales.bankRef} value={bankRef} onChangeText={setBankRef} isRTL={isRTL} />
+                <Input label={t.sales.note} value={note} onChangeText={setNote} isRTL={isRTL} />
+                <Button
+                  title={t.sales.sendNotice}
+                  onPress={submitReport}
+                  loading={busy === "report"}
+                  fullWidth
+                  style={{ marginTop: 12 }}
+                />
+              </ScrollView>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Finance answers ── */}
       <Modal visible={!!answer} transparent animationType="slide" onRequestClose={() => setAnswer(null)}>
-        <Pressable style={styles.modalOverlay} onPress={() => !busy && setAnswer(null)}>
-          <Pressable
-            style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={{ alignItems: "center", paddingBottom: 8 }}>
-              <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            </View>
-            <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: align }]}>
-              {t.sales.answerTitle.replace("{number}", answer?.noticeNumber ?? "")}
-            </Text>
-            <Text style={[styles.modalHint, { color: colors.mutedForeground, textAlign: align }]}>
-              {answer?.contactName || "—"} · {formatSar(answer?.amountStated ?? 0, isRTL)} ·{" "}
-              {(answer?.transferDate || "").slice(0, 10)}
-              {answer?.bankRef ? ` · ${answer.bankRef}` : ""}
-              {"\n"}
-              {t.sales.answerHint}
-            </Text>
-            <Input label={t.sales.financeMessage} value={message} onChangeText={setMessage} isRTL={isRTL} />
-            <View style={[styles.answerRow, { flexDirection: row }]}>
-              <View style={{ flex: 1 }}>
-                <Button
-                  title={t.sales.notFound}
-                  variant="secondary"
-                  loading={busy === "not_found"}
-                  onPress={() => submitAnswer("not_found")}
-                  fullWidth
-                />
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <Pressable accessible={false} style={[styles.modalOverlay, { backgroundColor: colors.overlay }]} onPress={() => !busy && setAnswer(null)}>
+            <Pressable accessible={false}
+              style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={{ alignItems: "center", paddingBottom: 8 }}>
+                <View style={[styles.handle, { backgroundColor: colors.border }]} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Button
-                  title={t.sales.confirmDeposit}
-                  loading={busy === "confirmed"}
-                  onPress={() => submitAnswer("confirmed")}
-                  fullWidth
-                />
+              <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: align }]}>
+                {t.sales.answerTitle.replace("{number}", answer?.noticeNumber ?? "")}
+              </Text>
+              <Text style={[styles.modalHint, { color: colors.mutedForeground, textAlign: align }]}>
+                {answer?.contactName || "—"} · {formatSar(answer?.amountStated ?? 0, isRTL)} ·{" "}
+                {(answer?.transferDate || "").slice(0, 10)}
+                {answer?.bankRef ? ` · ${answer.bankRef}` : ""}
+                {"\n"}
+                {t.sales.answerHint}
+              </Text>
+              <Input label={t.sales.financeMessage} value={message} onChangeText={setMessage} isRTL={isRTL} />
+              <View style={[styles.answerRow, { flexDirection: row }]}>
+                <View style={{ flex: 1 }}>
+                  <Button
+                    title={t.sales.notFound}
+                    variant="secondary"
+                    loading={busy === "not_found"}
+                    onPress={() => submitAnswer("not_found")}
+                    fullWidth
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Button
+                    title={t.sales.confirmDeposit}
+                    loading={busy === "confirmed"}
+                    onPress={() => submitAnswer("confirmed")}
+                    fullWidth
+                  />
+                </View>
               </View>
-            </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -410,20 +424,20 @@ export default function SalesPaymentsScreen() {
 const styles = StyleSheet.create({
   segments: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 8 },
   segment: { flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  segmentText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  segmentText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 6 },
   cardTop: { alignItems: "center", justifyContent: "space-between", gap: 8 },
   number: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  amount: { fontSize: 15, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
-  client: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  amount: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
+  client: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
   reportedLine: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  financeMsg: { fontSize: 12.5, fontFamily: "Inter_500Medium" },
+  financeMsg: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_500Medium" },
   metaRow: { alignItems: "center", gap: 8, flexWrap: "wrap" },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(11,26,43,0.45)", justifyContent: "flex-end" },
+  modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: "88%", gap: 10 },
   handle: { width: 40, height: 4, borderRadius: 2 },
   modalTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold", marginBottom: 4 },
-  modalHint: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 8 },
-  mismatch: { fontSize: 12.5, fontFamily: "Inter_500Medium", marginBottom: 6 },
+  modalHint: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 24, marginBottom: 8 },
+  mismatch: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_500Medium", marginBottom: 6 },
   answerRow: { gap: 10, marginTop: 12 },
 });

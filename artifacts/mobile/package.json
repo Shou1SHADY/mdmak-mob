@@ -16,6 +16,8 @@
     "lint": "tsc --noEmit",
     "check:mirrors": "node scripts/check-mirrors.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
+    "check:ui": "node scripts/check-ui.mjs",
+    "sync:notifications": "node scripts/sync-notification-strings.mjs",
     "eas:dev": "npx eas build --platform all --profile development",
     "eas:preview": "npx eas build --platform all --profile preview",
     "eas:prod": "npx eas build --platform all --profile production",

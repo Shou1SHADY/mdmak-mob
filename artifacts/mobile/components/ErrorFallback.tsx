@@ -58,7 +58,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           accessibilityLabel={t.errors.errorDetails}
           accessibilityRole="button"
           style={({ pressed }) => [
-            styles.topButton,
+            styles.topButton, isRTL ? { left: 16 } : { right: 16 },
             {
               top: insets.top + 16,
               backgroundColor: colors.surface,
@@ -79,7 +79,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           {t.errors.pleaseReload}
         </Text>
 
-        <Pressable
+        <Pressable accessibilityRole="button"
           onPress={handleRestart}
           style={({ pressed }) => [
             styles.button,
@@ -200,7 +200,6 @@ const styles = StyleSheet.create({
   },
   topButton: {
     position: "absolute",
-    right: 16,
     width: 44,
     height: 44,
     borderRadius: 12,

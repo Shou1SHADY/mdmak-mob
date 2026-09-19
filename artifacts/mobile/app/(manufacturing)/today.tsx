@@ -55,7 +55,7 @@ export default function MfgTodayScreen() {
       {state.personas.length > 1 && (
         <View style={[styles.personas, { flexDirection: row }]}>
           {state.personas.map((p) => (
-            <Pressable
+            <Pressable accessibilityRole="button"
               key={p}
               onPress={() => state.setPersona(p)}
               style={[
@@ -118,7 +118,7 @@ export default function MfgTodayScreen() {
                   const label = labelFor(t.mfg.candidates, item.candidate.key);
                   const tone = severityTone(item.severity);
                   return action ? (
-                    <Pressable
+                    <Pressable accessibilityRole="button"
                       key={i}
                       onPress={() => setTarget(action)}
                       style={[styles.action, { flexDirection: row, borderColor: colors.cta, backgroundColor: colors.ctaSoft }]}
@@ -159,13 +159,13 @@ function stageTone(stage: string): Tone {
 const styles = StyleSheet.create({
   personas: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, gap: 8, flexWrap: "wrap" },
   persona: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, minHeight: 40, justifyContent: "center" },
-  personaText: { fontSize: 12.5, fontFamily: "Inter_600SemiBold" },
+  personaText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 8 },
   cardTop: { alignItems: "center", justifyContent: "space-between", gap: 8 },
-  ref: { flex: 1, fontSize: 14.5, fontFamily: "Inter_600SemiBold" },
+  ref: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   cardTitle: { fontSize: 14, fontFamily: "Inter_500Medium" },
-  meta: { fontSize: 12.5, fontFamily: "Inter_400Regular" },
+  meta: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   action: { alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 12, minHeight: 44 },
-  actionText: { fontSize: 13.5, fontFamily: "Inter_600SemiBold" },
+  actionText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   waiting: { alignItems: "center", gap: 8 },
 });

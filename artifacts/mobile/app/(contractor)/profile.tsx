@@ -33,7 +33,7 @@ function MenuRow({
 }) {
   const colors = useColors();
   return (
-    <TouchableOpacity
+    <TouchableOpacity accessibilityRole="button"
       style={[
         styles.menuRow,
         { flexDirection: isRTL ? "row-reverse" : "row" },
@@ -230,7 +230,7 @@ export default function ContractorProfileScreen() {
         {/* Top bar */}
         <View style={[styles.headerTop, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <Text style={[styles.headerTitle, { color: colors.textWhite }]}>{t.profile.title}</Text>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.moreActions}
             style={[styles.settingsBtn, { backgroundColor: colors.textWhite12 }]}
             onPress={() => setShowActions(true)}
             activeOpacity={0.7}
@@ -243,7 +243,7 @@ export default function ContractorProfileScreen() {
         <View style={styles.avatarSection}>
           <View style={[styles.avatarRing, { borderColor: colors.textWhite40 }]}>
             <View style={[styles.avatar, { backgroundColor: colors.textWhite12 }]}>
-              <Text style={[styles.avatarText, { fontFamily: "Inter_600SemiBold" }]}>{initial}</Text>
+              <Text style={[styles.avatarText, { fontFamily: "Inter_600SemiBold", color: colors.textWhite }]}>{initial}</Text>
             </View>
           </View>
           <Text style={[styles.name, { color: colors.textWhite }]} numberOfLines={1} ellipsizeMode="tail">
@@ -261,7 +261,7 @@ export default function ContractorProfileScreen() {
 
       {/* ── Quick Actions ── */}
 
-      <ScrollView
+      <ScrollView keyboardShouldPersistTaps="handled"
         ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={[styles.scroll, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
@@ -353,7 +353,7 @@ export default function ContractorProfileScreen() {
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.profile.organization}</Text>
             </View>
             {!editing && (
-              <TouchableOpacity onPress={openEditMode} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.edit} onPress={openEditMode} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
                 <Feather name="edit-2" size={15} color={colors.cta} />
               </TouchableOpacity>
             )}
@@ -390,7 +390,7 @@ export default function ContractorProfileScreen() {
                 const isLast = idx === arr.length - 1;
                 return (
                   <React.Fragment key={item.label}>
-                    <TouchableOpacity
+                    <TouchableOpacity accessibilityRole="button"
                       style={[
                         styles.infoRow,
                         { flexDirection: isRTL ? "row-reverse" : "row" },
@@ -422,7 +422,7 @@ export default function ContractorProfileScreen() {
                         item.value && <Feather name="check" size={14} color={colors.success} style={{ opacity: 0.6 }} />
                       )}
                     </TouchableOpacity>
-                    {!isLast && <View style={[styles.infoSep, { backgroundColor: colors.border }]} />}
+                    {!isLast && <View style={[styles.infoSep, isRTL ? { marginRight: 54 } : { marginLeft: 54 }, { backgroundColor: colors.border }]} />}
                   </React.Fragment>
                 );
               })}
@@ -491,7 +491,7 @@ export default function ContractorProfileScreen() {
         </Card>
 
         {/* ── Sign Out ── */}
-        <TouchableOpacity style={[styles.signOutBtn, { borderColor: colors.destructive + "30" }]} onPress={handleLogout} activeOpacity={0.75}>
+        <TouchableOpacity accessibilityRole="button" style={[styles.signOutBtn, { borderColor: colors.destructive + "30" }]} onPress={handleLogout} activeOpacity={0.75}>
           <Feather name="log-out" size={16} color={colors.destructive} />
           <Text style={[styles.signOutText, { color: colors.destructive }]}>{t.common.signOut}</Text>
         </TouchableOpacity>
@@ -504,7 +504,7 @@ export default function ContractorProfileScreen() {
       {/* ── Settings Action Sheet ── */}
       <Modal visible={showActions} transparent animationType="slide" onRequestClose={() => setShowActions(false)}>
         <View style={styles.actionRoot}>
-          <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowActions(false)} />
+          <TouchableOpacity accessible={false} style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => setShowActions(false)} />
           <View style={[styles.actionSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={[styles.actionHandle, { backgroundColor: colors.border }]} />
             <Text style={[styles.actionTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
@@ -512,7 +512,7 @@ export default function ContractorProfileScreen() {
             </Text>
 
             {/* Edit Profile */}
-            <TouchableOpacity style={[styles.actionRow, { borderBottomColor: colors.border }]} onPress={openEditMode} activeOpacity={0.7}>
+            <TouchableOpacity accessibilityRole="button" style={[styles.actionRow, { borderBottomColor: colors.border }]} onPress={openEditMode} activeOpacity={0.7}>
               <View style={[styles.actionIcon, { backgroundColor: colors.cta + "15" }]}>
                 <Feather name="edit-2" size={18} color={colors.cta} />
               </View>
@@ -528,7 +528,7 @@ export default function ContractorProfileScreen() {
             </TouchableOpacity>
 
             {/* Language */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[styles.actionRow, { borderBottomColor: colors.border }]}
               onPress={() => { setLanguage(isRTL ? "en" : "ar"); setShowActions(false); }}
               activeOpacity={0.7}
@@ -548,7 +548,7 @@ export default function ContractorProfileScreen() {
             </TouchableOpacity>
 
             {/* Sign Out */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[styles.actionRow, { borderBottomWidth: 0 }]}
               onPress={() => { setShowActions(false); setTimeout(handleLogout, 300); }}
               activeOpacity={0.7}
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
   avatarSection: { alignItems: "center", gap: 8 },
   avatarRing: { width: 96, height: 96, borderRadius: 28, borderWidth: 3, alignItems: "center", justifyContent: "center" },
   avatar: { width: 86, height: 86, borderRadius: 25, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 24, lineHeight: 40, color: "#FFFFFF" },
+  avatarText: { fontSize: 24, lineHeight: 40 },
   name: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold", textAlign: "center", marginTop: 4 },
   email: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", textAlign: "center" },
   roleBadge: { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5, borderWidth: 1, marginTop: 4 },
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", },
   infoValue: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
   infoEmpty: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
-  infoSep: { height: StyleSheet.hairlineWidth, marginLeft: 54 },
+  infoSep: { height: StyleSheet.hairlineWidth },
 
   // Menu
   menuRow: { alignItems: "center", gap: 14, paddingVertical: 14, paddingHorizontal: 10 },

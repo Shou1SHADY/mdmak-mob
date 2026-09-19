@@ -180,7 +180,7 @@ export default function LoginScreen() {
           contentFit="cover"
           contentPosition="center"
         />
-        {/* Navy blue overlay */}
+        {/* ui-ok: navy scrim over the hero photo, the same in both themes */}
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(15,23,42,0.82)" }]} />
         {/* Logo + tagline centred in hero */}
         <View style={[styles.heroContent, { paddingTop: topPad }]}>
@@ -255,7 +255,7 @@ export default function LoginScreen() {
             </View>
 
             {/* Forgot password */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={[styles.forgot, { alignSelf: isRTL ? "flex-start" : "flex-end" }]}
               onPress={handleForgotPassword}
               disabled={resetLoading}
@@ -290,7 +290,7 @@ export default function LoginScreen() {
 
             {/* Social buttons */}
             <View style={[styles.socialRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
                 onPress={handleGoogleSignIn}
                 disabled={googleLoading}
@@ -301,18 +301,20 @@ export default function LoginScreen() {
                 ) : (
                   <>
                     <Text style={styles.googleG}>G</Text>
+                    {/* ui-ok: brand name */}
                     <Text style={[styles.socialLabel, { color: colors.foreground }]}>Google</Text>
                   </>
                 )}
               </TouchableOpacity>
 
               {Platform.OS === "ios" && (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   style={[styles.socialBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
                   activeOpacity={0.75}
                   onPress={() => Alert.alert(t.auth.login.comingSoon, t.auth.login.comingSoonApple)}
                 >
                   <Ionicons name="logo-apple" size={18} color={colors.foreground} />
+                  {/* ui-ok: brand name */}
                   <Text style={[styles.socialLabel, { color: colors.foreground }]}>Apple</Text>
                 </TouchableOpacity>
               )}
@@ -322,7 +324,7 @@ export default function LoginScreen() {
             <View style={{ flex: 1 }} />
 
             {/* Sign up */}
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button"
               style={styles.signupRow}
               onPress={() => router.push("/auth/register")}
               activeOpacity={0.7}
@@ -460,8 +462,8 @@ const styles = StyleSheet.create({
   },
   googleG: {
     fontSize: 17, lineHeight: 28,
-    fontWeight: "800" as const,
-    color: "#4285F4",
+    fontFamily: "Inter_700Bold",
+    color: "#4285F4", // ui-ok: Google's brand blue on the sign-in button
   },
   socialLabel: {
     fontFamily: "Inter_600SemiBold",

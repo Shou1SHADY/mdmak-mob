@@ -33,7 +33,7 @@ function MenuRow({
 }) {
   const colors = useColors();
   return (
-    <TouchableOpacity
+    <TouchableOpacity accessibilityRole="button"
       style={[
         styles.menuRow,
         { flexDirection: isRTL ? "row-reverse" : "row" },
@@ -140,7 +140,7 @@ export default function SupplierProfileScreen() {
       const offQ = query(collection(db, "offers"), where("organizationId", "==", user.organizationId));
       const offSnap = await getDocs(offQ);
       const offers = offSnap.docs.map((d) => d.data());
-      const accepted = offers.filter((o) => o.status === "مقبول").length;
+      const accepted = offers.filter((o) => o.status === "مقبول").length;  // ui-ok: stored offer status value
       setStats({ totalOffers: offers.length, acceptedOffers: accepted, activeRfqs: 0 });
     } catch (e) {
       if (__DEV__) console.warn("[Profile] Stats fetch failed:", e);
@@ -285,7 +285,7 @@ export default function SupplierProfileScreen() {
         {/* Top bar */}
         <View style={[styles.headerTop, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <Text style={[styles.headerTitle, { color: colors.textWhite }]}>{t.profile.title}</Text>
-          <TouchableOpacity
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel={editingSpecs ? t.common.cancel : t.a11y.edit}
             style={[styles.settingsBtn, { backgroundColor: colors.textWhite12 }]}
             onPress={() => setEditingSpecs(!editingSpecs)}
             activeOpacity={0.7}
@@ -298,7 +298,7 @@ export default function SupplierProfileScreen() {
         <View style={styles.avatarSection}>
           <View style={[styles.avatarRing, { borderColor: colors.textWhite40 }]}>
             <View style={[styles.avatar, { backgroundColor: colors.textWhite12 }]}>
-              <Text style={[styles.avatarText, { fontFamily: "Inter_600SemiBold" }]}>{initial}</Text>
+              <Text style={[styles.avatarText, { fontFamily: "Inter_600SemiBold", color: colors.textWhite }]}>{initial}</Text>
             </View>
           </View>
           <Text style={[styles.name, { color: colors.textWhite }]} numberOfLines={1} ellipsizeMode="tail">
@@ -324,7 +324,7 @@ export default function SupplierProfileScreen() {
 
       {/* ── Quick Actions ── */}
 
-      <ScrollView
+      <ScrollView keyboardShouldPersistTaps="handled"
         ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={[styles.scroll, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}
@@ -415,7 +415,7 @@ export default function SupplierProfileScreen() {
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.profile.organization}</Text>
             </View>
             {!editingInfo && (
-              <TouchableOpacity onPress={() => setEditingInfo(true)} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.edit} onPress={() => setEditingInfo(true)} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
                 <Feather name="edit-2" size={15} color={colors.cta} />
               </TouchableOpacity>
             )}
@@ -448,7 +448,7 @@ export default function SupplierProfileScreen() {
                 { icon: "globe" as const,     label: t.profile.website,       value: organization?.website,                   required: false },
                 { icon: "mail" as const,      label: t.auth.login.email,      value: user?.email,                             required: false },
               ].filter((item) => item.value || item.required).map((item) => (
-                <TouchableOpacity
+                <TouchableOpacity accessibilityRole="button"
                   key={item.label}
                   style={[
                     styles.infoRow,
@@ -532,7 +532,7 @@ export default function SupplierProfileScreen() {
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.supplierProfile.specializations}</Text>
             </View>
             {!editingSpecs && (
-              <TouchableOpacity onPress={() => setEditingSpecs(true)} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.edit} onPress={() => setEditingSpecs(true)} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
                 <Feather name="edit-2" size={15} color={colors.cta} />
               </TouchableOpacity>
             )}
@@ -560,7 +560,7 @@ export default function SupplierProfileScreen() {
               <Text style={[styles.label, { color: colors.mutedForeground }]}>{t.supplierProfile.serviceAreas}:</Text>
               <View style={styles.chipsGrid}>
                 {SAUDI_CITIES.map((cityAr) => (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     key={cityAr}
                     style={[styles.chip, {
                       borderColor: selectedAreas.includes(cityAr) ? colors.primaryText : colors.border,
@@ -667,7 +667,7 @@ export default function SupplierProfileScreen() {
         </Card>
 
         {/* ── Sign Out ── */}
-        <TouchableOpacity style={[styles.signOutBtn, { borderColor: colors.destructive + "30" }]} onPress={handleLogout} activeOpacity={0.75}>
+        <TouchableOpacity accessibilityRole="button" style={[styles.signOutBtn, { borderColor: colors.destructive + "30" }]} onPress={handleLogout} activeOpacity={0.75}>
           <Feather name="log-out" size={16} color={colors.destructive} />
           <Text style={[styles.signOutText, { color: colors.destructive }]}>{t.common.signOut}</Text>
         </TouchableOpacity>
@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
   avatarSection: { alignItems: "center", gap: 8 },
   avatarRing: { width: 96, height: 96, borderRadius: 28, borderWidth: 3, alignItems: "center", justifyContent: "center" },
   avatar: { width: 86, height: 86, borderRadius: 25, alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 24, lineHeight: 40, color: "#FFFFFF" },
+  avatarText: { fontSize: 24, lineHeight: 40 },
   name: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold", textAlign: "center", marginTop: 4 },
   email: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", textAlign: "center" },
   badges: { flexDirection: "row", gap: 8, marginTop: 4 },

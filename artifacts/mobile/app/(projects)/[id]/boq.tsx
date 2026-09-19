@@ -117,7 +117,7 @@ export default function ProjectBoqScreen() {
           <CardSkeleton />
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={visible}
           keyExtractor={(i) => i.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
@@ -262,7 +262,7 @@ function MeasureSheet({
   return (
     <Modal visible transparent animationType="slide" onRequestClose={close}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel={t.common.close} />
+        <Pressable accessibilityRole="button" style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel={t.common.close} />
         <View style={[styles.sheet, { backgroundColor: colors.background, borderColor: colors.border }]}>
           <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }} keyboardShouldPersistTaps="handled">
             <Text style={[styles.sheetTitle, { color: colors.foreground, textAlign: align }]}>
@@ -313,22 +313,22 @@ const styles = StyleSheet.create({
   controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   searchBox: { alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, minHeight: MIN_TOUCH },
   searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 10 },
-  progress: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  progress: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_700Bold" },
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 10 },
   cardTop: { alignItems: "flex-start", justifyContent: "space-between", gap: 8 },
   ref: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold", lineHeight: 21 },
   figures: { gap: 10 },
-  figureLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
+  figureLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_500Medium" },
   figureValue: { fontSize: 14, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
   track: { height: 6, borderRadius: 3, overflow: "hidden" },
   fill: { height: 6, borderRadius: 3 },
   actions: { alignItems: "center", gap: 10 },
-  count: { fontSize: 11.5, fontFamily: "Inter_400Regular" },
+  count: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 
   backdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" },
   sheet: { borderTopWidth: 1, borderTopStartRadius: 20, borderTopEndRadius: 20, maxHeight: "88%" },
-  sheetTitle: { fontSize: 16, lineHeight: 26, fontFamily: "Inter_700Bold" },
+  sheetTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_700Bold" },
   warn: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 4 },
-  warnTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", lineHeight: 20 },
+  warnTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold", lineHeight: 24 },
   warnBody: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
 });

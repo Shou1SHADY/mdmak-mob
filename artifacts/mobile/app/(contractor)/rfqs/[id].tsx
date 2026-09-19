@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert,
-  Modal, Pressable, ActivityIndicator,
-} from "react-native";
+  Modal, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, addDoc, writeBatch } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -234,11 +233,16 @@ export default function RFQDetailScreen() {
               await addDoc(collection(db, "users", supplierId, "notifications"), {
                 userId: supplierId,
                 type: action === "accept" ? "offer_accepted" : "offer_rejected",
+                i18n: {
+                  title: action === "accept" ? "pn_offer_accepted_title" : "pn_offer_rejected_title",
+                  message: action === "accept" ? "pn_offer_accepted" : "pn_offer_rejected",
+                  params: { rfq: rfq?.title || "" },
+                },
                 title: action === "accept"
                   ? (t.rfq.yourOfferWasAccepted)
                   : (t.rfq.yourOfferWasRejected),
                 message: isRTL
-                  ? `${action === "accept" ? "تم قبول" : "تم رفض"} عرضك على مناقصة: ${rfq?.title || ""}`
+                  ? `${action === "accept" ? "تم قبول" : "تم رفض"} عرضك على مناقصة: ${rfq?.title || ""}`  // ui-ok: fallback text for push; readers get i18n
                   : `Your offer for "${rfq?.title || ""}" was ${action === "accept" ? "accepted" : "rejected"}.`,
                 offerId: offer.id,
                 rfqId: id,
@@ -278,9 +282,10 @@ export default function RFQDetailScreen() {
           await addDoc(collection(db, "users", supplierId, "notifications"), {
             userId: supplierId,
             type: "price_reduction",
-            title: isRTL ? "طُلب منك تخفيض السعر" : "Price reduction requested",
+            i18n: { title: "pn_price_reduction_title", message: "pn_price_reduction", params: { rfq: rfq?.title || "", price: priceNum.toLocaleString("en-US"), note: "" } },
+            title: isRTL ? "طُلب منك تخفيض السعر" : "Price reduction requested",  // ui-ok: fallback text for push; readers get i18n
             message: isRTL
-              ? `يطلب المقاول تخفيض سعرك إلى ${priceNum.toLocaleString("ar-SA")} ر.س على مناقصة: ${rfq?.title || ""}`
+              ? `يطلب المقاول تخفيض سعرك إلى ${priceNum.toLocaleString("ar-SA")} ر.س على مناقصة: ${rfq?.title || ""}`  // ui-ok: fallback text for push; readers get i18n
               : `The contractor requests a price reduction to SAR ${priceNum.toLocaleString("en-SA")} for: ${rfq?.title || ""}`,
             offerId: reduceOffer.id,
             rfqId: id,
@@ -382,7 +387,7 @@ export default function RFQDetailScreen() {
         }
       />
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.content, { paddingBottom: tabScreenBottomPadding(insets.bottom) }]}>
         {/* RFQ Card */}
         {rfq && (
           <View style={[styles.rfqCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -569,69 +574,71 @@ export default function RFQDetailScreen() {
         animationType="slide"
         onRequestClose={() => setReduceOffer(null)}
       >
-        <Pressable style={[styles.modalOverlay, { backgroundColor: colors.overlay }]} onPress={() => setReduceOffer(null)}>
-          <Pressable
-            style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + space.lg }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={[styles.handle, { backgroundColor: colors.border }]} />
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <Pressable accessible={false} style={[styles.modalOverlay, { backgroundColor: colors.overlay }]} onPress={() => setReduceOffer(null)}>
+            <Pressable accessible={false}
+              style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + space.lg }]}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-            <Text style={[type.title, { color: colors.foreground, textAlign }]}>
-              {t.rfq.requestPriceReduction}
-            </Text>
+              <Text style={[type.title, { color: colors.foreground, textAlign }]}>
+                {t.rfq.requestPriceReduction}
+              </Text>
 
-            {/* Current price */}
-            {reduceOffer?.price && (
-              <View style={[styles.currentPriceRow, { backgroundColor: colors.muted, borderColor: colors.border, flexDirection: rowDirection }]}>
-                <Feather name="tag" size={14} color={colors.outline} />
-                <Text style={[type.body, { color: colors.outline }]}>
-                  {t.rfq.currentPrice}
-                  {"  "}
-                  <Text style={[type.bodyStrong, { color: colors.foreground }]}>
-                    {fmtSar(parseFloat(reduceOffer.price))}
+              {/* Current price */}
+              {reduceOffer?.price && (
+                <View style={[styles.currentPriceRow, { backgroundColor: colors.muted, borderColor: colors.border, flexDirection: rowDirection }]}>
+                  <Feather name="tag" size={14} color={colors.outline} />
+                  <Text style={[type.body, { color: colors.outline }]}>
+                    {t.rfq.currentPrice}
+                    {"  "}
+                    <Text style={[type.bodyStrong, { color: colors.foreground }]}>
+                      {fmtSar(parseFloat(reduceOffer.price))}
+                    </Text>
                   </Text>
-                </Text>
+                </View>
+              )}
+
+              <Input
+                label={t.rfq.targetPriceSar}
+                required
+                value={targetPrice}
+                onChangeText={setTargetPrice}
+                keyboardType="numeric"
+                placeholder={t.rfq.desiredPrice}
+                autoFocus
+                isRTL={isRTL}
+              />
+
+              <Input
+                label={t.rfq.noteToSupplierOptional}
+                value={reductionNote}
+                onChangeText={setReductionNote}
+                multiline
+                numberOfLines={3}
+                placeholder={t.rfq.explainWhyYouNeedA}
+                isRTL={isRTL}
+              />
+
+              <View style={{ flexDirection: rowDirection, gap: space.sm, marginTop: space.xs }}>
+                <Button
+                  title={t.common.cancel}
+                  variant="outline"
+                  style={{ flex: 1 }}
+                  onPress={() => setReduceOffer(null)}
+                />
+                <Button
+                  title={t.rfq.sendRequest}
+                  style={{ flex: 2 }}
+                  loading={isReducing}
+                  onPress={handleReduce}
+                  disabled={!targetPrice.trim()}
+                />
               </View>
-            )}
-
-            <Input
-              label={t.rfq.targetPriceSar}
-              required
-              value={targetPrice}
-              onChangeText={setTargetPrice}
-              keyboardType="numeric"
-              placeholder={t.rfq.desiredPrice}
-              autoFocus
-              isRTL={isRTL}
-            />
-
-            <Input
-              label={t.rfq.noteToSupplierOptional}
-              value={reductionNote}
-              onChangeText={setReductionNote}
-              multiline
-              numberOfLines={3}
-              placeholder={t.rfq.explainWhyYouNeedA}
-              isRTL={isRTL}
-            />
-
-            <View style={{ flexDirection: rowDirection, gap: space.sm, marginTop: space.xs }}>
-              <Button
-                title={t.common.cancel}
-                variant="outline"
-                style={{ flex: 1 }}
-                onPress={() => setReduceOffer(null)}
-              />
-              <Button
-                title={t.rfq.sendRequest}
-                style={{ flex: 2 }}
-                loading={isReducing}
-                onPress={handleReduce}
-                disabled={!targetPrice.trim()}
-              />
-            </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

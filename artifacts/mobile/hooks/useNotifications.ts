@@ -12,6 +12,8 @@ export interface AppNotification {
   read: boolean;
   createdAt?: any;
   relatedId?: string;
+  /** Translation keys the text was rendered from — the reader's language comes from here. */
+  i18n?: { title?: string; message?: string; params?: Record<string, string | number | null | undefined> } | null;
   offerId?: string;
   rfqId?: string;
   chatId?: string;

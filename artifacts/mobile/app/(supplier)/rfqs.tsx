@@ -287,7 +287,7 @@ export default function BrowseRFQsScreen() {
           {[1, 2, 3].map((k) => <CardSkeleton key={k} />)}
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={filtered}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (

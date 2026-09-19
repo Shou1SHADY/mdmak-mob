@@ -173,9 +173,9 @@ function Headline({
 
 const styles = StyleSheet.create({
   alert: { alignItems: "flex-start", gap: 10, borderWidth: 1, borderRadius: 12, padding: 12, margin: 16, marginBottom: 0 },
-  alertTitle: { fontSize: 13.5, fontFamily: "Inter_700Bold" },
+  alertTitle: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_700Bold" },
   alertBody: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2, lineHeight: 18 },
   grid: { gap: 12, padding: 16 },
   sheet: { borderTopWidth: 1, borderBottomWidth: 1, marginHorizontal: 0 },
-  footnote: { fontSize: 11.5, fontFamily: "Inter_400Regular", lineHeight: 18, padding: 16 },
+  footnote: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 20, padding: 16 },
 });

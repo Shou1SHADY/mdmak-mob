@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
 import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
+import { notificationText } from "@/lib/notification-copy";
 import type { Translations } from "@/i18n";
 import { useNotifications, AppNotification } from "@/hooks/useNotifications";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -87,10 +88,13 @@ function NotifCard({
   fallbackTitle: string;
 }) {
   const t = useT();
+  const { language } = useLanguage();
   const { icon, color } = notifMeta(item.type, colors);
+  // In the reader's language when the notification carries keys; its stored text otherwise.
+  const copy = notificationText(item, language);
 
   return (
-    <TouchableOpacity
+    <TouchableOpacity accessibilityRole="button"
       style={[
         styles.card,
         {
@@ -121,17 +125,17 @@ function NotifCard({
               ]}
               numberOfLines={2}
             >
-              {item.title || (item.type === "new_chat_message" || item.type === "new_message" ? fallbackTitle : "")}
+              {copy.title || (item.type === "new_chat_message" || item.type === "new_message" ? fallbackTitle : "")}
             </Text>
             {!item.read && <View style={[styles.dot, { backgroundColor: colors.accent }]} />}
           </View>
 
-          {(item.message ?? item.body) ? (
+          {copy.message ? (
             <Text
               style={[styles.notifBody, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}
               numberOfLines={2}
             >
-              {item.message ?? item.body}
+              {copy.message}
             </Text>
           ) : null}
 
@@ -191,11 +195,11 @@ export default function ContractorNotificationsScreen() {
           accessibilityLabel={t.common.back}
           accessibilityRole="button"
         >
-          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color="#FFFFFF" />
+          <Feather name={isRTL ? "arrow-right" : "arrow-left"} size={22} color={colors.textWhite} />
         </TouchableOpacity>
 
         <View style={{ flex: 1, alignItems: "center" }}>
-          <Text style={[styles.headerTitle, { fontFamily: "Inter_600SemiBold" }]}>
+          <Text style={[styles.headerTitle, { fontFamily: "Inter_600SemiBold", color: colors.textWhite }]}>
             {t.tabs.notifications}
           </Text>
           {unreadCount > 0 && (
@@ -210,9 +214,9 @@ export default function ContractorNotificationsScreen() {
           <TouchableOpacity
             style={styles.markAllBtn}
             onPress={markAllRead}
-            accessibilityRole="button"
+            accessibilityRole="button" accessibilityLabel={t.a11y.markAllRead}
           >
-            <Feather name="check-square" size={16} color="#FFFFFF" />
+            <Feather name="check-square" size={16} color={colors.textWhite} />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 44 }} />
@@ -284,7 +288,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.12)",
   },
-  headerTitle: { fontSize: 17, lineHeight: 28, color: "#FFFFFF" },
+  headerTitle: { fontSize: 17, lineHeight: 28 },
   headerSub: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.65)", marginTop: 2 },
   markAllBtn: {
     width: 40,

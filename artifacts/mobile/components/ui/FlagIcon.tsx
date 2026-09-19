@@ -20,6 +20,7 @@ export function SaudiArabiaFlag({ width = 56, height = 36 }: FlagProps) {
         textAnchor="middle"
         fontFamily="System"
       >
+        {/* ui-ok: the flag inscription */}
         لا إله إلا الله محمد رسول الله
       </SvgText>
       {/* Blade */}

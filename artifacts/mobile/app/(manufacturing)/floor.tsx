@@ -107,7 +107,7 @@ export default function MfgFloorScreen() {
                 )}
 
                 {action ? (
-                  <Pressable
+                  <Pressable accessibilityRole="button"
                     onPress={() => setTarget(action)}
                     style={[styles.action, { flexDirection: row, borderColor: colors.cta, backgroundColor: colors.ctaSoft }]}
                   >
@@ -143,10 +143,10 @@ export default function MfgFloorScreen() {
 const styles = StyleSheet.create({
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 8 },
   cardTop: { alignItems: "center", justifyContent: "space-between", gap: 8 },
-  ref: { flex: 1, fontSize: 14.5, fontFamily: "Inter_600SemiBold" },
-  inHand: { fontSize: 15, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
-  meta: { fontSize: 12.5, fontFamily: "Inter_400Regular" },
+  ref: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  inHand: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
+  meta: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   blocks: { gap: 6, flexWrap: "wrap" },
   action: { alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 12, minHeight: 44 },
-  actionText: { fontSize: 13.5, fontFamily: "Inter_600SemiBold" },
+  actionText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
 });

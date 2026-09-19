@@ -6,6 +6,27 @@
 // HERE, never in en.ts / ar.ts, which only assemble the modules.
 
 export const en = {
+  /** What a screen reader says for a control that shows only an icon. */
+  a11y: {
+    edit: "Edit",
+    delete: "Delete",
+    moreActions: "More actions",
+    view: "View",
+    selectAll: "Select all",
+    dismiss: "Dismiss",
+    changeLanguage: "Change language",
+    selectLanguage: "Select language",
+    pickDate: "Pick a date",
+    removeItem: "Remove",
+    clearChat: "Clear the conversation",
+    openAssistant: "Open the assistant",
+    showPassword: "Show password",
+    editPhoto: "Change photo",
+    closeTour: "Close the tour",
+    clearSearch: "Clear search",
+    step: "Step",
+    markAllRead: "Mark all as read",
+  },
   common: {
     appName: "Mdmak Tech",
     appNameAr: "مدماك تيك",
@@ -276,6 +297,26 @@ export const en = {
 };
 
 export const ar: typeof en = {
+  a11y: {
+    edit: "تعديل",
+    delete: "حذف",
+    moreActions: "إجراءات أخرى",
+    view: "عرض",
+    selectAll: "تحديد الكل",
+    dismiss: "إغلاق",
+    changeLanguage: "تغيير اللغة",
+    selectLanguage: "اختر اللغة",
+    pickDate: "اختر تاريخاً",
+    removeItem: "إزالة",
+    clearChat: "مسح المحادثة",
+    openAssistant: "افتح المساعد",
+    showPassword: "إظهار كلمة المرور",
+    editPhoto: "تغيير الصورة",
+    closeTour: "إغلاق الجولة",
+    clearSearch: "مسح البحث",
+    step: "الخطوة",
+    markAllRead: "تحديد الكل كمقروء",
+  },
   common: {
     appName: "مدماك تيك",
     appNameAr: "Mdmak Tech",

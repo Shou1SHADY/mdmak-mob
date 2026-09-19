@@ -192,7 +192,8 @@ export default function Index() {
 
           {/* Brand name */}
           <Animated.View style={{ opacity: titleOp, transform: [{ translateY: titleY }], alignItems: "center" }}>
-            <Text style={[styles.appName, isSmallScreen && { fontSize: 22 }]}>
+            {/* ui-ok: the splash wordmark, one step above display */}
+            <Text style={[styles.appName, isSmallScreen && { fontSize: 22, lineHeight: 36 }]}>
               {isRTL ? t.common.appNameAr : t.common.appName}
             </Text>
           </Animated.View>
@@ -206,7 +207,7 @@ export default function Index() {
               alignItems: "center",
             }}
           >
-            <Text style={[styles.tagline, isSmallScreen && { fontSize: 13, lineHeight: 20 }]}>
+            <Text style={[styles.tagline, isSmallScreen && { fontSize: 12, lineHeight: 20 }]}>
               {t.common.tagline}
             </Text>
           </Animated.View>
@@ -252,7 +253,7 @@ export default function Index() {
 
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
-      <Text style={{ color: colors.foreground, fontSize: 16 }}>
+      <Text style={{ color: colors.foreground, fontSize: 17, lineHeight: 28 }}>
         {t.auth.errors.adminNotSupported}
       </Text>
       <Text style={{ color: colors.outline, fontSize: 14, marginTop: 8 }}>
@@ -308,15 +309,16 @@ const styles = StyleSheet.create({
 
   appName: {
     fontFamily: "HankenGrotesk_700Bold",
-    fontSize: 28,
-    color: "#FFFFFF",
+    fontSize: 28, // ui-ok: the splash wordmark, one step above display
+    lineHeight: 44,
+    color: "#FFFFFF", // ui-ok: splash sits on the always-dark gradient
     textAlign: "center",
   },
 
   tagline: {
     fontFamily: "Inter_400Regular",
-    fontSize: 14.5,
-    lineHeight: 23,
+    fontSize: 14,
+    lineHeight: 24,
     color: "rgba(255,255,255,0.72)",
     textAlign: "center",
   },
@@ -375,7 +377,8 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontFamily: "Inter_400Regular",
-    fontSize: 11,
+    fontSize: 12,
+    lineHeight: 20,
     color: "rgba(255,255,255,0.45)",
   },
 });

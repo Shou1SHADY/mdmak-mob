@@ -75,7 +75,7 @@ export function DocumentUploadRow({ docType, label, required, doc, orgId, onUpda
 
   return (
     <>
-      <TouchableOpacity
+      <TouchableOpacity accessibilityRole="button"
         style={[
           styles.row,
           {
@@ -118,7 +118,7 @@ export function DocumentUploadRow({ docType, label, required, doc, orgId, onUpda
 
         <View style={{ flexDirection: isRTL ? "row-reverse" : "row", alignItems: "center", gap: 8 }}>
           {isUploaded && (
-            <TouchableOpacity
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.view}
               onPress={handleView}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={[styles.viewBtn, { backgroundColor: colors.cta + "12", borderColor: colors.cta + "30" }]}
@@ -151,17 +151,17 @@ export function DocumentUploadRow({ docType, label, required, doc, orgId, onUpda
               containerStyle={{ marginBottom: 12 }}
             />
             <View style={styles.modalActions}>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[styles.modalBtn, { borderColor: colors.border, borderWidth: 1 }]}
                 onPress={() => setExpiryModal(false)}
               >
                 <Text style={[styles.modalBtnText, { color: colors.outline }]}>{t.common.cancel}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[styles.modalBtn, { backgroundColor: colors.cta }]}
                 onPress={handleSaveExpiry}
               >
-                <Text style={[styles.modalBtnText, { color: "#FFFFFF" }]}>{t.common.save}</Text>
+                <Text style={[styles.modalBtnText, { color: colors.ctaForeground }]}>{t.common.save}</Text>
               </TouchableOpacity>
             </View>
           </View>

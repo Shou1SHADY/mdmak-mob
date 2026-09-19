@@ -60,7 +60,7 @@ function CityPickerModal({
       {/* Full-screen wrapper — overlay behind, sheet in front */}
       <View style={styles.modalRoot}>
         {/* Dim overlay */}
-        <TouchableOpacity style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => { onClose(); setQuery(""); }} />
+        <TouchableOpacity accessible={false} style={StyleSheet.absoluteFillObject} activeOpacity={1} onPress={() => { onClose(); setQuery(""); }} />
 
         {/* Bottom sheet */}
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -73,7 +73,7 @@ function CityPickerModal({
               <Text style={[styles.sheetTitle, { color: colors.foreground, fontFamily: "Inter_600SemiBold" }]}>
                 {t.rfq.selectCity}
               </Text>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.common.close}
                 onPress={() => { onClose(); setQuery(""); }}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 style={[styles.closeBtn, { backgroundColor: colors.muted }]}
@@ -96,7 +96,7 @@ function CityPickerModal({
                 textAlign={isRTL ? "right" : "left"}
               />
               {query.length > 0 && (
-                <TouchableOpacity onPress={() => setQuery("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.clearSearch} onPress={() => setQuery("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Feather name="x-circle" size={16} color={colors.mutedForeground} />
                 </TouchableOpacity>
               )}
@@ -134,7 +134,7 @@ function CityPickerModal({
               renderItem={({ item }) => {
                 const isSelected = item === selected;
                 return (
-                  <TouchableOpacity
+                  <TouchableOpacity accessibilityRole="button"
                     style={[styles.cityRow, isSelected && { backgroundColor: colors.accent + "18" }]}
                     onPress={() => { onSelect(item); onClose(); setQuery(""); }}
                     activeOpacity={0.65}
@@ -154,7 +154,7 @@ function CityPickerModal({
                     </View>
                     {isSelected ? (
                       <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
-                        <Feather name="check" size={12} color="#fff" />
+                        <Feather name="check" size={12} color={colors.accentForeground} />
                       </View>
                     ) : (
                       <View style={[styles.checkBadge, { backgroundColor: colors.muted, borderWidth: 1, borderColor: colors.border }]} />
@@ -178,7 +178,7 @@ export default function OnboardingScreen() {
   const { isRTL } = useLanguage();
 
   const [orgName, setOrgName] = useState("");
-  const [city, setCity] = useState("الرياض");
+  const [city, setCity] = useState("الرياض");  // ui-ok: stored city value default
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -279,7 +279,7 @@ export default function OnboardingScreen() {
               <Text style={[styles.label, { color: colors.secondary }]}>
                 {t.onboarding.city}
               </Text>
-              <TouchableOpacity
+              <TouchableOpacity accessibilityRole="button"
                 style={[
                   styles.citySelector,
                   { borderColor: colors.border, backgroundColor: colors.muted },
@@ -367,8 +367,8 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
   },
-  appName: { fontSize: 24, lineHeight: 40, color: "#FFFFFF" },
-  tagline: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 24, color: "rgba(248,250,252,0.6)", textAlign: "center" },
+  appName: { fontSize: 24, lineHeight: 40, color: "#FFFFFF" }, // ui-ok: on the always-dark gradient header
+  tagline: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 24, color: "rgba(248,250,252,0.6)", textAlign: "center" }, // ui-ok: on the always-dark gradient header
   scroll: { paddingHorizontal: 20, paddingTop: 4 },
   card: {
     padding: 24,

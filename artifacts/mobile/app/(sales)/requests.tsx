@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, FlatList, StyleSheet, Modal, Pressable, Alert } from "react-native";
+import { View, Text, FlatList, StyleSheet, Modal, Pressable, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
@@ -70,8 +70,9 @@ export default function SalesRequestsScreen() {
         note,
         actor: { id: user.uid, name: user.displayName || user.email },
         notification: {
-          title: isRTL ? "تعذّر تسعير طلبك" : "Your quote request could not be priced",
-          message: (isRTL ? "أعادت المبيعات الطلب {number}: {reason}" : "Sales returned request {number}: {reason}")
+          i18n: { title: "sales_rq_notif_declined_title", message: "sales_rq_notif_declined_msg", params: { number: declining.requestNumber, reason: `@sales_rq_reason_${reason}` } },
+          title: isRTL ? "تعذّر تسعير طلبك" : "Your quote request could not be priced",  // ui-ok: fallback text for push; readers get i18n
+          message: (isRTL ? "أعادت المبيعات الطلب {number}: {reason}" : "Sales returned request {number}: {reason}")  // ui-ok: fallback text for push; readers get i18n
             .replace("{number}", declining.requestNumber)
             .replace("{reason}", labelFor(t.sales.declineReasons, reason)),
         },
@@ -94,7 +95,7 @@ export default function SalesRequestsScreen() {
 
       <View style={[styles.segments, { flexDirection: row }]}>
         {(["new", "answered"] as const).map((s) => (
-          <Pressable
+          <Pressable accessibilityRole="button"
             key={s}
             onPress={() => setSegment(s)}
             style={[
@@ -118,7 +119,7 @@ export default function SalesRequestsScreen() {
           <CardSkeleton />
         </View>
       ) : (
-        <FlatList
+        <FlatList keyboardShouldPersistTaps="handled"
           data={filtered}
           keyExtractor={(r) => r.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
@@ -173,48 +174,50 @@ export default function SalesRequestsScreen() {
       )}
 
       <Modal visible={!!declining} transparent animationType="slide" onRequestClose={() => setDeclining(null)}>
-        <Pressable style={styles.modalOverlay} onPress={() => !busy && setDeclining(null)}>
-          <Pressable
-            style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View style={{ alignItems: "center", paddingBottom: 8 }}>
-              <View style={[styles.handle, { backgroundColor: colors.border }]} />
-            </View>
-            <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: align }]}>
-              {t.sales.declineTitle.replace("{number}", declining?.requestNumber ?? "")}
-            </Text>
-            <Text style={[styles.modalHint, { color: colors.mutedForeground, textAlign: align }]}>
-              {t.sales.declineHint}
-            </Text>
-            {QUOTE_DECLINE_REASONS.map((r) => (
-              <Pressable
-                key={r}
-                onPress={() => setReason(r)}
-                style={[
-                  styles.reason,
-                  {
-                    borderColor: reason === r ? colors.cta : colors.border,
-                    backgroundColor: reason === r ? colors.ctaSoft ?? colors.card : colors.card,
-                  },
-                ]}
-              >
-                <Text style={[styles.reasonText, { color: colors.foreground, textAlign: align }]}>
-                  {labelFor(t.sales.declineReasons, r)}
-                </Text>
-              </Pressable>
-            ))}
-            <Input label={t.sales.note} value={note} onChangeText={setNote} isRTL={isRTL} />
-            <Button
-              title={t.sales.declineConfirm}
-              onPress={submitDecline}
-              loading={busy}
-              disabled={!reason}
-              fullWidth
-              style={{ marginTop: 8 }}
-            />
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <Pressable accessible={false} style={[styles.modalOverlay, { backgroundColor: colors.overlay }]} onPress={() => !busy && setDeclining(null)}>
+            <Pressable accessible={false}
+              style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={{ alignItems: "center", paddingBottom: 8 }}>
+                <View style={[styles.handle, { backgroundColor: colors.border }]} />
+              </View>
+              <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: align }]}>
+                {t.sales.declineTitle.replace("{number}", declining?.requestNumber ?? "")}
+              </Text>
+              <Text style={[styles.modalHint, { color: colors.mutedForeground, textAlign: align }]}>
+                {t.sales.declineHint}
+              </Text>
+              {QUOTE_DECLINE_REASONS.map((r) => (
+                <Pressable accessibilityRole="button"
+                  key={r}
+                  onPress={() => setReason(r)}
+                  style={[
+                    styles.reason,
+                    {
+                      borderColor: reason === r ? colors.cta : colors.border,
+                      backgroundColor: reason === r ? colors.ctaSoft ?? colors.card : colors.card,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.reasonText, { color: colors.foreground, textAlign: align }]}>
+                    {labelFor(t.sales.declineReasons, r)}
+                  </Text>
+                </Pressable>
+              ))}
+              <Input label={t.sales.note} value={note} onChangeText={setNote} isRTL={isRTL} />
+              <Button
+                title={t.sales.declineConfirm}
+                onPress={submitDecline}
+                loading={busy}
+                disabled={!reason}
+                fullWidth
+                style={{ marginTop: 8 }}
+              />
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -223,19 +226,19 @@ export default function SalesRequestsScreen() {
 const styles = StyleSheet.create({
   segments: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 8 },
   segment: { flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  segmentText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  segmentText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10, gap: 6 },
   cardTop: { alignItems: "center", justifyContent: "space-between", gap: 8 },
   number: { flex: 1, fontSize: 14, fontFamily: "Inter_600SemiBold" },
   client: { fontSize: 14, fontFamily: "Inter_500Medium" },
-  lines: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  lines: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 24 },
   meta: { fontSize: 12, fontFamily: "Inter_400Regular" },
   actions: { gap: 8, marginTop: 4 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(11,26,43,0.45)", justifyContent: "flex-end" },
+  modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: "88%", gap: 8 },
   handle: { width: 40, height: 4, borderRadius: 2 },
   modalTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold" },
-  modalHint: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20, marginBottom: 4 },
+  modalHint: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 24, marginBottom: 4 },
   reason: { borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, minHeight: 44, justifyContent: "center" },
-  reasonText: { fontSize: 13.5, fontFamily: "Inter_500Medium" },
+  reasonText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_500Medium" },
 });

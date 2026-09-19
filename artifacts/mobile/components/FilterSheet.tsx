@@ -149,6 +149,7 @@ export function FilterButton({
   onPress: () => void;
   label: string;
 }) {
+  const { isRTL } = useLanguage();
   const colors = useColors();
   const active = activeCount > 0;
   return (
@@ -168,7 +169,7 @@ export function FilterButton({
     >
       <Feather name="sliders" size={18} color={active ? colors.cta : colors.outline} />
       {active && (
-        <View style={[styles.triggerBadge, { backgroundColor: colors.cta }]}>
+        <View style={[styles.triggerBadge, isRTL ? { left: 2 } : { right: 2 }, { backgroundColor: colors.cta }]}>
           <Text style={[type.captionStrong, { color: colors.ctaForeground }]}>{activeCount}</Text>
         </View>
       )}
@@ -237,7 +238,6 @@ const styles = StyleSheet.create({
   triggerBadge: {
     position: "absolute",
     top: 2,
-    right: 2,
     minWidth: 20,
     height: 20,
     paddingHorizontal: space.xs,
