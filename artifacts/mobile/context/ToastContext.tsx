@@ -3,6 +3,8 @@ import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import colors from "@/constants/colors";
+import { useColors } from "@/hooks/useColors";
+import { useLanguage } from "@/context/LanguageContext";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
@@ -24,12 +26,29 @@ export function useToast() {
   return ctx;
 }
 
-const TOAST_CONFIG: Record<ToastType, { bg: string; icon: keyof typeof Feather.glyphMap }> = {
-  success: { bg: "rgba(18, 160, 99, 0.92)", icon: "check-circle" },
-  error: { bg: "rgba(239, 68, 68, 0.92)", icon: "alert-circle" },
-  info: { bg: "rgba(3, 105, 161, 0.92)", icon: "info" },
-  warning: { bg: "rgba(245, 158, 11, 0.92)", icon: "alert-triangle" },
+/** Icon per tone; the colours come from the theme, below. */
+const TOAST_ICON: Record<ToastType, keyof typeof Feather.glyphMap> = {
+  success: "check-circle",
+  error: "alert-circle",
+  info: "info",
+  warning: "alert-triangle",
 };
+
+/**
+ * The toast is the app's success channel, so it follows the palette rather than
+ * carrying its own colours: the fixed greens and reds here were the values
+ * constants/colors.ts retired for failing AA (#12A063 at 3.4:1), they never
+ * answered dark mode, and each tone's foreground token is the one checked
+ * against it by `npm run check:contrast`.
+ */
+function toneOf(c: ReturnType<typeof useColors>, type: ToastType): { bg: string; fg: string } {
+  switch (type) {
+    case "success": return { bg: c.success, fg: c.successForeground };
+    case "error": return { bg: c.destructive, fg: c.destructiveForeground };
+    case "warning": return { bg: c.warning, fg: c.warningForeground };
+    default: return { bg: c.cta, fg: c.ctaForeground };
+  }
+}
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string) => void }) {
   const translateY = useRef(new Animated.Value(-20)).current;
@@ -74,24 +93,33 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
     ]).start(() => onDismiss(toast.id));
   }, [toast.id, onDismiss, translateY, opacity]);
 
-  const config = TOAST_CONFIG[toast.type];
+  const themeColors = useColors();
+  const { isRTL } = useLanguage();
+  const tone = toneOf(themeColors, toast.type);
 
   return (
     <Animated.View
       style={[
         styles.toast,
         colors.shadow.md,
-        { backgroundColor: config.bg, transform: [{ translateY }], opacity },
+        // The row mirrors like every other row in the app: in Arabic the icon
+        // leads from the right and the dismiss sits on the left.
+        { flexDirection: isRTL ? "row-reverse" : "row" },
+        { backgroundColor: tone.bg, transform: [{ translateY }], opacity },
       ]}
+      accessibilityRole="alert"
     >
-      <Feather name={config.icon} size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+      <Feather name={TOAST_ICON[toast.type]} size={18} color={tone.fg} style={isRTL ? { marginLeft: 8 } : { marginRight: 8 }} />
       <View style={styles.messageContainer}>
-        <Text style={styles.messageText} numberOfLines={2}>
+        <Text
+          style={[styles.messageText, { color: tone.fg, textAlign: isRTL ? "right" : "left" }]}
+          numberOfLines={2}
+        >
           {toast.message}
         </Text>
       </View>
-      <Pressable onPress={handleDismiss} hitSlop={8} style={styles.closeButton}>
-        <Feather name="x" size={18} color="rgba(255,255,255,0.8)" />
+      <Pressable onPress={handleDismiss} hitSlop={8} style={isRTL ? styles.closeButtonRtl : styles.closeButton} accessibilityRole="button">
+        <Feather name="x" size={18} color={tone.fg} />
       </Pressable>
     </Animated.View>
   );
@@ -138,20 +166,22 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginHorizontal: 16,
     marginBottom: 8,
-    flexDirection: "row",
     alignItems: "center",
   },
   messageContainer: {
     flex: 1,
   },
   messageText: {
-    color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "500",
-    lineHeight: 20,
+    fontFamily: "Inter_600SemiBold",
+    lineHeight: 24,
   },
   closeButton: {
     marginLeft: 8,
+    padding: 4,
+  },
+  closeButtonRtl: {
+    marginRight: 8,
     padding: 4,
   },
 });

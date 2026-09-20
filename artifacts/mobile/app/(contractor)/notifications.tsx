@@ -44,6 +44,9 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
     case "new_chat_message":
     case "new_message":
       return { icon: "message-circle" as const, color: colors.primaryText, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };
+    // The team room fans one of these out to every member per message.
+    case "team_chat_message":
+      return { icon: "users" as const, color: colors.primaryText, nav: () => "/team-room" };
     case "sample_sent":
       return { icon: "package" as const, color: colors.warning, nav: (n: AppNotification) => n.rfqId ? `/(contractor)/rfqs/${n.rfqId}` : null };
     case "delivery_notice":
@@ -98,7 +101,7 @@ function NotifCard({
       style={[
         styles.card,
         {
-          backgroundColor: item.read ? colors.card : colors.cta + "07",
+          backgroundColor: item.read ? colors.card : colors.ctaSoft,
           borderColor: item.read ? colors.border : colors.cta + "25",
           ...colors.shadow.sm,
         },

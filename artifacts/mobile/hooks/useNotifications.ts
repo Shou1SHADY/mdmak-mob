@@ -1,7 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
-import { collection, query, orderBy, onSnapshot, updateDoc, doc, writeBatch } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, updateDoc, doc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+
+/** How many notifications the feed subscribes to, newest first. */
+const NOTIFICATION_PAGE = 200;
 
 export interface AppNotification {
   id: string;
@@ -34,7 +37,11 @@ export function useNotifications() {
     setError(null);
     const q = query(
       collection(db, "users", user.uid, "notifications"),
-      orderBy("createdAt", "desc")
+      orderBy("createdAt", "desc"),
+      // The feed is read, not audited: an active org accrues thousands of these
+      // (the team room writes one per member per message) and a live listener
+      // over all of them costs the member's data plan for rows no one scrolls to.
+      limit(NOTIFICATION_PAGE)
     );
     const unsub = onSnapshot(
       q,
@@ -76,11 +83,13 @@ export function useNotifications() {
     const unread = notifications.filter((n) => !n.read);
     if (!unread.length) return;
     try {
-      const batch = writeBatch(db);
-      unread.forEach((n) => {
-        batch.update(doc(db, "users", user.uid, "notifications", n.id), { read: true });
-      });
-      await batch.commit();
+      for (let i = 0; i < unread.length; i += 400) {
+        const batch = writeBatch(db);
+        for (const n of unread.slice(i, i + 400)) {
+          batch.update(doc(db, "users", user.uid, "notifications", n.id), { read: true });
+        }
+        await batch.commit();
+      }
     } catch (e: any) {
       if (__DEV__) console.warn("[useNotifications] markAllRead failed:", e.message);
     }

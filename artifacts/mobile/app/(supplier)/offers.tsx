@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, RefreshControl,
   Platform, StyleSheet, ScrollView, Modal, Alert, TextInput, Pressable, KeyboardAvoidingView } from "react-native";
-import { router } from "expo-router";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
+import { router, useFocusEffect } from "expo-router";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc, increment } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { formatSar } from "@/lib/crm-display";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { db } from "@/lib/firebase";
+import { byNewest } from "@/lib/time";
 import { OfferCard, OfferItem } from "@/components/OfferCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -51,11 +53,7 @@ export default function MyOffersScreen() {
       const items: OfferItem[] = snap.docs
         .map((d) => ({ id: d.id, ...d.data() } as OfferItem))
         .filter((o: any) => !o.archived)
-        .sort((a, b) => {
-          const ta = typeof a.createdAt?.toDate === "function" ? a.createdAt.toDate().getTime() : 0;
-          const tb = typeof b.createdAt?.toDate === "function" ? b.createdAt.toDate().getTime() : 0;
-          return tb - ta;
-        });
+        .sort(byNewest);
 
       // For legacy offers missing rfqTitle, fetch in parallel with allSettled (partial failure is OK).
       const missing = items.filter((o) => !o.rfqTitle && o.rfqId);
@@ -89,7 +87,8 @@ export default function MyOffersScreen() {
     setFiltered(status === "all" ? items : items.filter((o) => o.status === status));
   };
 
-  useEffect(() => { fetchOffers(); }, [user?.organizationId]);
+  // Submitting an offer returns to this list, which never unmounted.
+  useFocusEffect(useCallback(() => { fetchOffers(); }, [user?.organizationId]));
   useEffect(() => { applyFilter(offers, statusFilter); }, [statusFilter, offers]);
 
   // Stats
@@ -145,6 +144,14 @@ export default function MyOffersScreen() {
       const contractorId = (withdrawOffer as any).contractorId;
       const rfqTitle = withdrawOffer.rfqTitle || "";
       await deleteDoc(doc(db, "offers", withdrawOffer.id));
+      // Submitting incremented this; without the matching decrement the RFQ
+      // keeps reporting an offer the contractor can no longer open. Best
+      // effort, exactly as the increment is on submission.
+      if (withdrawOffer.rfqId) {
+        try {
+          await updateDoc(doc(db, "rfqs", withdrawOffer.rfqId), { offersCount: increment(-1) });
+        } catch {}
+      }
       if (contractorId) {
         try {
           await addDoc(collection(db, "users", contractorId, "notifications"), {
@@ -367,7 +374,7 @@ export default function MyOffersScreen() {
                       {t.offers.contractorSTargetPrice}
                     </Text>
                     <Text style={[styles.targetValue, { color: colors.warning }]}>
-                      {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format((updatePriceOffer as any).targetPrice)}
+                      {formatSar((updatePriceOffer as any).targetPrice, isRTL)}
                     </Text>
                   </View>
                 </View>

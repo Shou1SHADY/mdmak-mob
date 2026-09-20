@@ -8,6 +8,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useToast } from "@/context/ToastContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
+import { formatDay } from "@/lib/time";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -51,7 +52,7 @@ export default function SalesPaymentsScreen() {
   const { showToast } = useToast();
 
   const { items: quotations, isLoading: qLoading } = useOrgCollection<CrmQuotation>("crmQuotations");
-  const { items: notices, isLoading: nLoading } = useOrgCollection<TransferNotice>("salesTransferNotices");
+  const { items: notices, isLoading: nLoading, error: loadError } = useOrgCollection<TransferNotice>("salesTransferNotices");
   const { items: orders } = useOrgCollection<SalesOrder>("salesOrders");
   const isLoading = qLoading || nLoading;
 
@@ -301,7 +302,7 @@ export default function SalesPaymentsScreen() {
               </Text>
               <Text style={[styles.reportedLine, { color: colors.outline, textAlign: align }]}>
                 {t.sales.reportedLine
-                  .replace("{date}", (item.reportedAt || "").slice(0, 10))
+                  .replace("{date}", formatDay((item.reportedAt || "").slice(0, 10), isRTL))
                   .replace("{name}", item.createdByUserName)}
               </Text>
               {item.financeMessage ? (
@@ -321,7 +322,11 @@ export default function SalesPaymentsScreen() {
               </View>
             </View>
           )}
-          ListEmptyComponent={<EmptyState icon="inbox" title={t.sales.noNotices} subtitle={t.sales.noticesHint} />}
+          ListEmptyComponent={loadError ? (
+              <EmptyState variant="error" icon="alert-circle" title={t.errors.loadFailed} subtitle={t.errors.loadFailedHint} />
+            ) : (
+              <EmptyState icon="inbox" title={t.sales.noNotices} subtitle={t.sales.noticesHint} />
+            )}
         />
       )}
 
@@ -388,7 +393,7 @@ export default function SalesPaymentsScreen() {
               </Text>
               <Text style={[styles.modalHint, { color: colors.mutedForeground, textAlign: align }]}>
                 {answer?.contactName || "—"} · {formatSar(answer?.amountStated ?? 0, isRTL)} ·{" "}
-                {(answer?.transferDate || "").slice(0, 10)}
+                {formatDay((answer?.transferDate || "").slice(0, 10), isRTL)}
                 {answer?.bankRef ? ` · ${answer.bankRef}` : ""}
                 {"\n"}
                 {t.sales.answerHint}

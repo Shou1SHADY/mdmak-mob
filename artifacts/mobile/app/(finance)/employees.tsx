@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { StatsCard } from "@/components/StatsCard";
 import { useOrgCollection } from "@/hooks/useOrgCollection";
+import { usePermissions } from "@/hooks/usePermissions";
 import { formatSarCompact } from "@/lib/crm-display";
 
 interface Employee {
@@ -23,18 +24,21 @@ interface Employee {
 /**
  * The team roster, read-only.
  *
- * Salaries are shown because the module is gated on `employees.manage` — the
- * same permission that reveals the website's HR pages, where the figure is
- * already visible. Anyone who can open this screen can already see it there.
+ * Salaries are shown only to `employees.manage` — the same permission that
+ * reveals the website's HR pages, where the figure is already visible. The
+ * module door opens for Finance OR HR, so this screen checks for itself rather
+ * than trusting the door: reaching it by a link must not hand the payroll to
+ * someone who only keeps the ledger.
  */
 export default function EmployeesScreen() {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { items: employees, isLoading } = useOrgCollection<Employee>("employees");
+  const { items: employees, isLoading, error: loadError } = useOrgCollection<Employee>("employees");
 
   const [search, setSearch] = useState("");
+  const { can, isLoading: permsLoading } = usePermissions();
 
   const payroll = useMemo(
     () => employees.reduce((sum, e) => sum + (e.salary ?? 0), 0),
@@ -49,6 +53,15 @@ export default function EmployeesScreen() {
       )
       .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }, [employees, search]);
+
+  if (!permsLoading && !can("employees.manage")) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScreenHeader title={t.hr.employees} subtitle={t.hr.title} showBack />
+        <EmptyState icon="lock" title={t.errors.noPermissionTitle} subtitle={t.errors.noPermission} />
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -148,13 +161,15 @@ export default function EmployeesScreen() {
               )}
             </View>
           )}
-          ListEmptyComponent={
-            <EmptyState
+          ListEmptyComponent={loadError ? (
+              <EmptyState variant="error" icon="alert-circle" title={t.errors.loadFailed} subtitle={t.errors.loadFailedHint} />
+            ) : (
+              <EmptyState
               icon="briefcase"
               title={t.hr.noEmployees}
               subtitle={t.hr.noEmployeesHint}
             />
-          }
+            )}
         />
       )}
     </View>

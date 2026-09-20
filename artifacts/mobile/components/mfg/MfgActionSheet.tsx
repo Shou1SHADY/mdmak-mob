@@ -17,6 +17,9 @@ import {
   canDo,
   isQcStation,
   materialNeed,
+  materialOpen,
+  materialReceived,
+  roundNeed,
   type DefectKind,
 } from "@/lib/manufacturing-engine";
 import {
@@ -111,10 +114,23 @@ export function MfgActionSheet({
   );
   const atQcStation = department ? isQcStation(department) : false;
   const allowed = view ? canDo(view.calc, index) : 0;
-  const needLines = useMemo(
-    () => (view && target?.kind === "request_materials" ? materialNeed(view.calc, index) : []),
-    [view, index, target?.kind]
-  );
+  // What is still OUTSTANDING, not the station's whole need: material already
+  // received, or already requested and not yet received, must not be asked for
+  // twice — the write appends rows verbatim, so a second full request issues
+  // the quantity again. Same remainder the website's form pre-fills.
+  const needLines = useMemo(() => {
+    if (!view || target?.kind !== "request_materials") return [];
+    const deptId = target.departmentId ?? "";
+    return materialNeed(view.calc, index)
+      .map((l) => ({
+        ...l,
+        qty: Math.max(
+          0,
+          roundNeed(l.unit, l.qty - materialReceived(view.calc.slice, deptId, l.itemName) - materialOpen(view.calc.slice, deptId, l.itemName))
+        ),
+      }))
+      .filter((l) => l.qty > 0);
+  }, [view, index, target?.kind, target?.departmentId]);
   const lostToday = useMemo(
     () => (department ? state.world.lost.get(department.id) ?? 0 : 0),
     [state.world.lost, department]

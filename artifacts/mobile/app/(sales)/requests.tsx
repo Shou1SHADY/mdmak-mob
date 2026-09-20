@@ -39,7 +39,7 @@ export default function SalesRequestsScreen() {
   const { user } = useAuth();
   const { can } = usePermissions();
   const { showToast } = useToast();
-  const { items: requests, isLoading } = useOrgCollection<QuoteRequest>("salesQuoteRequests");
+  const { items: requests, isLoading, error: loadError } = useOrgCollection<QuoteRequest>("salesQuoteRequests");
 
   const canQuote = can("sales.manage");
   const rolePrefix = user?.role === "Supplier" ? "/supplier" : "/contractor";
@@ -169,7 +169,11 @@ export default function SalesRequestsScreen() {
               </View>
             );
           }}
-          ListEmptyComponent={<EmptyState icon="inbox" title={t.sales.noRequests} subtitle={t.sales.noRequestsHint} />}
+          ListEmptyComponent={loadError ? (
+              <EmptyState variant="error" icon="alert-circle" title={t.errors.loadFailed} subtitle={t.errors.loadFailedHint} />
+            ) : (
+              <EmptyState icon="inbox" title={t.sales.noRequests} subtitle={t.sales.noRequestsHint} />
+            )}
         />
       )}
 

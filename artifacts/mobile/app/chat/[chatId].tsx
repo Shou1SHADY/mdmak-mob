@@ -56,23 +56,36 @@ function toTimeLabel(ts: any, isRTL: boolean): string {
 }
 
 function buildListItems(messages: Message[], isRTL: boolean, labels: DateLabels): ListItem[] {
-  // messages come inverted (newest first), we need newest-first for inverted FlatList
+  // `messages` is newest-first and the list is inverted, so a LATER index draws
+  // HIGHER on screen. A day's header therefore has to be pushed once the whole
+  // day has been pushed — i.e. when the day changes — so it lands above that
+  // day's OLDEST message. Emitting it on the first message of a day (the
+  // newest) put the header below most of its own messages, which dated this
+  // morning's message to yesterday.
   const result: ListItem[] = [];
-  let lastDateKey = "";
+  const keyOf = (ts: any) => {
+    const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : null;
+    return d && !Number.isNaN(d.getTime()) ? d.toDateString() : "";
+  };
 
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
-    const ts = msg.createdAt;
-    const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : null;
-    const dateKey = d ? d.toDateString() : "";
+    const dateKey = keyOf(msg.createdAt);
+    const prev = i > 0 ? messages[i - 1] : null;
+    const prevKey = prev ? keyOf(prev.createdAt) : "";
 
-    result.push({ type: "message", id: msg.id, data: msg });
-
-    // Insert date separator below this message (inverted list = older messages at bottom)
-    if (dateKey && dateKey !== lastDateKey) {
-      lastDateKey = dateKey;
-      result.push({ type: "date", id: `date-${dateKey}`, label: toDateLabel(ts, isRTL, labels) });
+    // The previous message closed out its day: cap it before this one.
+    if (prev && prevKey && prevKey !== dateKey) {
+      result.push({ type: "date", id: `date-${prevKey}`, label: toDateLabel(prev.createdAt, isRTL, labels) });
     }
+    result.push({ type: "message", id: msg.id, data: msg });
+  }
+
+  // The oldest message on screen still needs its own header.
+  const oldest = messages[messages.length - 1];
+  const oldestKey = oldest ? keyOf(oldest.createdAt) : "";
+  if (oldestKey) {
+    result.push({ type: "date", id: `date-${oldestKey}`, label: toDateLabel(oldest.createdAt, isRTL, labels) });
   }
   return result;
 }

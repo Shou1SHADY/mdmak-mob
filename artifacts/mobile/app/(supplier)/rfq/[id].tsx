@@ -15,7 +15,7 @@ import { RFQItem } from "@/components/RFQCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
-import { RFQ_ACCEPTING_OFFERS, RFQ_STATUSES } from "@/constants/data";
+import { RFQ_ACCEPTING_OFFERS, RFQ_STATUSES, displayCategory, displayCity } from "@/constants/data";
 import { BOQEditor } from "@/components/BOQEditor";
 import { headerTopPadding } from "@/lib/layout";
 
@@ -113,7 +113,7 @@ export default function SupplierRFQDetailScreen() {
         {/* Category + status */}
         <View style={[styles.heroMeta, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <View style={styles.categoryPill}>
-            <Text style={styles.categoryText}>{rfq.category}</Text>
+            <Text style={styles.categoryText}>{displayCategory(rfq.category, isRTL)}</Text>
           </View>
           {statusInfo && <StatusBadge label={statusInfo.label} color={statusInfo.color} />}
         </View>
@@ -130,7 +130,7 @@ export default function SupplierRFQDetailScreen() {
         <View style={[styles.heroStats, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           <View style={[styles.heroStat, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <Feather name="map-pin" size={13} color="rgba(255,255,255,0.7)" />
-            <Text style={styles.heroStatText}>{rfq.city}</Text>
+            <Text style={styles.heroStatText}>{displayCity(rfq.city, isRTL)}</Text>
           </View>
           {deadline && (
             <View style={[styles.heroStat, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
@@ -181,7 +181,7 @@ export default function SupplierRFQDetailScreen() {
           </View>
           <View style={styles.detailsGrid}>
             {[
-              { icon: "map-pin", label: t.rfq.city, value: rfq.city, color: colors.cta },
+              { icon: "map-pin", label: t.rfq.city, value: displayCity(rfq.city, isRTL), color: colors.cta },
               rfq.district ? { icon: "navigation", label: t.rfq.district, value: rfq.district, color: colors.purpleAccent } : null,
               deadline ? { icon: "clock", label: t.rfq.deadline, value: deadline, color: colors.warning } : null,
               createdAt ? { icon: "calendar", label: t.rfq.createdAt, value: createdAt, color: colors.outline } : null,

@@ -22,8 +22,10 @@ Notifications.setNotificationHandler({
 function navigateFromNotification(data: Record<string, any>) {
   const { type, offerId, rfqId, chatId } = data ?? {};
   try {
-    if (type === "new_message" && (chatId || offerId)) {
+    if (["new_chat_message", "new_message"].includes(type) && (chatId || offerId)) {
       router.push(`/chat/${chatId ?? offerId}`);
+    } else if (type === "team_chat_message") {
+      router.push("/team-room");
     } else if (
       ["offer_accepted", "price_updated", "offer_withdrawn"].includes(type) &&
       (offerId || chatId)
@@ -34,10 +36,7 @@ function navigateFromNotification(data: Record<string, any>) {
       rfqId
     ) {
       router.push(`/(contractor)/rfqs/${rfqId}`);
-    } else if (
-      ["offer_accepted", "offer_rejected"].includes(type) &&
-      offerId
-    ) {
+    } else if (type === "offer_rejected" && offerId) {
       router.push(`/(supplier)/offers`);
     }
   } catch (e) {

@@ -13,6 +13,7 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
+import { formatDay } from "@/lib/time";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { StatsCard } from "@/components/StatsCard";
@@ -58,7 +59,7 @@ export default function InvoicesScreen() {
   const t = useT();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { items: invoices, isLoading } = useOrgCollection<Invoice>("invoices");
+  const { items: invoices, isLoading, error: loadError } = useOrgCollection<Invoice>("invoices");
   const { can } = usePermissions();
   const { showToast } = useToast();
   const canManage = can("invoices.manage");
@@ -214,7 +215,7 @@ export default function InvoicesScreen() {
                   <StatusBadge label={labelFor(t.finance.invoiceStatuses, item.status)} tone={statusTone(item.status)} size="sm" />
                   {item.dueDate ? (
                     <Text style={[styles.due, { color: colors.outline }]}>
-                      {t.finance.dueDate} {item.dueDate}
+                      {t.finance.dueDate} {formatDay(item.dueDate, isRTL)}
                     </Text>
                   ) : null}
                 </View>
@@ -232,13 +233,15 @@ export default function InvoicesScreen() {
               </View>
             );
           }}
-          ListEmptyComponent={
-            <EmptyState
+          ListEmptyComponent={loadError ? (
+              <EmptyState variant="error" icon="alert-circle" title={t.errors.loadFailed} subtitle={t.errors.loadFailedHint} />
+            ) : (
+              <EmptyState
               icon="file-text"
               title={t.finance.noInvoices}
               subtitle={t.finance.noInvoicesHint}
             />
-          }
+            )}
         />
       )}
     </View>

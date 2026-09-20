@@ -125,9 +125,10 @@ export default function WarehouseDetailScreen() {
   }, [items, search]);
 
   const renderItem = ({ item }: { item: InventoryItem }) => {
-    // `minQuantity` is the reorder point the website records; below it the row
-    // is flagged rather than hidden, so a site visit surfaces what to reorder.
-    const low = item.minQuantity != null && item.quantity <= item.minQuantity;
+    // The reorder point the website records; below it the row is flagged
+    // rather than hidden, so a site visit surfaces what to reorder.
+    const min = item.minStockLevel ?? item.minQuantity ?? null;
+    const low = min != null && item.quantity <= min;
     const editable = canManage && item.trackingMode !== "unit";
     return (
       <TouchableOpacity

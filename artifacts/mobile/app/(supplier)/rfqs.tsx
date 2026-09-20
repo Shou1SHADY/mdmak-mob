@@ -11,6 +11,7 @@ import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { createdAtMs } from "@/lib/time";
 import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -30,15 +31,6 @@ const OPEN_STATUSES = ["New", "Awarded"];
 const ALL = "All";
 type FilterDraft = { category: string; city: string; status: string };
 const NO_FILTERS: FilterDraft = { category: ALL, city: ALL, status: ALL };
-
-/** `createdAt` is written as an ISO string by both apps; older mobile rows may
- *  still hold a Firestore Timestamp. */
-function createdAtMs(value: any): number {
-  if (!value) return 0;
-  if (typeof value?.toDate === "function") return value.toDate().getTime();
-  const ms = new Date(value).getTime();
-  return Number.isNaN(ms) ? 0 : ms;
-}
 
 export default function BrowseRFQsScreen() {
   const colors = useColors();

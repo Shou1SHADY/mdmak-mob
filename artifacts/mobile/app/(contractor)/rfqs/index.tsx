@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -17,6 +17,7 @@ import { useColors } from "@/hooks/useColors";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { db } from "@/lib/firebase";
 import { RFQCard, RFQItem } from "@/components/RFQCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
@@ -36,6 +37,7 @@ export default function MyRFQsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { can } = usePermissions();
   const t = useT();
   const { isRTL } = useLanguage();
   const rowDirection = isRTL ? "row-reverse" : "row";
@@ -97,7 +99,10 @@ export default function MyRFQsScreen() {
     setFiltered(res);
   };
 
-  useEffect(() => { fetchRFQs(); }, [user?.organizationId]);
+  // Refetch when the screen comes back into view: creating an RFQ returns
+  // here, and this screen never unmounted, so a mount-only effect left the new
+  // RFQ (and the counts) off the list.
+  useFocusEffect(useCallback(() => { fetchRFQs(); }, [user?.organizationId]));
   useEffect(() => { applyFilters(rfqs, search, statusFilter, categoryFilter, cityFilter); }, [search, statusFilter, categoryFilter, cityFilter, rfqs]);
 
   const isFiltered = search.trim().length > 0 || statusFilter !== "all" || categoryFilter !== "" || cityFilter !== "";
@@ -335,7 +340,9 @@ export default function MyRFQsScreen() {
         labels={{ title: t.rfq.filterTitle, apply: t.rfq.applyFilters, reset: t.rfq.resetFilters, all: t.common.all }}
       />
 
-      {/* Floating Action Button */}
+      {/* Floating Action Button — only for a member who may actually create an
+          RFQ; otherwise the wizard refuses at the last step. */}
+      {can("rfq.create") && (
       <TouchableOpacity
         style={[
           styles.fab,
@@ -355,6 +362,7 @@ export default function MyRFQsScreen() {
         <Feather name="plus" size={20} color={colors.ctaForeground} />
         <Text style={[styles.fabLabel, { color: colors.ctaForeground }]}>{t.dashboard.newRfq}</Text>
       </TouchableOpacity>
+      )}
     </View>
   );
 }

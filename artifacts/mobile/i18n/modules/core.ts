@@ -143,6 +143,9 @@ export const en = {
     closeErrorDetails: "Close error details",
     noPermissionTitle: "Not allowed",
     noPermission: "Your team role doesn't allow this. Ask your organization owner for access.",
+    /** A list that could not be read — never show an empty state for this. */
+    loadFailed: "Could not load this list",
+    loadFailedHint: "Check your connection, or ask your organization owner whether your role may see this.",
   },
   profileTour: {
     stepOf: "{n} of {total}",
@@ -433,6 +436,8 @@ export const ar: typeof en = {
     closeErrorDetails: "إغلاق تفاصيل الخطأ",
     noPermissionTitle: "غير مسموح",
     noPermission: "صلاحيات دورك في الفريق لا تتيح هذا الإجراء. تواصل مع مالك المنشأة لمنحك الصلاحية.",
+    loadFailed: "تعذّر تحميل القائمة",
+    loadFailedHint: "تحقق من الاتصال، أو اسأل مالك المنشأة إن كان دورك يسمح بعرضها.",
   },
   profileTour: {
     stepOf: "{n} من {total}",

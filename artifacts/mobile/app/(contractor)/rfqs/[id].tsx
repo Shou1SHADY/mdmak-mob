@@ -7,10 +7,12 @@ import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, addD
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { formatSar } from "@/lib/crm-display";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
+import { createdAtMs } from "@/lib/time";
 import { readRfqLineItems } from "@/lib/contracts";
 import { usePermissions } from "@/hooks/usePermissions";
 import { RFQItem } from "@/components/RFQCard";
@@ -63,8 +65,7 @@ export default function RFQDetailScreen() {
 
   const rowDirection = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
-  const fmtSar = (n: number) =>
-    new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(n);
+  const fmtSar = (n: number) => formatSar(n, isRTL);
 
   const handleExportRFQ = async () => {
     if (!rfq) return;
@@ -141,9 +142,7 @@ export default function RFQDetailScreen() {
 
   const sortedOffers = [...offers].sort((a, b) => {
     if (sortBy === "price") return (parseFloat(a.price || "0") || 0) - (parseFloat(b.price || "0") || 0);
-    const ta = typeof a.createdAt?.toDate === "function" ? a.createdAt.toDate().getTime() : 0;
-    const tb = typeof b.createdAt?.toDate === "function" ? b.createdAt.toDate().getTime() : 0;
-    return tb - ta;
+    return createdAtMs(b.createdAt) - createdAtMs(a.createdAt);
   });
 
   const handleRepublish = () => {
@@ -493,7 +492,7 @@ export default function RFQDetailScreen() {
           sortedOffers.map((offer, idx) => {
             // The per-offer decisions stay on the card (OfferCard flags a
             // share-link offer itself, beside its status).
-            const decisionRow = offer.status === OFFER_STATUS.UNDER_REVIEW ? (
+            const decisionRow = offer.status === OFFER_STATUS.UNDER_REVIEW && can("offers.accept") ? (
               <View style={[styles.offerActions, { flexDirection: rowDirection }]}>
                 <Button title={t.rfq.accept} onPress={() => handleAcceptReject(offer, "accept")} size="sm" style={{ flex: 1 }} />
                 <Button

@@ -32,7 +32,7 @@ export default function GoodsReceivedScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   // Deliveries name the contractor's ORG, not their uid.
-  const { items: deliveries, isLoading } = useOrgCollection<DeliveryDoc>(
+  const { items: deliveries, isLoading, error: loadError } = useOrgCollection<DeliveryDoc>(
     "deliveries",
     "contractorOrgId"
   );
@@ -182,13 +182,15 @@ export default function GoodsReceivedScreen() {
               </View>
             );
           }}
-          ListEmptyComponent={
+          ListEmptyComponent={loadError ? (
+            <EmptyState variant="error" icon="alert-circle" title={t.errors.loadFailed} subtitle={t.errors.loadFailedHint} />
+          ) : (
             <EmptyState
               icon="package"
               title={t.goods.noDeliveries}
               subtitle={t.goods.noDeliveriesHint}
             />
-          }
+          )}
         />
       )}
 

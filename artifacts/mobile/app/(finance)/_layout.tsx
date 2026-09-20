@@ -18,7 +18,10 @@ import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
  * One route group covers both: they are two short lists sharing the same gate
  * shape, and splitting them would mean two layouts differing only in a
  * permission id. `invoices.manage` guards Finance and `employees.manage` guards
- * HR, matching the website's nav items; each screen re-checks its own.
+ * HR, matching the website's nav items — and each TAB carries its own gate, so
+ * an AP clerk is not handed the payroll and an HR member is not handed the
+ * ledger. The door opens for either permission; the bar shows only what the
+ * member may open.
  *
  * Tabs, not a Stack. A module owns its own bottom bar listing its own screens —
  * the mobile equivalent of the module's sidebar section on the website. With a
@@ -46,7 +49,10 @@ export default function FinanceLayout() {
 
   if (!user) return <Redirect href="/auth/login" />;
 
-  if (!can("invoices.manage") && !can("employees.manage")) {
+  const canFinance = can("invoices.manage");
+  const canHr = can("employees.manage");
+
+  if (!canFinance && !canHr) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background, padding: 32 }]}>
         <Feather name="lock" size={32} color={colors.outline} />
@@ -66,6 +72,7 @@ export default function FinanceLayout() {
         name="invoices"
         options={{
           title: t.modules.items.invoices,
+          href: canFinance ? undefined : null,
           tabBarIcon: ({ focused }) => <ModuleTabIcon name="file" focused={focused} />,
         }}
       />
@@ -73,6 +80,7 @@ export default function FinanceLayout() {
         name="guarantees"
         options={{
           title: t.modules.items.guarantees,
+          href: canFinance ? undefined : null,
           tabBarIcon: ({ focused }) => <ModuleTabIcon name="shield" focused={focused} />,
         }}
       />
@@ -80,6 +88,7 @@ export default function FinanceLayout() {
         name="employees"
         options={{
           title: t.modules.items.employees,
+          href: canHr ? undefined : null,
           tabBarIcon: ({ focused }) => <ModuleTabIcon name="briefcase" focused={focused} />,
         }}
       />

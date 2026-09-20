@@ -28,7 +28,13 @@ export interface InventoryItem {
   /** "unit" means barcode-tracked individual pieces, which this app does not
    * move — validateTransfer rejects them with `unit_tracked`. */
   trackingMode?: "unit" | null;
+  /** The reorder point. `minStockLevel` is the stored field on both apps;
+   * `minQuantity` is kept only for rows written before that was settled. */
+  minStockLevel?: number | null;
   minQuantity?: number | null;
+  /** Weighted-average cost carried by receipts and transfers — what values a
+   * waste record and its journal entry. */
+  unitCost?: number | null;
   category?: string | null;
 }
 

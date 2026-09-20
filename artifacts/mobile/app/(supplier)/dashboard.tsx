@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
-import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, getCountFromServer, orderBy, limit } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -68,12 +68,30 @@ export default function SupplierDashboard() {
       ));
       setRecentRfqs(rfqSnap.docs.map((d) => ({ id: d.id, ...d.data() } as RFQItem)));
 
-      setStats({
-        totalOffers: offerItems.length,
-        pending: offerItems.filter((o) => o.status === OFFER_STATUS.UNDER_REVIEW).length,
-        accepted: offerItems.filter((o) => o.status === OFFER_STATUS.ACCEPTED).length,
-        openRfqs: rfqSnap.size,
-      });
+      // The hero says "you have N active tenders and M offers", so these must be
+      // the real totals — the lists above are capped at 10 and 5 for display, and
+      // reporting those caps told a supplier with 40 offers that they had 10.
+      // Counted on the server; if an aggregation is unavailable, fall back to
+      // what was fetched rather than showing nothing.
+      const offersCol = collection(db, "offers");
+      const rfqsCol = collection(db, "rfqs");
+      const countOf = async (q: any, fallback: number) => {
+        try {
+          return (await getCountFromServer(q)).data().count;
+        } catch {
+          return fallback;
+        }
+      };
+      const orgOffers = query(offersCol, where("organizationId", "==", orgId));
+      const [totalOffers, pending, accepted, openRfqs] = await Promise.all([
+        countOf(orgOffers, offerItems.length),
+        countOf(query(offersCol, where("organizationId", "==", orgId), where("status", "==", OFFER_STATUS.UNDER_REVIEW)),
+          offerItems.filter((o) => o.status === OFFER_STATUS.UNDER_REVIEW).length),
+        countOf(query(offersCol, where("organizationId", "==", orgId), where("status", "==", OFFER_STATUS.ACCEPTED)),
+          offerItems.filter((o) => o.status === OFFER_STATUS.ACCEPTED).length),
+        countOf(query(rfqsCol, where("status", "==", "New"), where("visibility", "==", "public")), rfqSnap.size),
+      ]);
+      setStats({ totalOffers, pending, accepted, openRfqs });
     } catch {
       setFetchError(true);
     } finally {

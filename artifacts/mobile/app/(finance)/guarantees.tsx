@@ -7,6 +7,7 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
+import { formatDay } from "@/lib/time";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { Button } from "@/components/ui/Button";
@@ -53,7 +54,7 @@ export default function GuaranteesScreen() {
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { items, isLoading, orgId } = useGuarantees<Guarantee>();
+  const { items, isLoading, orgId, error: loadError } = useGuarantees<Guarantee>();
   const { can } = usePermissions();
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -161,7 +162,7 @@ export default function GuaranteesScreen() {
                         { color: expired ? colors.destructive : expiring ? colors.warning : colors.outline },
                       ]}
                     >
-                      {expired ? t.guarantee.expired : `${t.finance.expires} ${item.expirationDate}`}
+                      {expired ? t.guarantee.expired : `${t.finance.expires} ${formatDay(item.expirationDate, isRTL)}`}
                     </Text>
                   ) : null}
                 </View>
@@ -205,13 +206,15 @@ export default function GuaranteesScreen() {
               </View>
             );
           }}
-          ListEmptyComponent={
-            <EmptyState
+          ListEmptyComponent={loadError ? (
+              <EmptyState variant="error" icon="alert-circle" title={t.errors.loadFailed} subtitle={t.errors.loadFailedHint} />
+            ) : (
+              <EmptyState
               icon="shield"
               title={t.finance.noGuarantees}
               subtitle={t.finance.noGuaranteesHint}
             />
-          }
+            )}
         />
       )}
     </View>

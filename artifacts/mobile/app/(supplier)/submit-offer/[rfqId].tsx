@@ -7,6 +7,7 @@ import { collection, addDoc, getDocs, query, where, getDoc, doc, updateDoc, incr
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { formatSar } from "@/lib/crm-display";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
@@ -349,7 +350,7 @@ export default function SubmitOfferScreen() {
                   </View>
                   {boqPricing[item.id] && parseFloat(boqPricing[item.id]) > 0 && (
                     <Text style={{ fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", color: colors.success, textAlign: isRTL ? "right" : "left" }}>
-                      {t.boq.totalPrice}: {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(parseFloat(boqPricing[item.id]) * item.quantity)}
+                      {t.boq.totalPrice}: {formatSar(parseFloat(boqPricing[item.id]) * item.quantity, isRTL)}
                     </Text>
                   )}
                   {idx < boqItems.length - 1 && <View style={{ height: 1, backgroundColor: colors.border, marginTop: 4 }} />}

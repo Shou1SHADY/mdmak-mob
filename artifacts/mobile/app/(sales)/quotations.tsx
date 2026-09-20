@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
+import { formatDay } from "@/lib/time";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -34,7 +35,7 @@ export default function SalesQuotationsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { can } = usePermissions();
-  const { items: quotations, isLoading } = useOrgCollection<CrmQuotation>("crmQuotations");
+  const { items: quotations, isLoading, error: loadError } = useOrgCollection<CrmQuotation>("crmQuotations");
 
   const [search, setSearch] = useState("");
 
@@ -130,14 +131,16 @@ export default function SalesQuotationsScreen() {
                             .replace("{total}", formatSarCompact(item.amount, isRTL))}
                     </Text>
                   )}
-                  {item.date ? <Text style={[styles.date, { color: colors.outline }]}>{item.date}</Text> : null}
+                  {item.date ? <Text style={[styles.date, { color: colors.outline }]}>{formatDay(item.date, isRTL)}</Text> : null}
                 </View>
               </View>
             );
           }}
-          ListEmptyComponent={
+          ListEmptyComponent={loadError ? (
+            <EmptyState variant="error" icon="alert-circle" title={t.errors.loadFailed} subtitle={t.errors.loadFailedHint} />
+          ) : (
             <EmptyState icon="file-text" title={t.sales.noQuotations} subtitle={t.sales.noQuotationsHint} />
-          }
+          )}
         />
       )}
     </View>

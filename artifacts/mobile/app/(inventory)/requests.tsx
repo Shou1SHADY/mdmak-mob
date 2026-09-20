@@ -30,9 +30,11 @@ import {
   useInventoryItems,
   type WarehouseRequest,
 } from "@/hooks/useInventory";
+import { collection, getDocs } from "firebase/firestore";
 import {
   confirmWarehouseRequestReceipt,
   createWarehouseRequest,
+  itemMergeKey,
   releaseWarehouseRequest,
 } from "@/lib/warehouse-requests";
 
@@ -152,6 +154,17 @@ export default function WarehouseRequestsScreen() {
     if (!confirmTarget || !central || !user) return;
     setBusy(true);
     try {
+      // Top up the row already holding this material rather than adding a
+      // second one: the BOM, the transfers and the low-stock alert all find an
+      // item by name and unit, so a duplicate row hides half the stock from
+      // each of them. Same lookup the website's confirmation performs.
+      const destItems = await getDocs(collection(db, "warehouses", confirmTarget.toWarehouseId, "inventoryItems"));
+      const key = itemMergeKey({ name: confirmTarget.itemName, unit: confirmTarget.unit });
+      const match = destItems.docs.find((d) => {
+        const data = d.data() as { name?: string; unit?: string; trackingMode?: string | null; lot?: string | null; remnant?: boolean | null };
+        return !!data.name && !!data.unit && data.trackingMode !== "unit"
+          && itemMergeKey({ name: data.name, unit: data.unit, lot: data.lot, remnant: data.remnant }) === key;
+      });
       await confirmWarehouseRequestReceipt({
         firestore: db,
         centralWarehouseId: central.id,
@@ -159,6 +172,7 @@ export default function WarehouseRequestsScreen() {
         byUserId: user.uid,
         byUserName: user.displayName || user.email,
         note: confirmNote.trim() || null,
+        existingDestItemId: match?.id ?? null,
       });
       setConfirmTarget(null);
       setConfirmNote("");

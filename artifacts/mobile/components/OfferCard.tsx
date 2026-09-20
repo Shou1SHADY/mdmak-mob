@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { formatSar } from "@/lib/crm-display";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { OFFER_STATUSES } from "@/constants/data";
@@ -61,12 +62,10 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
     ? t.cards.rankThird
     : undefined;
 
-  const formatCurrency = (amount: string) =>
-    new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", {
-      style: "currency",
-      currency: "SAR",
-      maximumFractionDigits: 0,
-    }).format(parseFloat(amount));
+  const formatCurrency = (amount: string) => {
+    const n = parseFloat(amount);
+    return Number.isFinite(n) ? formatSar(n, isRTL) : "—";
+  };
 
   return (
     <TouchableOpacity
@@ -173,7 +172,7 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
                 {t.cards.targetPrice}
                 {"  "}
                 <Text style={[styles.reductionValue, { color: colors.warning }]}>
-                  {new Intl.NumberFormat(isRTL ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(offer.targetPrice)}
+                  {formatSar(offer.targetPrice, isRTL)}
                 </Text>
               </Text>
             </View>

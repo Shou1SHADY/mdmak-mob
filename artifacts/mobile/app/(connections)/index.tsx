@@ -44,7 +44,7 @@ export default function ConnectionsScreen() {
   const { user, organization, loading } = useAuth();
   const { can, isLoading: permsLoading } = usePermissions();
 
-  const { items: links, isLoading: linksLoading } = useOrgCollection<SupplierLink>(
+  const { items: links, isLoading: linksLoading, error: loadError } = useOrgCollection<SupplierLink>(
     "contractorSupplierLinks",
     "supplierOrgId"
   );
@@ -246,13 +246,15 @@ export default function ConnectionsScreen() {
               </View>
             );
           }}
-          ListEmptyComponent={
+          ListEmptyComponent={loadError ? (
+            <EmptyState variant="error" icon="alert-circle" title={t.errors.loadFailed} subtitle={t.errors.loadFailedHint} />
+          ) : (
             <EmptyState
               icon="link"
               title={t.connections.noConnections}
               subtitle={t.connections.noConnectionsHint}
             />
-          }
+          )}
         />
       )}
     </View>

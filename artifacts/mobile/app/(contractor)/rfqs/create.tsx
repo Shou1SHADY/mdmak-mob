@@ -65,6 +65,9 @@ export default function CreateRFQScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (draft: boolean) => {
+    // One write at a time: "Save draft" and "Publish" are separate buttons, and
+    // only the one that was pressed shows a spinner — the other stayed tappable.
+    if (loading) return;
     // The website gates RFQ creation on 'rfq.create'; firestore.rules requires
     // it too, so an ungated member would just see the write fail.
     if (!can("rfq.create")) {
@@ -426,6 +429,7 @@ export default function CreateRFQScreen() {
                 title={t.rfq.saveDraft}
                 variant="outline"
                 loading={loading && isDraft}
+                disabled={loading}
                 style={{ flex: 1 }}
                 onPress={() => { setIsDraft(true); handleSubmit(true); }}
               />
@@ -433,6 +437,7 @@ export default function CreateRFQScreen() {
                 title={t.rfq.publish}
                 onPress={() => { setIsDraft(false); handleSubmit(false); }}
                 loading={loading && !isDraft}
+                disabled={loading}
                 style={{ flex: 1 }}
               />
             </View>

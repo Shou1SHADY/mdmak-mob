@@ -270,16 +270,23 @@ function withDateRows(
   labels: { today: string; yesterday: string }
 ): Row[] {
   const rows: Row[] = [];
-  let lastKey = "";
-  for (const m of messages) {
-    rows.push({ kind: "message", id: m.id, message: m });
+  const keyOf = (m: TeamMessage) => {
     const d = toDate(m.createdAt);
-    const key = d ? d.toDateString() : "";
-    if (key && key !== lastKey) {
-      lastKey = key;
-      rows.push({ kind: "date", id: `d:${key}`, label: dateLabel(d!, isRTL, labels) });
+    return { d, key: d ? d.toDateString() : "" };
+  };
+  for (let i = 0; i < messages.length; i++) {
+    const prev = i > 0 ? messages[i - 1] : null;
+    if (prev) {
+      const p = keyOf(prev);
+      const c = keyOf(messages[i]);
+      // The previous message was the last of its day: cap it before this one,
+      // so the header draws above that day's whole block rather than inside it.
+      if (p.key && p.key !== c.key) rows.push({ kind: "date", id: `d:${p.key}`, label: dateLabel(p.d!, isRTL, labels) });
     }
+    rows.push({ kind: "message", id: messages[i].id, message: messages[i] });
   }
+  const oldest = messages.length ? keyOf(messages[messages.length - 1]) : null;
+  if (oldest?.key) rows.push({ kind: "date", id: `d:${oldest.key}`, label: dateLabel(oldest.d!, isRTL, labels) });
   return rows;
 }
 

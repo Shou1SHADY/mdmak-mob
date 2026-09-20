@@ -60,6 +60,9 @@ export default function CompareScreen() {
   const [processing, setProcessing] = useState<string | null>(null);
 
   /* ── Load RFQs that have offers ── */
+  // `rfqReload` is what Retry bumps: the loader lives in this effect, so
+  // clearing the error alone left the screen spinning with nothing in flight.
+  const [rfqReload, setRfqReload] = useState(0);
   useEffect(() => {
     const load = async () => {
       const orgId = user?.organizationId;
@@ -80,7 +83,9 @@ export default function CompareScreen() {
         const rows: RFQRow[] = [];
         for (const r of results) {
           if (r.status === "fulfilled" && r.value.offSnap.size > 0) {
-            rows.push({ id: r.value.d.id, offersCount: r.value.offSnap.size, ...(r.value.d.data() as any) });
+            // Spread first: the live count must win over the document's own
+            // `offersCount`, which drifts up when an offer is withdrawn.
+            rows.push({ ...(r.value.d.data() as any), id: r.value.d.id, offersCount: r.value.offSnap.size });
           }
         }
         setRfqs(rows);
@@ -91,7 +96,7 @@ export default function CompareScreen() {
       }
     };
     load();
-  }, [user?.organizationId]);
+  }, [user?.organizationId, rfqReload]);
 
   /* ── Load offers for selected RFQ ── */
   const loadOffers = useCallback(async (rfq: RFQRow) => {
@@ -237,7 +242,7 @@ export default function CompareScreen() {
             <Text style={[styles.errorText, { color: colors.destructive }]}>{rfqError}</Text>
             <TouchableOpacity accessibilityRole="button"
               style={[styles.retryBtn, { borderColor: colors.cta }]}
-              onPress={() => { setRfqLoading(true); setRfqError(null); }}
+              onPress={() => { setRfqLoading(true); setRfqError(null); setRfqReload((n) => n + 1); }}
             >
               <Text style={[styles.retryBtnText, { color: colors.cta }]}>
                 {t.common.retry}

@@ -24,12 +24,15 @@ const PREVIEW_BY_COLLECTION: Record<string, unknown[]> = {
 
 export function useOrgCollection<T>(collectionName: string, field = "organizationId") {
   if (isPreview()) {
-    return { items: (PREVIEW_BY_COLLECTION[collectionName] ?? []) as T[], orgId: "preview-user", isLoading: false };
+    return { items: (PREVIEW_BY_COLLECTION[collectionName] ?? []) as T[], orgId: "preview-user", isLoading: false, error: null as string | null };
   }
   const { user } = useAuth();
   const orgId = user?.organizationId || "";
   const [items, setItems] = useState<T[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // A refused or offline read must not read as "your company has none of these":
+  // the screens show an error with a retry when this is set.
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!orgId) {
@@ -37,21 +40,24 @@ export function useOrgCollection<T>(collectionName: string, field = "organizatio
       return;
     }
     setIsLoading(true);
+    setError(null);
     const unsub = onSnapshot(
       query(collection(db, collectionName), where(field, "==", orgId)),
       (snap) => {
         setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T));
+        setError(null);
         setIsLoading(false);
       },
       (e) => {
         if (__DEV__) console.warn(`[useOrgCollection:${collectionName}]`, e.message);
+        setError(e?.message || "read failed");
         setIsLoading(false);
       }
     );
     return unsub;
   }, [orgId, collectionName, field]);
 
-  return { items, orgId, isLoading };
+  return { items, orgId, isLoading, error };
 }
 
 /**
@@ -72,5 +78,6 @@ export function useGuarantees<T extends { id: string }>() {
     items: Array.from(byId.values()),
     orgId: contractorSide.orgId,
     isLoading: contractorSide.isLoading || supplierSide.isLoading,
+    error: contractorSide.error ?? supplierSide.error ?? null,
   };
 }

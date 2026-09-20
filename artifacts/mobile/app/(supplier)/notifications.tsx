@@ -51,6 +51,9 @@ function notifMeta(type: string, colors: ReturnType<typeof useColors>) {
     case "new_chat_message":
     case "new_message":
       return { icon: "message-circle" as const, color: colors.primaryText, nav: (n: AppNotification) => (n.chatId ?? n.relatedId) ? `/chat/${n.chatId ?? n.relatedId}` : null };
+    // The team room fans one of these out to every member per message.
+    case "team_chat_message":
+      return { icon: "users" as const, color: colors.primaryText, nav: () => "/team-room" };
     default:
       return { icon: "bell" as const, color: colors.accent, nav: () => null };
   }
@@ -111,7 +114,7 @@ export default function SupplierNotificationsScreen() {
               style={[
                 styles.card,
                 {
-                  backgroundColor: item.read ? colors.card : colors.cta + "06",
+                  backgroundColor: item.read ? colors.card : colors.ctaSoft,
                   borderColor: item.read ? colors.border : colors.cta + "20",
                 },
               ]}

@@ -314,13 +314,15 @@ export default function ContractorDashboard() {
           />
 
           <View style={[styles.quickRow, { flexDirection: row }]}>
-            <QuickActionCard
-              title={t.dashboard.createRfq}
-              icon="file-plus"
-              bgColor={colors.ctaSoft}
-              iconColor={colors.cta}
-              onPress={() => router.push("/(contractor)/rfqs/create")}
-            />
+            {can("rfq.create") && (
+              <QuickActionCard
+                title={t.dashboard.createRfq}
+                icon="file-plus"
+                bgColor={colors.ctaSoft}
+                iconColor={colors.cta}
+                onPress={() => router.push("/(contractor)/rfqs/create")}
+              />
+            )}
             <QuickActionCard
               title={t.dashboard.myMessages}
               icon="message-circle"
@@ -383,7 +385,7 @@ export default function ContractorDashboard() {
           {loading
             ? [1, 2, 3].map((k) => <CardSkeleton key={k} />)
             : rfqs.length === 0
-            ? <EmptyState icon="file-text" title={t.dashboard.noRfqs} subtitle={t.dashboard.noRfqsDesc} actionLabel={t.dashboard.createRfq} onAction={() => router.push("/(contractor)/rfqs/create")} />
+            ? <EmptyState icon="file-text" title={t.dashboard.noRfqs} subtitle={t.dashboard.noRfqsDesc} actionLabel={can("rfq.create") ? t.dashboard.createRfq : undefined} onAction={can("rfq.create") ? () => router.push("/(contractor)/rfqs/create") : undefined} />
             : rfqs.slice(0, 5).map((rfq) => (
               <RFQCard key={rfq.id} rfq={rfq} onPress={() => router.push(`/(contractor)/rfqs/${rfq.id}`)} showOffers />
             ))}

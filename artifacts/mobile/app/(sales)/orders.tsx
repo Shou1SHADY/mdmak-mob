@@ -6,6 +6,7 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
+import { formatDay } from "@/lib/time";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -26,7 +27,7 @@ export default function SalesOrdersScreen() {
   const t = useT();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { items: orders, isLoading } = useOrgCollection<SalesOrder>("salesOrders");
+  const { items: orders, isLoading, error: loadError } = useOrgCollection<SalesOrder>("salesOrders");
 
   const [search, setSearch] = useState("");
 
@@ -110,13 +111,17 @@ export default function SalesOrdersScreen() {
                 </Text>
                 {item.promiseDate ? (
                   <Text style={[styles.due, { color: colors.outline }]}>
-                    {t.sales.promise} {item.promiseDate}
+                    {t.sales.promise} {formatDay(item.promiseDate, isRTL)}
                   </Text>
                 ) : null}
               </View>
             </View>
           )}
-          ListEmptyComponent={<EmptyState icon="clipboard" title={t.sales.noOrders} subtitle={t.sales.noOrdersHint} />}
+          ListEmptyComponent={loadError ? (
+              <EmptyState variant="error" icon="alert-circle" title={t.errors.loadFailed} subtitle={t.errors.loadFailedHint} />
+            ) : (
+              <EmptyState icon="clipboard" title={t.sales.noOrders} subtitle={t.sales.noOrdersHint} />
+            )}
         />
       )}
     </View>

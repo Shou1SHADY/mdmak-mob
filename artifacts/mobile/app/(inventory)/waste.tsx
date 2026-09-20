@@ -92,6 +92,9 @@ export default function WasteScreen() {
             quantityTaken: takenNum,
             quantityUsed: usedNum,
             unit: item.unit,
+            // Values the waste and the material-issue posting; the website
+            // passes the same field from the stock row.
+            unitCost: item.unitCost ?? null,
             reasonCode: wasted > 0 ? reason : null,
             reasonNote: wasted > 0 && note.trim() ? note.trim() : null,
           },
@@ -104,6 +107,9 @@ export default function WasteScreen() {
         wasteTargetPercent: DEFAULT_WASTE_TARGET_PERCENT,
         userId: user.uid,
         userName: user.displayName || user.email,
+        // Without the org the mirrored write skips onMaterialIssued entirely,
+        // so stock moved on the phone never reached the journal.
+        organizationId: user.organizationId || null,
       });
       reset();
       Alert.alert(t.common.success, t.waste.recorded);
