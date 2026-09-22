@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform,
   Animated,
@@ -22,6 +22,9 @@ import { router } from "expo-router";
 import Constants from "expo-constants";
 import { CATEGORIES, SAUDI_CITIES, displayCity, displayCategory, normalizeCategoryToAr } from "@/constants/data";
 import { ProfileTourGuide, useProfileTour } from "@/components/ProfileTourGuide";
+import { OFFER_STATUS } from "@/constants/data";
+import { useSupplierOrders } from "@/hooks/useSupplierOrders";
+import { asSupplierSees } from "@/lib/procurement/supplier";
 
 /* ─── Quick Action Pill ─── */
 /* ─── Menu Row ─── */
@@ -94,7 +97,8 @@ export default function SupplierProfileScreen() {
   const [documents, setDocuments] = useState<Record<string, LegalDoc>>(organization?.documents ?? {});
 
   const [saving, setSaving] = useState(false);
-  const [stats, setStats] = useState({ totalOffers: 0, acceptedOffers: 0, activeRfqs: 0 });
+  const [stats, setStats] = useState({ totalOffers: 0, activeRfqs: 0 });
+  const [awardFacts, setAwardFacts] = useState<{ status?: string | null; poId?: string | null; awaitingOrderApproval?: boolean | null }[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -140,8 +144,8 @@ export default function SupplierProfileScreen() {
       const offQ = query(collection(db, "offers"), where("organizationId", "==", user.organizationId));
       const offSnap = await getDocs(offQ);
       const offers = offSnap.docs.map((d) => d.data());
-      const accepted = offers.filter((o) => o.status === "مقبول").length;  // ui-ok: stored offer status value
-      setStats({ totalOffers: offers.length, acceptedOffers: accepted, activeRfqs: 0 });
+      setAwardFacts(offers.map((o) => ({ status: o.status, poId: o.poId ?? null, awaitingOrderApproval: o.awaitingOrderApproval ?? null })));
+      setStats({ totalOffers: offers.length, activeRfqs: 0 });
     } catch (e) {
       if (__DEV__) console.warn("[Profile] Stats fetch failed:", e);
     } finally {
@@ -150,6 +154,15 @@ export default function SupplierProfileScreen() {
   }, [user?.organizationId]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
+
+  // "Accepted" here means accepted as far as this supplier may know. An award
+  // whose purchase order Finance has not yet approved and sent is still the
+  // buyer's own decision, so it does not count towards the win rate either.
+  const { ordersById, ready: ordersReady } = useSupplierOrders(user?.organizationId);
+  const acceptedOffers = useMemo(
+    () => asSupplierSees(awardFacts, ordersById).filter((o) => o.status === OFFER_STATUS.ACCEPTED).length,
+    [awardFacts, ordersById]
+  );
 
   const toggleSpec = (spec: string) => {
     setSelectedSpecs((prev) => prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]);
@@ -381,8 +394,8 @@ export default function SupplierProfileScreen() {
         <View style={[styles.statsGrid, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
           {[
             { label: t.dashboard.myOffers, value: stats.totalOffers, icon: "tag", color: colors.primaryText, bg: colors.primaryText + "10" },
-            { label: t.dashboard.accepted, value: stats.acceptedOffers, icon: "check-circle", color: colors.success, bg: colors.success + "10" },
-            { label: t.dashboard.pending, value: stats.totalOffers > 0 ? Math.round((stats.acceptedOffers / stats.totalOffers) * 100) + "%" : "0%", icon: "percent", color: colors.cta, bg: colors.cta + "10" },
+            { label: t.dashboard.accepted, value: acceptedOffers, icon: "check-circle", color: colors.success, bg: colors.success + "10" },
+            { label: t.dashboard.pending, value: stats.totalOffers > 0 ? Math.round((acceptedOffers / stats.totalOffers) * 100) + "%" : "0%", icon: "percent", color: colors.cta, bg: colors.cta + "10" },
           ].map((s) => (
             <TouchableOpacity
               key={s.label}
@@ -390,14 +403,14 @@ export default function SupplierProfileScreen() {
               onPress={() => router.push("/(supplier)/offers")}
               activeOpacity={0.75}
               accessibilityRole="button"
-              accessibilityLabel={`${s.label}: ${loadingStats ? "—" : s.value}`}
+              accessibilityLabel={`${s.label}: ${loadingStats || !ordersReady ? "—" : s.value}`}
             >
             <Card style={[styles.statCard, { borderColor: s.color + "20" }]}>
               <View style={[styles.statIconBox, { backgroundColor: s.bg }]}>
                 <Feather name={s.icon as any} size={18} color={s.color} />
               </View>
               <Text style={[styles.statValue, { color: colors.foreground }]}>
-                {loadingStats ? "—" : s.value}
+                {loadingStats || !ordersReady ? "—" : s.value}
               </Text>
               <Text style={[styles.statLabel, { color: colors.outline }]} numberOfLines={1} ellipsizeMode="tail">{s.label}</Text>
             </Card>

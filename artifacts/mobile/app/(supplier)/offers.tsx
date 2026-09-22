@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, RefreshControl,
   Platform, StyleSheet, ScrollView, Modal, Alert, TextInput, Pressable, KeyboardAvoidingView } from "react-native";
@@ -19,6 +19,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { Button } from "@/components/ui/Button";
 import { OFFER_STATUSES, OFFER_STATUS } from "@/constants/data";
+import { useSupplierOrders } from "@/hooks/useSupplierOrders";
+import { asSupplierSees } from "@/lib/procurement/supplier";
 
 export default function MyOffersScreen() {
   const colors = useColors();
@@ -26,8 +28,7 @@ export default function MyOffersScreen() {
   const t = useT();
   const { isRTL } = useLanguage();
   const { user } = useAuth();
-  const [offers, setOffers] = useState<OfferItem[]>([]);
-  const [filtered, setFiltered] = useState<OfferItem[]>([]);
+  const [stored, setStored] = useState<OfferItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -73,8 +74,7 @@ export default function MyOffersScreen() {
         });
       }
 
-      setOffers(items);
-      applyFilter(items, statusFilter);
+      setStored(items);
     } catch (e: any) {
       setFetchError(e?.message || "Failed to load offers");
     } finally {
@@ -83,13 +83,19 @@ export default function MyOffersScreen() {
     }
   };
 
-  const applyFilter = (items: OfferItem[], status: string) => {
-    setFiltered(status === "all" ? items : items.filter((o) => o.status === status));
-  };
-
   // Submitting an offer returns to this list, which never unmounted.
   useFocusEffect(useCallback(() => { fetchOffers(); }, [user?.organizationId]));
-  useEffect(() => { applyFilter(offers, statusFilter); }, [statusFilter, offers]);
+
+  // An award is the buying company's decision until Finance has approved its
+  // purchase order and it has been sent, so the whole screen — badges, counts,
+  // the chips, the chat button — reads the status the supplier MAY see rather
+  // than the one stored on the offer.
+  const { ordersById, ready: ordersReady } = useSupplierOrders(user?.organizationId);
+  const offers = useMemo(() => asSupplierSees(stored, ordersById), [stored, ordersById]);
+  const filtered = useMemo(
+    () => (statusFilter === "all" ? offers : offers.filter((o) => o.status === statusFilter)),
+    [offers, statusFilter]
+  );
 
   // Stats
   const pendingCount = offers.filter((o) => o.status === OFFER_STATUS.UNDER_REVIEW).length;
@@ -179,6 +185,10 @@ export default function MyOffersScreen() {
 
   const filterOptions = [{ id: "all", label: t.common.all, labelAr: t.common.all }, ...OFFER_STATUSES];
 
+  // Deciding on a half-read order map would show an award as accepted and then
+  // take it back, so the list waits for both reads.
+  const busy = loading || !ordersReady;
+
   const renderOfferActions = (item: OfferItem) => {
     const nodes: React.ReactNode[] = [];
     if (item.status === OFFER_STATUS.ACCEPTED) {
@@ -234,7 +244,7 @@ export default function MyOffersScreen() {
       />
 
       {/* Stats bar */}
-      {!loading && offers.length > 0 && (
+      {!busy && offers.length > 0 && (
         <View style={[styles.statsBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.warning, fontFamily: "Inter_600SemiBold" }]}>{pendingCount}</Text>
@@ -293,7 +303,7 @@ export default function MyOffersScreen() {
         </ScrollView>
       </View>
 
-      {loading ? (
+      {busy ? (
         <View style={{ padding: 16, gap: 10 }}>
           {[1, 2, 3].map((k) => <CardSkeleton key={k} />)}
         </View>

@@ -32,6 +32,12 @@ export interface OfferItem {
   executionDuration?: string;
   executionDurationUnit?: string;
   deliveryLocation?: string;
+  /** The purchase order the award created, when it created one, and the flag
+   * the award writes while that order is still internal. A supplier screen
+   * never reads `status` raw — it reads what `asSupplierSees` allows
+   * (lib/procurement/supplier.ts): Finance may still refuse the order. */
+  poId?: string | null;
+  awaitingOrderApproval?: boolean | null;
 }
 
 interface OfferCardProps {

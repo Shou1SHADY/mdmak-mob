@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View, FlatList, StyleSheet, Platform,
 } from "react-native";
@@ -15,13 +15,15 @@ import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { OFFER_STATUS } from "@/constants/data";
+import { useSupplierOrders } from "@/hooks/useSupplierOrders";
+import { asSupplierSees } from "@/lib/procurement/supplier";
 
 export default function OrdersScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const t = useT();
-  const [orders, setOrders] = useState<OfferItem[]>([]);
+  const [awarded, setAwarded] = useState<OfferItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -55,7 +57,7 @@ export default function OrdersScreen() {
               return offer;
             })
         );
-        setOrders(items);
+        setAwarded(items);
       } catch {
         setError(true);
       } finally {
@@ -65,10 +67,20 @@ export default function OrdersScreen() {
     fetchOrders();
   }, [user?.organizationId, reloadKey]);
 
+  // The query above asks the server for awards, which cannot know whether an
+  // award has been disclosed: one still waiting for Finance to approve its
+  // purchase order is not this supplier's order yet. Mapping the statuses and
+  // keeping only what still reads as accepted drops exactly those.
+  const { ordersById, ready: ordersReady } = useSupplierOrders(user?.organizationId);
+  const orders = useMemo(
+    () => asSupplierSees(awarded, ordersById).filter((o) => o.status === OFFER_STATUS.ACCEPTED),
+    [awarded, ordersById]
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={t.orders.title} showBack />
-      {loading ? (
+      {loading || !ordersReady ? (
         <View style={{ padding: 16, gap: 10 }}>{[1, 2].map((k) => <CardSkeleton key={k} />)}</View>
       ) : error ? (
         <EmptyState variant="error" icon="package" title={t.errors.somethingWentWrong} actionLabel={t.common.retry} onAction={() => { setLoading(true); setReloadKey((k) => k + 1); }} />

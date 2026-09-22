@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { collection, query, where, getDocs, getCountFromServer, orderBy, limit } from "firebase/firestore";
@@ -20,6 +20,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Card } from "@/components/ui/Card";
 import { DashboardHeader, WelcomeHeroCard, QuickActionCard } from "@/components/ScreenHeader";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useSupplierOrders } from "@/hooks/useSupplierOrders";
+import { asSupplierSees, supplierSegmentOf } from "@/lib/procurement/supplier";
 import { AIChatWidget } from "@/components/AIChatWidget";
 
 /**
@@ -33,7 +35,7 @@ export default function SupplierDashboard() {
   const t = useT();
   const { isRTL } = useLanguage();
   const { user, organization } = useAuth();
-  const [offers, setOffers] = useState<OfferItem[]>([]);
+  const [stored, setStored] = useState<OfferItem[]>([]);
   const [recentRfqs, setRecentRfqs] = useState<RFQItem[]>([]);
   const [stats, setStats] = useState({ totalOffers: 0, pending: 0, accepted: 0, openRfqs: 0 });
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ export default function SupplierDashboard() {
 
   const fetchData = async () => {
     if (isPreview()) {
-      setOffers(PREVIEW_SUPPLIER_OFFERS as OfferItem[]);
+      setStored(PREVIEW_SUPPLIER_OFFERS as OfferItem[]);
       setRecentRfqs(PREVIEW_CONTRACTOR_RFQS as RFQItem[]);
       setStats(PREVIEW_SUPPLIER_STATS);
       setLoading(false);
@@ -60,7 +62,7 @@ export default function SupplierDashboard() {
         collection(db, "offers"), where("organizationId", "==", orgId), orderBy("createdAt", "desc"), limit(10)
       ));
       const offerItems = offSnap.docs.map((d) => ({ id: d.id, ...d.data() } as OfferItem));
-      setOffers(offerItems);
+      setStored(offerItems);
 
       // Public only — a supplier never sees another contractor's private RFQs here.
       const rfqSnap = await getDocs(query(
@@ -102,10 +104,26 @@ export default function SupplierDashboard() {
 
   useEffect(() => { fetchData(); }, [user?.organizationId]);
 
-  const ratio = (n: number) => (stats.totalOffers > 0 ? n / stats.totalOffers : 0);
+  // An award is internal until Finance has approved its purchase order and it
+  // has been sent, so both the recent list and the two bars read what the
+  // supplier MAY see. The bars are server counts over `status`, which cannot
+  // know that: every order still waiting for approval is one award counted as
+  // accepted, so it moves across to pending here.
+  const { ordersById, ready: ordersReady } = useSupplierOrders(user?.organizationId);
+  const offers = useMemo(() => asSupplierSees(stored, ordersById), [stored, ordersById]);
+  const undisclosed = useMemo(
+    () => [...ordersById.values()].filter((po) => supplierSegmentOf(po) == null).length,
+    [ordersById]
+  );
+  const shown = useMemo(() => {
+    const moved = Math.min(stats.accepted, undisclosed);
+    return { ...stats, accepted: stats.accepted - moved, pending: stats.pending + moved };
+  }, [stats, undisclosed]);
+
+  const ratio = (n: number) => (shown.totalOffers > 0 ? n / shown.totalOffers : 0);
   const bars: { label: string; value: number; tone: Tone }[] = [
-    { label: t.dashboard.pending, value: stats.pending, tone: "warning" },
-    { label: t.dashboard.accepted, value: stats.accepted, tone: "success" },
+    { label: t.dashboard.pending, value: shown.pending, tone: "warning" },
+    { label: t.dashboard.accepted, value: shown.accepted, tone: "success" },
   ];
 
   const headerRight = (
@@ -219,7 +237,7 @@ export default function SupplierDashboard() {
             ))}
 
           <SectionHeader title={t.dashboard.recentOffers} actionLabel={t.dashboard.browseAll} onAction={() => router.push("/(supplier)/offers")} />
-          {loading
+          {loading || !ordersReady
             ? [1, 2].map((k) => <CardSkeleton key={k} />)
             : offers.length === 0
             ? <EmptyState icon="tag" title={t.dashboard.noOffers} subtitle={t.dashboard.noOffersDesc} />

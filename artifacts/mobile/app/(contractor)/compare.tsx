@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
   Platform, ActivityIndicator, ScrollView, Alert,
 } from "react-native";
-import { collection, query, where, getDocs, orderBy, updateDoc, doc, addDoc, writeBatch } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -13,7 +13,9 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { usePermissions } from "@/hooks/usePermissions";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { OFFER_STATUS } from "@/constants/data";
+import * as WebBrowser from "expo-web-browser";
+import { awardPath } from "@/lib/award-writes";
+import { siteUrl } from "@/lib/site-api";
 
 interface RFQRow {
   id: string;
@@ -57,7 +59,6 @@ export default function CompareScreen() {
   const [offersLoading, setOffersLoading] = useState(false);
   const [offersError, setOffersError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>("price");
-  const [processing, setProcessing] = useState<string | null>(null);
 
   /* ── Load RFQs that have offers ── */
   // `rfqReload` is what Retry bumps: the loader lives in this effect, so
@@ -117,55 +118,22 @@ export default function CompareScreen() {
     }
   }, [isRTL]);
 
-  /* ── Accept offer ── */
-  const handleAccept = async (offer: OfferRow) => {
-    if (!user || !selectedRfq) return;
-    // Awarding an offer requires 'offers.accept', exactly as on the website.
+  /* ── Award ── */
+  // The phone does not award. Awarding now prepares a purchase order for
+  // Finance and tells the supplier nothing until that order is sent, and
+  // writing only the first half here would leave an award nobody can approve
+  // and a supplier who never hears (see lib/award-writes.ts).
+  const handleAward = (offer: OfferRow) => {
+    if (!selectedRfq) return;
     if (!can("offers.accept")) {
       Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
       return;
     }
-    setProcessing(offer.id);
-    try {
-      // The field set the website's RfqOffersView writes, committed with the
-      // same atomicity: the accepted offer and the RFQ's "Awarded" status go
-      // in one batch, so the two can never disagree.
-      const now = new Date().toISOString();
-      const batch = writeBatch(db);
-      batch.update(doc(db, "offers", offer.id), {
-        status: OFFER_STATUS.ACCEPTED,
-        decidedByUserId: user.uid,
-        decidedByUserName: user.displayName || user.email || null,
-        decidedAt: now,
-        updatedAt: now,
-        readAt: null,
-      });
-      batch.update(doc(db, "rfqs", selectedRfq.id), { status: "Awarded", awardedAt: now, updatedAt: now });
-      await batch.commit();
-      // A guest offer has no account behind it — the website reaches the guest
-      // over the share channel instead, so there is nobody to notify here.
-      if (offer.supplierId && !offer.isGuestOffer) {
-        await addDoc(collection(db, "users", offer.supplierId, "notifications"), {
-          userId: offer.supplierId,
-          type: "offer_accepted",
-          // Keys: the reader sees it in their own language (web and phone).
-          i18n: { title: "pn_offer_accepted_title", message: "pn_offer_accepted", params: { rfq: offer.rfqTitle ?? selectedRfq.title ?? "" } },
-          title: isRTL ? "تم قبول عرضك" : "Your offer was accepted",  // ui-ok: fallback text for push; readers get i18n
-          message: isRTL
-            ? `تم قبول عرضك لـ "${offer.rfqTitle ?? selectedRfq.title}"`  // ui-ok: fallback text for push; readers get i18n
-            : `Your offer for "${offer.rfqTitle ?? selectedRfq.title}" was accepted`,
-          offerId: offer.id,
-          rfqId: selectedRfq.id,
-          createdAt: new Date().toISOString(),
-          read: false,
-        });
-      }
-      setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, status: OFFER_STATUS.ACCEPTED } : o));
-    } catch (e: any) {
-      Alert.alert(t.common.error, t.errors.generic);
-    } finally {
-      setProcessing(null);
-    }
+    const rfqId = selectedRfq.id;
+    Alert.alert(t.rfq.awardOnWeb, undefined, [
+      { text: t.common.cancel, style: "cancel" },
+      { text: t.rfq.openAward, onPress: () => void WebBrowser.openBrowserAsync(siteUrl(awardPath(rfqId))) },
+    ]);
   };
 
   /* ── Helpers ── */
@@ -422,18 +390,14 @@ export default function CompareScreen() {
                   ) : null}
                 </View>
 
-                {/* Accept button — only for pending offers */}
+                {/* Award — only for pending offers, and only on the website */}
                 {isPending && (
                   <TouchableOpacity accessibilityRole="button"
                     style={[styles.acceptBtn, { backgroundColor: isBest ? colors.success : colors.cta }]}
-                    onPress={() => handleAccept(offer)}
-                    disabled={processing === offer.id}
+                    onPress={() => handleAward(offer)}
                     activeOpacity={0.8}
                   >
-                    {processing === offer.id
-                      ? <ActivityIndicator size="small" color={isBest ? colors.successForeground : colors.ctaForeground} />
-                      : <Feather name="check-circle" size={15} color={isBest ? colors.successForeground : colors.ctaForeground} />
-                    }
+                    <Feather name="external-link" size={15} color={isBest ? colors.successForeground : colors.ctaForeground} />
                     <Text style={[styles.acceptText, { color: isBest ? colors.successForeground : colors.ctaForeground }]}>{t.compare.accept}</Text>
                   </TouchableOpacity>
                 )}

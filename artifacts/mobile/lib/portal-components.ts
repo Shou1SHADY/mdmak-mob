@@ -128,6 +128,7 @@ function accountingItems(prefix: "/contractor" | "/supplier"): NavItem[] {
     { titleKey: "acc_dashboard", href: "/(accounting)/books", icon: "grid", requiredPermission: "accounting.view", built: true },
     { titleKey: "acc_locked", href: `${prefix}/accounting/locked`, icon: "lock", requiredPermission: "accounting.view", built: false },
     { titleKey: "acc_sales_desk", href: `${prefix}/accounting/sales-desk`, icon: "dollar-sign", requiredPermission: "invoices.manage", built: false },
+    { titleKey: "acc_procurement_desk", href: `${prefix}/accounting/procurement-desk`, icon: "check-square", requiredPermission: "po.approve", built: false },
     { titleKey: "acc_income", href: "/(accounting)/income", icon: "trending-up", requiredPermission: "accounting.view", built: true },
     { titleKey: "acc_balance", href: "/(accounting)/balance", icon: "bar-chart-2", requiredPermission: "accounting.view", built: true },
     { titleKey: "acc_cashflow", href: "/(accounting)/cashflow", icon: "dollar-sign", requiredPermission: "accounting.view", built: true },

@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert,
   Modal, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, setDoc, addDoc, writeBatch } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -27,6 +27,9 @@ import { RFQ_STATUSES, OFFER_STATUS, statusTone, displayCategory, displayCity } 
 import { BOQEditor } from "@/components/BOQEditor";
 import { exportRFQPDF, exportOfferComparisonPDF } from "@/lib/pdf-export";
 import { type, space, radius, MIN_TOUCH } from "@/lib/design";
+import * as WebBrowser from "expo-web-browser";
+import { awardPath } from "@/lib/award-writes";
+import { siteUrl } from "@/lib/site-api";
 
 type SortMode = "price" | "date";
 
@@ -164,85 +167,61 @@ export default function RFQDetailScreen() {
     ]);
   };
 
-  const handleAcceptReject = async (offer: OfferItem, action: "accept" | "reject") => {
-    // Same gate the website applies, and the same one firestore.rules enforces:
-    // deciding on an offer needs 'offers.accept'. Checking here turns a silent
-    // rules rejection into an explanation.
+  // The phone does not award. Awarding prepares a purchase order for Finance
+  // and tells the supplier nothing until that order is sent; writing only the
+  // first half here would leave an award nobody can approve and a supplier who
+  // never hears (see lib/award-writes.ts).
+  const handleAward = (offer: OfferItem) => {
     if (!can("offers.accept")) {
       Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
       return;
     }
-    const confirmMsg = action === "accept" ? t.rfq.acceptOffer : t.rfq.rejectOffer;
-    Alert.alert(t.common.confirm, confirmMsg, [
+    Alert.alert(t.rfq.awardOnWeb, undefined, [
+      { text: t.common.cancel, style: "cancel" },
+      { text: t.rfq.openAward, onPress: () => void WebBrowser.openBrowserAsync(siteUrl(awardPath(id))) },
+    ]);
+  };
+
+  // Rejecting was never part of the order flow, and the supplier still hears
+  // at once — he is waiting on an answer either way.
+  const handleReject = async (offer: OfferItem) => {
+    if (!can("offers.accept")) {
+      Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
+      return;
+    }
+    Alert.alert(t.common.confirm, t.rfq.rejectOffer, [
       { text: t.common.cancel, style: "cancel" },
       {
         text: t.common.confirm,
         onPress: async () => {
-          const newStatus = action === "accept" ? OFFER_STATUS.ACCEPTED : OFFER_STATUS.REJECTED;
           const now = new Date().toISOString();
-          // The field set the website's RfqOffersView writes, committed with the
-          // same atomicity: an accepted offer and its RFQ's "Awarded" status go
-          // in one batch, so the two can never disagree.
-          const decision = {
-            status: newStatus,
-            decidedByUserId: user?.uid ?? null,
-            decidedByUserName: user?.displayName || user?.email || null,
-            decidedAt: now,
-            updatedAt: now,
-            readAt: null,
-          };
           try {
-            if (action === "accept") {
-              const batch = writeBatch(db);
-              batch.update(doc(db, "offers", offer.id), decision);
-              batch.update(doc(db, "rfqs", id), { status: "Awarded", awardedAt: now });
-              await batch.commit();
-            } else {
-              await updateDoc(doc(db, "offers", offer.id), decision);
-            }
+            await updateDoc(doc(db, "offers", offer.id), {
+              status: OFFER_STATUS.REJECTED,
+              decidedByUserId: user?.uid ?? null,
+              decidedByUserName: user?.displayName || user?.email || null,
+              decidedAt: now,
+              updatedAt: now,
+              readAt: null,
+            });
           } catch {
             Alert.alert(t.common.error, t.errors.generic);
             return;
           }
 
-          // A guest offer (share-link, no account) has nobody to chat with or
-          // notify in-app; the website reaches the guest over the share channel.
-          if (action === "accept" && !offer.isGuestOffer) {
-            // Create chat doc
-            const chatRef = doc(db, "chats", offer.id);
-            const chatSnap = await getDoc(chatRef);
-            if (!chatSnap.exists()) {
-              await setDoc(chatRef, {
-                offerId: offer.id,
-                rfqId: id,
-                rfqTitle: rfq?.title || "",
-                contractorId: user?.uid,
-                contractorOrgId: user?.organizationId || user?.uid,
-                supplierId: offer.supplierId || offer.organizationId,
-                supplierOrgId: offer.organizationId,
-                createdAt: new Date().toISOString(),
-              });
-            }
-          }
-
-          // Notify supplier
+          // A guest offer (share-link, no account) has nobody to notify in-app;
+          // the website reaches the guest over the share channel.
           const supplierId = offer.supplierId || offer.organizationId;
           if (supplierId && !offer.isGuestOffer) {
             try {
               await addDoc(collection(db, "users", supplierId, "notifications"), {
                 userId: supplierId,
-                type: action === "accept" ? "offer_accepted" : "offer_rejected",
-                i18n: {
-                  title: action === "accept" ? "pn_offer_accepted_title" : "pn_offer_rejected_title",
-                  message: action === "accept" ? "pn_offer_accepted" : "pn_offer_rejected",
-                  params: { rfq: rfq?.title || "" },
-                },
-                title: action === "accept"
-                  ? (t.rfq.yourOfferWasAccepted)
-                  : (t.rfq.yourOfferWasRejected),
+                type: "offer_rejected",
+                i18n: { title: "pn_offer_rejected_title", message: "pn_offer_rejected", params: { rfq: rfq?.title || "" } },
+                title: t.rfq.yourOfferWasRejected,
                 message: isRTL
-                  ? `${action === "accept" ? "تم قبول" : "تم رفض"} عرضك على مناقصة: ${rfq?.title || ""}`  // ui-ok: fallback text for push; readers get i18n
-                  : `Your offer for "${rfq?.title || ""}" was ${action === "accept" ? "accepted" : "rejected"}.`,
+                  ? `تم رفض عرضك على مناقصة: ${rfq?.title || ""}`  // ui-ok: fallback text for push; readers get i18n
+                  : `Your offer for "${rfq?.title || ""}" was rejected.`,
                 offerId: offer.id,
                 rfqId: id,
                 createdAt: new Date().toISOString(),
@@ -494,7 +473,7 @@ export default function RFQDetailScreen() {
             // share-link offer itself, beside its status).
             const decisionRow = offer.status === OFFER_STATUS.UNDER_REVIEW && can("offers.accept") ? (
               <View style={[styles.offerActions, { flexDirection: rowDirection }]}>
-                <Button title={t.rfq.accept} onPress={() => handleAcceptReject(offer, "accept")} size="sm" style={{ flex: 1 }} />
+                <Button title={t.rfq.accept} onPress={() => handleAward(offer)} size="sm" style={{ flex: 1 }} />
                 <Button
                   title={t.rfq.reduce}
                   onPress={() => { setReduceOffer(offer); setTargetPrice(""); setReductionNote(""); }}
@@ -502,7 +481,7 @@ export default function RFQDetailScreen() {
                   variant="outline"
                   style={{ flex: 1 }}
                 />
-                <Button title={t.rfq.reject} onPress={() => handleAcceptReject(offer, "reject")} size="sm" variant="destructive" style={{ flex: 1 }} />
+                <Button title={t.rfq.reject} onPress={() => handleReject(offer)} size="sm" variant="destructive" style={{ flex: 1 }} />
               </View>
             ) : offer.status === OFFER_STATUS.ACCEPTED ? (
               <Button

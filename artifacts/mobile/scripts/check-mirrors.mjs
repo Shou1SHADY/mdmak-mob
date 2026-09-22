@@ -28,8 +28,11 @@ import { fileURLToPath } from "node:url";
 const MOB = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Resolution order: CLI argument, MDMAK_WEB_DIR, then the sibling-checkout
 // layout. A machine that keeps the two repos elsewhere sets the variable once.
+// Flags are skipped: taking argv[2] whatever it was made the documented
+// `npm run check:mirrors -- --update-lock` look for a website called
+// "--update-lock", so the lock could not be refreshed the way this file says.
 const WEB = path.resolve(
-  process.argv[2] ?? process.env.MDMAK_WEB_DIR ?? path.join(MOB, "../../../studio-monaqasati")
+  process.argv.slice(2).find((a) => !a.startsWith("--")) ?? process.env.MDMAK_WEB_DIR ?? path.join(MOB, "../../../studio-monaqasati")
 );
 
 /** mobile path -> website path */
@@ -69,6 +72,10 @@ const MIRRORS = {
   "lib/mfg-events.ts": "src/lib/mfg-events.ts",
   "lib/mfg-outside.ts": "src/lib/mfg-outside.ts",
   "lib/search-text.ts": "src/lib/search-text.ts",
+  "lib/procurement/types.ts": "src/lib/procurement/types.ts",
+  "lib/procurement/po.ts": "src/lib/procurement/po.ts",
+  "lib/procurement/receipts.ts": "src/lib/procurement/receipts.ts",
+  "lib/procurement/supplier.ts": "src/lib/procurement/supplier.ts",
 };
 
 /**
