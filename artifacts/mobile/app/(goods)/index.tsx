@@ -13,7 +13,9 @@ import { Input } from "@/components/ui/Input";
 import { CrmSheet } from "@/components/crm/CrmSheet";
 import { db } from "@/lib/firebase";
 import { useOrgCollection } from "@/hooks/useOrgCollection";
-import { confirmDelivery, type DeliveryDoc } from "@/lib/delivery-writes";
+import * as WebBrowser from "expo-web-browser";
+import { confirmDelivery, RECEIVE_ON_WEB, receivingPath, type DeliveryDoc } from "@/lib/delivery-writes";
+import { siteUrl } from "@/lib/site-api";
 
 /**
  * Delivery notices awaiting confirmation.
@@ -81,6 +83,15 @@ export default function GoodsReceivedScreen() {
       setReceiver("");
       Alert.alert(t.common.success, stockLanded ? t.goods.confirmedToast : t.goods.stockNotLanded);
     } catch (e: any) {
+      if (e?.message === RECEIVE_ON_WEB) {
+        const deliveryId = target.id;
+        setTarget(null);
+        Alert.alert(t.goods.receiveOnWeb, undefined, [
+          { text: t.common.cancel, style: "cancel" },
+          { text: t.goods.openReceiving, onPress: () => void WebBrowser.openBrowserAsync(siteUrl(receivingPath(deliveryId))) },
+        ]);
+        return;
+      }
       if (__DEV__) console.warn("[GoodsReceived] confirm:", e?.message);
       Alert.alert(t.common.error, t.goods.failed);
     } finally {

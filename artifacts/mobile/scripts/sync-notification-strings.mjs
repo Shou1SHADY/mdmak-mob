@@ -17,8 +17,9 @@
 
 import fs from "node:fs"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
 
-const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const OUT = path.join(ROOT, "i18n", "notifications.generated.ts")
 const check = process.argv.includes("--check")
 const webDir = process.argv.slice(2).find((a) => !a.startsWith("--")) || process.env.MDMAK_WEB_DIR || "/home/shady/ora2/studio-monaqasati"

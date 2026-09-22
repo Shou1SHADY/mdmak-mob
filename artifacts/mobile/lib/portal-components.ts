@@ -56,6 +56,8 @@ export interface NavItem {
   href: string;
   icon: FeatherIcon;
   requiredPermission?: PermissionId;
+  /** Visible to whoever holds ANY of these — as on the website. */
+  requiredAnyPermission?: PermissionId[];
   /** False until the screen exists in this app. */
   built: boolean;
 }
@@ -72,6 +74,12 @@ export interface PortalComponentDef {
   displayOrder: number;
   items: NavItem[];
 }
+
+/** Procurement's Today opens for anyone holding any of the module's
+ * permissions (PRD 3.0 §7.2) — the queue itself shows each role its own rows. */
+const PROC_ANY_ROLE: PermissionId[] = ["rfq.create", "rfq.manage", "offers.view", "offers.accept", "po.approve", "po.expedite", "suppliers.manage", "deliveries.confirm"];
+/** The orders list: whoever sees prices, plus the expediter (dates and quantities only). */
+const PROC_ORDER_ROLES: PermissionId[] = ["offers.view", "offers.accept", "po.approve", "po.expedite"];
 
 // Reachable from every module, never permission-gated — everyone in an org can
 // be talked to. Mirrors the website's CONTRACTOR/SUPPLIER_COMMUNICATION_SECTION.
@@ -172,12 +180,16 @@ export const CONTRACTOR_COMPONENTS: PortalComponentDef[] = [
     accentToken: "cta",
     displayOrder: 3,
     items: [
+      { titleKey: "proc_today", href: "/contractor/rfqs/today", icon: "sunrise", requiredAnyPermission: PROC_ANY_ROLE, built: false },
       { titleKey: "rfqs", href: "/(contractor)/rfqs", icon: "file-text", requiredPermission: "rfq.manage", built: true },
+      { titleKey: "purchase_orders", href: "/contractor/rfqs/orders", icon: "clipboard", requiredAnyPermission: PROC_ORDER_ROLES, built: false },
       { titleKey: "compare_offers", href: "/(contractor)/compare", icon: "bar-chart-2", requiredPermission: "offers.view", built: true },
       // The supplier directory (search, favourites, invitations) is a desktop
       // job; the phone's suppliers screen only ever redirected home.
       { titleKey: "browse_suppliers", href: "/contractor/suppliers", icon: "users", requiredPermission: "suppliers.manage", built: false },
       { titleKey: "goods_received", href: "/(goods)", icon: "package", requiredPermission: "deliveries.confirm", built: true },
+      { titleKey: "proc_reports", href: "/contractor/rfqs/reports", icon: "bar-chart", requiredAnyPermission: ["offers.view", "offers.accept"], built: false },
+      { titleKey: "proc_settings", href: "/contractor/rfqs/settings", icon: "settings", requiredPermission: "po.approve", built: false },
     ],
   },
   {
@@ -402,7 +414,9 @@ export function communicationForRole(role: string | undefined): NavItem[] {
 export type PermissionCheck = (permission: PermissionId) => boolean;
 
 function itemIsVisible(item: NavItem, can: PermissionCheck): boolean {
-  return !item.requiredPermission || can(item.requiredPermission);
+  if (item.requiredPermission && !can(item.requiredPermission)) return false;
+  if (item.requiredAnyPermission?.length && !item.requiredAnyPermission.some((p) => can(p))) return false;
+  return true;
 }
 
 /** Items the caller may see. Unbuilt items are KEPT — they open on the website,

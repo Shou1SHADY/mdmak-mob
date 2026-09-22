@@ -73,6 +73,8 @@ export const en = {
     centralLocation: "Head office",
     centralDesc: "The company's master stock — project warehouses draw from it and return to it",
     stockNotLanded: "Receipt confirmed, but the quantities were not booked into the warehouse — add them in Inventory by hand.",
+    receiveOnWeb: "This delivery belongs to a purchase order, so it is counted at receiving on the website — the count, any rejects and the receipt number are recorded there.",
+    openReceiving: "Open receiving",
   },
 };
 
@@ -144,5 +146,7 @@ export const ar: typeof en = {
     centralLocation: "المقر الرئيسي",
     centralDesc: "المخزون الرئيسي للشركة — مستودعات المشاريع تسحب منه وتُرجع إليه",
     stockNotLanded: "تم تأكيد الاستلام، لكن الكميات لم تُسجَّل في المستودع — أضفها من المخزون يدوياً.",
+    receiveOnWeb: "هذا التوريد تابع لأمر شراء، لذا يُعدّ عند الاستلام على الموقع — هناك تُسجَّل الكمية المعدودة والمرفوضات ورقم إشعار الاستلام.",
+    openReceiving: "فتح الاستلام",
   },
 };

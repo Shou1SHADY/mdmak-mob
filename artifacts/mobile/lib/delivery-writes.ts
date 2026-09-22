@@ -27,6 +27,13 @@ import { markPurchaseArrived } from "@/lib/manufacturing-writes";
 //
 // Getting that ordering wrong would either lose a confirmation the contractor
 // already gave, or credit stock for a delivery that was never confirmed.
+//
+// Since PRD 3.0 (22 Sep 2026) the website confirms an itemised delivery with
+// no purchase order through its receipts write, which does all of the above
+// and also issues a GR-yyyy/NNN receipt. That write is not mirrored yet, so a
+// delivery confirmed here lands the same stock and posting without a receipt
+// number. A delivery WITH a purchase order is refused below and sent to the
+// website's receiving desk, where it must be counted.
 
 export interface DeliveryItem {
   name?: string;
@@ -51,7 +58,16 @@ export interface DeliveryDoc {
   deliveryDate?: string | null;
   createdAt?: unknown;
   confirmedAt?: unknown;
+  /** Set when the award behind this delivery has a purchase order (PRD 3.0). */
+  poId?: string | null;
 }
+
+/** Thrown when a delivery belongs to a purchase order and must be counted at
+ * receiving on the website instead of confirmed whole here. */
+export const RECEIVE_ON_WEB = "receive_on_web";
+
+/** The website's goods-received desk, open on this delivery. */
+export const receivingPath = (deliveryId: string) => `/contractor/goods-received?delivery=${deliveryId}`;
 
 /** Names of the central warehouse this app creates when none exists yet. Kept
  * as parameters rather than hardcoded Arabic so the caller passes localized
@@ -82,6 +98,29 @@ export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<{ st
   const userName = input.userName || "";
   let stockLanded = true;
 
+  // The award's price and, since PRD 3.0, whether it carries a purchase order.
+  // Read before anything is written: an ordered delivery is not ours to confirm.
+  let net = 0;
+  let offerPoId: string | null = null;
+  try {
+    if (delivery.offerId) {
+      const offerSnap = await getDoc(doc(firestore, "offers", delivery.offerId));
+      const o = offerSnap.data() as { price?: string | number; totalBatchesPrice?: number; poId?: string | null } | undefined;
+      net = Math.max(0, Number(o?.totalBatchesPrice ?? o?.price) || 0);
+      offerPoId = o?.poId || null;
+    }
+  } catch {
+    net = 0;
+  }
+
+  // A delivery against a purchase order is counted at the gate — blind count,
+  // coded rejects, the over-receipt limit and a GR number — never confirmed
+  // whole. The website routes it to its receiving desk; confirming it here
+  // would land stock at the notified quantity and skip every one of those.
+  if (delivery.poId || offerPoId) {
+    throw new Error(RECEIVE_ON_WEB);
+  }
+
   // 1 — the confirmation itself.
   await updateDoc(doc(firestore, "deliveries", delivery.id), {
     status: "confirmed",
@@ -96,16 +135,6 @@ export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<{ st
   // deterministic id the website uses (`central_{orgId}`) so both apps land on
   // one warehouse rather than two.
   const orgId = delivery.contractorOrgId;
-  let net = 0;
-  try {
-    if (delivery.offerId) {
-      const offerSnap = await getDoc(doc(firestore, "offers", delivery.offerId));
-      const o = offerSnap.data() as { price?: string | number; totalBatchesPrice?: number } | undefined;
-      net = Math.max(0, Number(o?.totalBatchesPrice ?? o?.price) || 0);
-    }
-  } catch {
-    net = 0;
-  }
   try {
     const rawItems = (delivery.items ?? [])
       .map((it) => ({
