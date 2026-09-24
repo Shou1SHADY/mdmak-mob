@@ -70,6 +70,7 @@ const MIRRORS = {
   "lib/manufacturing-view.ts": "src/lib/manufacturing-view.ts",
   "lib/manufacturing-requests.ts": "src/lib/manufacturing-requests.ts",
   "lib/mfg-events.ts": "src/lib/mfg-events.ts",
+  "lib/sales-numbering.ts": "src/lib/sales-numbering.ts",
   "lib/mfg-outside.ts": "src/lib/mfg-outside.ts",
   "lib/search-text.ts": "src/lib/search-text.ts",
   "lib/procurement/types.ts": "src/lib/procurement/types.ts",

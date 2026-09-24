@@ -1,7 +1,3 @@
-// VERBATIM MIRROR of the website's src/lib/accounting/journal.ts — the append-only general journal's entry builder.
-// Do not edit here; change the website copy, run its tests, re-copy.
-// Verified by scripts/check-mirrors.mjs.
-
 // The general journal (دفتر اليومية) — the one place money facts are recorded.
 // Everything else in Accounting is a read of these entries.
 //
@@ -67,6 +63,10 @@ export type SourceType =
   | "retention_release"
   | "vat_settlement"
   | "zakat_provision"
+  /** Zakat paid to ZATCA — clears the provision. */
+  | "zakat_payment"
+  /** Withholding tax remitted to ZATCA — clears 210302. */
+  | "wht_remittance"
   | "wip_revenue"
   | "manual_voucher"
   /** A hand-posted clearing of a counterparty balance — a receipt, a payment,
@@ -88,6 +88,18 @@ export interface JournalLine {
   party?: string | null
   partyName?: string | null
   note?: string | null
+  /** Set on the line that credits withholding tax payable: what was withheld,
+   * from what, at which rate — the WHT register reads it. */
+  wht?: WhtLineInfo | null
+}
+
+export interface WhtLineInfo {
+  /** A payment type id from withholding.ts (rent, technical_services, …). */
+  type: string
+  /** Fraction — 0.05 is 5 %. */
+  rate: number
+  /** The gross amount due to the non-resident before withholding. */
+  base: number
 }
 
 export interface JournalEntry {
@@ -119,6 +131,16 @@ export interface JournalEntry {
   createdByUserName: string
   createdAt?: unknown
   updatedAt?: unknown
+}
+
+/**
+ * Did a person write this entry, or a business event? Manual: vouchers from
+ * New journal entry, settlements, reversals, the tax screens' provisions — and
+ * opening balances, which are always typed in by hand. The General Journal's
+ * Automatic/Manual filter and its badges both ask this.
+ */
+export function isManualEntry(entry: Pick<JournalEntry, "kind">): boolean {
+  return entry.kind === "manual" || entry.kind === "opening"
 }
 
 export const round2 = (n: number): number => Math.round((Number(n) || 0) * 100) / 100
@@ -205,6 +227,8 @@ export function buildEntry(input: BuildEntryInput): Omit<JournalEntry, "id"> {
       party: l.party ?? null,
       partyName: l.partyName ?? null,
       note: l.note ?? null,
+      // Only carried when present, so every existing line keeps its exact shape.
+      ...(l.wht ? { wht: { type: l.wht.type, rate: l.wht.rate, base: round2(l.wht.base) } } : {}),
     }))
     .filter((l) => l.debit !== 0 || l.credit !== 0)
 
