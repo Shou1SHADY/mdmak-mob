@@ -108,16 +108,19 @@ export default function SupplierDashboard() {
   // has been sent, so both the recent list and the two bars read what the
   // supplier MAY see. The bars are server counts over `status`, which cannot
   // know that: every order still waiting for approval is one award counted as
-  // accepted, so it moves across to pending here.
+  // accepted, so it moves across to pending here — and one cancelled before it
+  // ever reached the supplier is no longer his at all, so it leaves both.
   const { ordersById, ready: ordersReady } = useSupplierOrders(user?.organizationId);
   const offers = useMemo(() => asSupplierSees(stored, ordersById), [stored, ordersById]);
-  const undisclosed = useMemo(
-    () => [...ordersById.values()].filter((po) => supplierSegmentOf(po) == null).length,
-    [ordersById]
-  );
+  const undisclosed = useMemo(() => {
+    const hidden = [...ordersById.values()].filter((po) => supplierSegmentOf(po) == null);
+    const withdrawn = hidden.filter((po) => po.status === "cancelled").length;
+    return { waiting: hidden.length - withdrawn, withdrawn };
+  }, [ordersById]);
   const shown = useMemo(() => {
-    const moved = Math.min(stats.accepted, undisclosed);
-    return { ...stats, accepted: stats.accepted - moved, pending: stats.pending + moved };
+    const moved = Math.min(stats.accepted, undisclosed.waiting);
+    const gone = Math.min(stats.accepted - moved, undisclosed.withdrawn);
+    return { ...stats, accepted: stats.accepted - moved - gone, pending: stats.pending + moved };
   }, [stats, undisclosed]);
 
   const ratio = (n: number) => (shown.totalOffers > 0 ? n / shown.totalOffers : 0);

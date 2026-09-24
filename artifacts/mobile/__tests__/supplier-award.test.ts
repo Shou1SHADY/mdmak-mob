@@ -11,7 +11,7 @@
 // that gets dropped in a later edit — so this pins the whole state table, and
 // the two derivations the screens build on top of it.
 
-import { asSupplierSees, awardDisclosed, supplierOfferStatus, supplierSegmentOf, AWARDED, UNDER_REVIEW } from "@/lib/procurement/supplier";
+import { asSupplierSees, awardDisclosed, supplierOfferStatus, supplierSegmentOf, AWARDED, UNDER_REVIEW, CLOSED_UNAWARDED } from "@/lib/procurement/supplier";
 import type { PoLine, PoStoredStatus, PurchaseOrder } from "@/lib/procurement/types";
 
 const line = (over: Partial<PoLine> = {}): PoLine => ({
@@ -46,8 +46,8 @@ describe("an award the supplier may not read yet", () => {
     expect(supplierOfferStatus(award(), map(order("awaiting_approval", { returnedReason: "over the limit" })))).toBe(UNDER_REVIEW);
   });
 
-  it("waits when the order was cancelled before it ever reached him", () => {
-    expect(supplierOfferStatus(award(), map(order("cancelled")))).toBe(UNDER_REVIEW);
+  it("reads closed when the order was cancelled before it ever reached him — not under review forever", () => {
+    expect(supplierOfferStatus(award(), map(order("cancelled")))).toBe(CLOSED_UNAWARDED);
   });
 
   it("waits when the order cannot be read at all", () => {
@@ -148,7 +148,7 @@ describe("the count the dashboard corrects", () => {
     const every: PoStoredStatus[] = ["awaiting_approval", "approved", "sent", "accepted", "closed", "cancelled"];
     for (const status of every) {
       const po = order(status);
-      const masked = supplierOfferStatus(award(), map(po)) === UNDER_REVIEW;
+      const masked = supplierOfferStatus(award(), map(po)) !== AWARDED;
       expect(masked).toBe(supplierSegmentOf(po) == null);
     }
   });

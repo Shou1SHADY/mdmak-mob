@@ -114,6 +114,7 @@ export const OFFER_STATUS = {
   DELIVERED:        "تم التسليم",
   IN_TRANSIT:       "جاري التوصيل",
   IN_PREPARATION:   "قيد التجهيز",
+  CLOSED_UNAWARDED: "مغلق",
 } as const;
 
 export const OFFER_STATUSES: { id: string; label: string; labelAr: string; color: string; tone: Tone }[] = [
@@ -124,6 +125,7 @@ export const OFFER_STATUSES: { id: string; label: string; labelAr: string; color
   { id: "تم التسليم",      label: "Delivered",       labelAr: "تم التسليم",      color: "#06b6d4", tone: "accent" },
   { id: "جاري التوصيل",   label: "In Transit",      labelAr: "جاري التوصيل",   color: "#3b82f6", tone: "cta" },
   { id: "قيد التجهيز",    label: "In Preparation",  labelAr: "قيد التجهيز",    color: "#a855f7", tone: "purple" },
+  { id: "مغلق",            label: "Closed — not awarded", labelAr: "أُغلق دون ترسية", color: "#94a3b8", tone: "neutral" },
 ];
 
 /** Returns the canonical Arabic category name whether the input is Arabic or the
