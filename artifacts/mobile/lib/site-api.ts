@@ -138,3 +138,21 @@ export async function sendTeamInvitation(params: {
     return { ok: false, code: "NETWORK" };
   }
 }
+
+/** POST /api/sms {kind: "new_offer"} — the website tells the contractor about a
+ * new offer: the notification and the text, both written server-side because
+ * only the server can read the contractor's sealing policy (a sealed round must
+ * name no amount; the phone used to write "عرضاً بمبلغ …" itself). Returns
+ * whether it was told, so the caller can fall back to an amount-free notice. */
+export async function announceNewOffer(idToken: string, offerId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${SITE_URL}/api/sms`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ kind: "new_offer", offerId }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

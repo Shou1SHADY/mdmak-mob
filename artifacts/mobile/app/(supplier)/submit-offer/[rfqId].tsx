@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, Alert, TouchableOpacity, Platform, KeyboardAvoidingView, Modal, Pressable, TextInput,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { collection, addDoc, getDocs, query, where, getDoc, doc, updateDoc, increment } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, getDoc, doc, setDoc, updateDoc, increment } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -11,7 +11,8 @@ import { formatSar } from "@/lib/crm-display";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { announceNewOffer } from "@/lib/site-api";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -131,22 +132,32 @@ export default function SubmitOfferScreen() {
         executionDurationUnit,
       });
 
-      await addDoc(collection(db, "offers"), offerData);
+      const offerRef = await addDoc(collection(db, "offers"), offerData);
 
       // Notify contractor + increment offersCount (best-effort — don't fail the whole submit)
       if (contractorId) {
+        // The website tells the contractor (notification + text): only it can
+        // read the contractor's sealing policy, and a sealed round must name no
+        // amount. If it cannot be reached, an amount-free notice under the same
+        // id — a later server run overwrites it instead of adding a second.
         try {
-          await addDoc(collection(db, "users", contractorId, "notifications"), {
-            userId: contractorId,
-            type: "new_offer",
-            // Rendered in the READER's language by the website's notification screens.
-            i18n: { title: "pn_new_offer_title", message: "pn_new_offer", params: { supplier: user?.orgName || user?.displayName || "", price: Number(price).toLocaleString("en-US"), rfq: rfqTitle || "" } },
-            title: "عرض سعر جديد",  // ui-ok: fallback text for push; readers get i18n
-            message: `قدم المورد ${user?.orgName || user?.displayName || "مورد"} عرضاً بمبلغ ${Number(price).toLocaleString("ar-SA")} ر.س على مناقصة: ${rfqTitle}`,  // ui-ok: fallback text for push; readers get i18n
-            rfqId,
-            createdAt: new Date().toISOString(),
-            read: false,
-          });
+          const idToken = await auth.currentUser?.getIdToken();
+          const told = idToken ? await announceNewOffer(idToken, offerRef.id) : false;
+          if (!told) {
+            const supplier = user?.orgName || user?.displayName || "مورد";  // ui-ok: fallback text for push; readers get i18n
+            await setDoc(doc(db, "users", contractorId, "notifications", `new_offer__${offerRef.id}`), {
+              userId: contractorId,
+              type: "new_offer",
+              // Rendered in the READER's language by the website's notification screens.
+              i18n: { title: "pn_new_offer_title", message: "pn_new_offer_plain", params: { supplier, rfq: rfqTitle || "" } },
+              title: "عرض سعر جديد",  // ui-ok: fallback text for push; readers get i18n
+              message: `قدّم المورد ${supplier} عرضاً على طلب عروض الأسعار: ${rfqTitle}`,  // ui-ok: fallback text for push; readers get i18n
+              offerId: offerRef.id,
+              rfqId,
+              createdAt: new Date().toISOString(),
+              read: false,
+            });
+          }
         } catch (e: any) {
           if (__DEV__) console.warn("[SubmitOffer] Contractor notification failed:", e.message);
         }
