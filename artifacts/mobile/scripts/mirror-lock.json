@@ -4,7 +4,7 @@
     "src/components/supplier/SubmitOfferDialog.tsx": "9e29fb9d228cca0eea91c392cf82c6cb083ba41ded75d0612924614c81fea948"
   },
   "lib/crm-writes.ts": {
-    "src/lib/crm-writes.ts": "54be31a22ea81ba32ba381e02ef62faa449f97ec2693052dffda75e44f5cc136",
+    "src/lib/crm-writes.ts": "5e457a4eb6405af30cc290be2933f45def08acc83e9ee3f06796077c894a6967",
     "src/components/crm/CrmContactDialog.tsx": "21c34b8cc8cfee329f41d22b723d96edac999011270bc529adce8201d24e0f27",
     "src/components/crm/CrmOpportunityDialog.tsx": "ddeb0156a831580b8db971786402f0553cbbf1b721ab6edebf8fbde29c4435fb",
     "src/components/crm/CrmActivityDialog.tsx": "aa796c84858cd54aa6129d91de6043a690c6048075b892b5b83c232a3633a7e7"
@@ -16,6 +16,6 @@
     "src/app/[locale]/(supplier)/supplier/connections/page.tsx": "ddc34c019d7086696ff059a9cd3c5d47c3df889b98eac396980827ababa464f0"
   },
   "lib/portal-components.ts": {
-    "src/lib/portal-components.ts": "09b163053a66fd2dcd83584eda991f2719f5ab7b13b0be8e0be82864eeeabd5d"
+    "src/lib/portal-components.ts": "bd0eacdf7a7bfaaa5ed5ea54d8a071b5bea7a586dab31cf6713877f56c241daf"
   }
 }
