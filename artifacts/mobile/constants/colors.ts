@@ -43,6 +43,8 @@ const colors = {
     successForeground: "#FFFFFF",
 
     warning: "#976000", // AA on white, on the page and on warningSoft
+    // Project Management's module colour (PM 1.0), 6.9:1 on white.
+    pm: "#1F5AA8",
     warningForeground: "#FFFFFF",
 
     border: "#E1E6EE",
@@ -143,6 +145,7 @@ const colors = {
     successForeground: "#04170D",
 
     warning: "#F5B544",
+    pm: "#7FAEF0",
     warningForeground: "#1C1200",
 
     border: "#28344A", // visible against the lifted card

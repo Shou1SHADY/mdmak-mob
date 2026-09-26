@@ -47,7 +47,7 @@ export type PortalComponentId =
   | "users";
 
 /** Keys into the palette in constants/colors.ts, resolved by useColors(). */
-export type AccentToken = "primary" | "secondary" | "accent" | "success" | "cta" | "warning" | "destructive";
+export type AccentToken = "primary" | "secondary" | "accent" | "success" | "cta" | "warning" | "destructive" | "pm";
 
 export interface NavItem {
   /** Key into the `modules.items` i18n namespace. */
@@ -165,11 +165,15 @@ export const CONTRACTOR_COMPONENTS: PortalComponentDef[] = [
     descKey: "project_management",
     homeHref: "/(projects)",
     icon: "grid",
-    accentToken: "primary",
+    // PM 1.0's blue, as on the website.
+    accentToken: "pm",
     displayOrder: 2,
     items: [
       { titleKey: "dashboard", href: "/(contractor)/dashboard", icon: "grid", built: true },
       { titleKey: "projects", href: "/(projects)", icon: "folder", requiredPermission: "projects.view", built: true },
+      // PM 1.0 (HO-01, DEC-01): the handover inbox and the decisions across projects — web screens.
+      { titleKey: "pm_inbox", href: "/contractor/projects/inbox", icon: "inbox", built: false },
+      { titleKey: "pm_today", href: "/contractor/projects/today", icon: "sunrise", built: false },
     ],
   },
   {

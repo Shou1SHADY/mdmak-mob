@@ -180,6 +180,7 @@ export default function ContractorDashboard() {
       cta: colors.cta,
       warning: colors.warning,
       destructive: colors.destructive,
+      pm: colors.pm,
     };
     return map[mod.accentToken];
   };
