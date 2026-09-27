@@ -16,6 +16,6 @@
     "src/app/[locale]/(supplier)/supplier/connections/page.tsx": "ddc34c019d7086696ff059a9cd3c5d47c3df889b98eac396980827ababa464f0"
   },
   "lib/portal-components.ts": {
-    "src/lib/portal-components.ts": "bd0eacdf7a7bfaaa5ed5ea54d8a071b5bea7a586dab31cf6713877f56c241daf"
+    "src/lib/portal-components.ts": "2a274ffc8d7c7d2716dc6e01d2908371f49c15e29573568b584db15670ee0cf2"
   }
 }
