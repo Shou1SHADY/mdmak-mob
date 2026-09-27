@@ -47,7 +47,7 @@ export type PortalComponentId =
   | "users";
 
 /** Keys into the palette in constants/colors.ts, resolved by useColors(). */
-export type AccentToken = "primary" | "secondary" | "accent" | "success" | "cta" | "warning" | "destructive" | "pm";
+export type AccentToken = "primary" | "secondary" | "accent" | "success" | "cta" | "warning" | "destructive" | "pm" | "teal";
 
 export interface NavItem {
   /** Key into the `modules.items` i18n namespace. */
@@ -182,7 +182,7 @@ export const CONTRACTOR_COMPONENTS: PortalComponentDef[] = [
     descKey: "procurement",
     homeHref: "/(contractor)/rfqs",
     icon: "shopping-bag",
-    accentToken: "cta",
+    accentToken: "teal",
     displayOrder: 3,
     items: [
       { titleKey: "proc_today", href: "/contractor/rfqs/today", icon: "sunrise", requiredAnyPermission: PROC_ANY_ROLE, built: false },
@@ -320,7 +320,7 @@ export const SUPPLIER_COMPONENTS: PortalComponentDef[] = [
     descKey: "supplier_sales",
     homeHref: "/(supplier)/rfqs",
     icon: "shopping-bag",
-    accentToken: "cta",
+    accentToken: "teal",
     displayOrder: 3,
     items: [
       { titleKey: "browse_rfqs", href: "/(supplier)/rfqs", icon: "search", requiredPermission: "offers.view", built: true },

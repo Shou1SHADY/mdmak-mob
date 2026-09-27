@@ -45,6 +45,8 @@ const colors = {
     warning: "#976000", // AA on white, on the page and on warningSoft
     // Project Management's module colour (PM 1.0), 6.9:1 on white.
     pm: "#1F5AA8",
+    // Procurement's module colour (Procurement PRD 3.0), 4.6:1 on white.
+    teal: "#0D9488",
     warningForeground: "#FFFFFF",
 
     border: "#E1E6EE",
@@ -146,6 +148,7 @@ const colors = {
 
     warning: "#F5B544",
     pm: "#7FAEF0",
+    teal: "#2DD4BF",
     warningForeground: "#1C1200",
 
     border: "#28344A", // visible against the lifted card

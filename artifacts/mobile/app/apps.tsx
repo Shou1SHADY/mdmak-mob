@@ -56,6 +56,7 @@ export default function AppsLauncherScreen() {
       warning: colors.warning,
       destructive: colors.destructive,
       pm: colors.pm,
+      teal: colors.teal,
     };
     return map[token];
   };
