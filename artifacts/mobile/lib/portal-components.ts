@@ -171,9 +171,8 @@ export const CONTRACTOR_COMPONENTS: PortalComponentDef[] = [
     items: [
       { titleKey: "dashboard", href: "/(contractor)/dashboard", icon: "grid", built: true },
       { titleKey: "projects", href: "/(projects)", icon: "folder", requiredPermission: "projects.view", built: true },
-      // PM 1.0 (HO-01, DEC-01): the handover inbox and the decisions across projects — web screens.
+      // PM 1.0 (HO-01): the handover inbox — a web screen.
       { titleKey: "pm_inbox", href: "/contractor/projects/inbox", icon: "inbox", built: false },
-      { titleKey: "pm_today", href: "/contractor/projects/today", icon: "sunrise", built: false },
     ],
   },
   {
