@@ -63,6 +63,7 @@ const MIRRORS = {
   "lib/accounting/statement-tree.ts": "src/lib/accounting/statement-tree.ts",
   "lib/accounting/analytics.ts": "src/lib/accounting/analytics.ts",
   "lib/accounting/settings.ts": "src/lib/accounting/settings.ts",
+  "lib/accounting/branches.ts": "src/lib/accounting/branches.ts",
   "lib/manufacturing-engine.ts": "src/lib/manufacturing-engine.ts",
   "lib/manufacturing.ts": "src/lib/manufacturing.ts",
   "lib/delivery-notes.ts": "src/lib/delivery-notes.ts",

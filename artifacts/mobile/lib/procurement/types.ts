@@ -1,6 +1,3 @@
-// Mirrored VERBATIM from the website: src/lib/procurement/types.ts
-// Do not edit here. See scripts/check-mirrors.mjs.
-
 // Procurement PRD 3.0 — the purchase order and what hangs off it.
 //
 // Until now an accepted offer WAS the order. It still is, for everything that
@@ -142,8 +139,15 @@ export interface PurchaseOrder {
   projectId: string | null
   projectName?: string | null
   category?: string | null
-  /** Carried through so a receipt can still close Manufacturing's request. */
-  purchaseSource?: { kind: string; workOrderId?: string; purchaseRequestId?: string } | null
+  /** Carried through so a receipt can still close Manufacturing's request.
+   * `kind`: mfg_purchase (a work order's shortfall) · project_request (a
+   * project's internal request) · stock_gap (an item at or below its minimum). */
+  purchaseSource?: { kind: string; workOrderId?: string; purchaseRequestId?: string; projectId?: string; warehouseId?: string; itemId?: string } | null
+  /** An order placed ON a live price agreement (basis `direct`): its prices are
+   * the agreement's, already competed, so the direct-purchase cap and the split
+   * check do not apply to it. */
+  agreementId?: string | null
+  agreementNo?: string | null
 
   // The supplier, as the award knew it.
   supplierOrgId: string // "guest" for an off-platform supplier
@@ -296,6 +300,12 @@ export interface ProcurementPolicies {
   /** How many days before a delivery a notice still sitting with Procurement
    * becomes somebody's task to forward (§5.2-3b). */
   forwardWindowDays: number
+  /** Procurement → Finance → Supplier (customer review, 27 Sep 2026): once
+   * approved, an order to a supplier registered on the portal is sent to him
+   * there at once, in the approver's name — nobody has to remember to press
+   * "Send". A guest supplier has no portal: his order waits for WhatsApp or
+   * e-mail, and whoever may send it is told. ON by default. */
+  sendOnApproval: boolean
 }
 
 export const DEFAULT_POLICIES: ProcurementPolicies = {
@@ -310,6 +320,7 @@ export const DEFAULT_POLICIES: ProcurementPolicies = {
   splitWindowDays: 30,
   sealOffersUntilDeadline: false,
   forwardWindowDays: 1,
+  sendOnApproval: true,
 }
 
 /** What an approval needs to know about the supplier — read from the
