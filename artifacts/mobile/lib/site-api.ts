@@ -43,7 +43,7 @@ export function extractInviteToken(text: string): string | null {
 
 export type InvitationInfo =
   | { type: "team_invite"; email: string; name: string | null; orgName: string; role: string }
-  | { type: "supplier_invite"; email: string; companyName: string | null; contractorName: string };
+  | { type: "supplier_invite"; email: string | null; companyName: string | null; contractorName: string };
 
 export type ApiFailure = { ok: false; code: string; message?: string; status?: number };
 export type ApiResult<T> = { ok: true; data: T } | ApiFailure;
