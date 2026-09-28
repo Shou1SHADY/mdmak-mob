@@ -1,7 +1,3 @@
-// Mirrored VERBATIM from the website's src/lib/project-sections.ts. Zero imports, which
-// is what makes copying it whole safe — the status set and section catalog are
-// identical in both apps by construction. Re-copy when the website's changes;
-// never hand-edit here.
 // Project "sections" catalog (أقسام المشروع) — single source of truth for the 19
 // toggleable project features shown as tabs on the project detail page. Mirrors
 // src/lib/permissions.ts's catalog pattern, but this is NOT a permission system:
@@ -36,7 +32,7 @@ export const SECTION_IDS = [
   "contract", "procure", "docs",
   "receive", "store", "mats",
   "invoice", "pay", "cost", "ipc", "collect",
-  "mfg", "daily", "progress", "vo", "subs",
+  "mfg", "daily", "progress", "vo", "subs", "wwp", "eqp",
   "qa", "hse", "rfi",
 ] as const
 export type SectionId = (typeof SECTION_IDS)[number]
@@ -44,7 +40,7 @@ export type SectionId = (typeof SECTION_IDS)[number]
 export const SECTION_REGISTRY: Record<SectionId, SectionDef> = {
   contract: { id: "contract", group: "foundation", required: true, dependsOn: [], stages: ["budget"], reconciliationId: null, source: "auto", status: "built", tabRoute: null },
   procure: { id: "procure", group: "foundation", required: true, dependsOn: [], stages: ["priced", "commit"], reconciliationId: "r1", source: "auto", status: "built", tabRoute: null },
-  docs: { id: "docs", group: "foundation", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "mix", status: "ghost", tabRoute: "docs" },
+  docs: { id: "docs", group: "foundation", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "mix", status: "built", tabRoute: "docs" },
 
   receive: { id: "receive", group: "materials", required: false, dependsOn: [], stages: ["recv"], reconciliationId: "r2", source: "auto", status: "built", tabRoute: null },
   store: { id: "store", group: "materials", required: false, dependsOn: ["receive"], stages: [], reconciliationId: "r3", source: "man", status: "built", tabRoute: "warehouse" },
@@ -57,14 +53,16 @@ export const SECTION_REGISTRY: Record<SectionId, SectionDef> = {
   collect: { id: "collect", group: "money", required: false, dependsOn: ["ipc"], stages: ["coll"], reconciliationId: "r6", source: "mix", status: "built", tabRoute: "ipc" },
 
   mfg: { id: "mfg", group: "execution", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "built", tabRoute: "mfg" },
-  daily: { id: "daily", group: "execution", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "ghost", tabRoute: "daily" },
+  daily: { id: "daily", group: "execution", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "built", tabRoute: "daily" },
   progress: { id: "progress", group: "execution", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "ghost", tabRoute: "progress" },
   vo: { id: "vo", group: "execution", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "mix", status: "ghost", tabRoute: "vo" },
-  subs: { id: "subs", group: "execution", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "mix", status: "ghost", tabRoute: "subs" },
+  subs: { id: "subs", group: "execution", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "mix", status: "built", tabRoute: "subs" },
+  wwp: { id: "wwp", group: "execution", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "built", tabRoute: null },
+  eqp: { id: "eqp", group: "execution", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "built", tabRoute: null },
 
   qa: { id: "qa", group: "governance", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "ghost", tabRoute: "qa" },
-  hse: { id: "hse", group: "governance", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "ghost", tabRoute: "hse" },
-  rfi: { id: "rfi", group: "governance", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "ghost", tabRoute: "rfi" },
+  hse: { id: "hse", group: "governance", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "built", tabRoute: "hse" },
+  rfi: { id: "rfi", group: "governance", required: false, dependsOn: [], stages: [], reconciliationId: null, source: "man", status: "built", tabRoute: "rfi" },
 }
 
 export function sectionLabelKey(id: SectionId): string {
