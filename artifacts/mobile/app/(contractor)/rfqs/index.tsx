@@ -342,7 +342,7 @@ export default function MyRFQsScreen() {
 
       {/* Floating Action Button — only for a member who may actually create an
           RFQ; otherwise the wizard refuses at the last step. */}
-      {can("rfq.create") && (
+      {(can("rfq.create") || can("offers.accept") || can("po.approve")) && (
       <TouchableOpacity
         style={[
           styles.fab,

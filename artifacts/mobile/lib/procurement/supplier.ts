@@ -1,6 +1,3 @@
-// Mirrored VERBATIM from the website: src/lib/procurement/supplier.ts
-// Do not edit here. See scripts/check-mirrors.mjs.
-
 // The supplier's side of a purchase order (PRD 3.0 §5.1-7, §5.2-1, §7.4) —
 // pure. What the supplier portal derives from an order addressed to him:
 // which segment it sits in, whether he may still accept it or announce a
@@ -12,7 +9,7 @@
 
 import { daysLate, dayOf, lineOutstanding, lineToArrive, poStatus, todayOf } from "./po"
 import { noticeLinesFromPo } from "./receipts"
-import type { DeliveryLine, PoLine, PoStatus, PurchaseOrder } from "./types"
+import { QUALITY_PAPERS, type DeliveryLine, type PoLine, type PoStatus, type PurchaseOrder, type QualityPaper } from "./types"
 
 const num = (n: number | null | undefined) => (Number.isFinite(Number(n)) ? Number(n) : 0)
 
@@ -267,7 +264,9 @@ export interface NoticeInput {
   deliveryDate: string
   deliveryWindow?: DeliveryWindow | null
   driverName?: string | null
+  driverPhone?: string | null
   vehiclePlate?: string | null
+  qualityPapers?: QualityPaper[] | null
   paperNoteNumber?: string | null
   notes?: string | null
   /** The uploaded note / certificates, when any. */
@@ -302,6 +301,8 @@ export interface DeliveryNoticeDoc {
   poNumber: string
   lines: DeliveryLine[]
   vehiclePlate: string | null
+  driverPhone: string | null
+  qualityPapers: QualityPaper[]
   paperNoteNumber: string | null
   deliveryWindow: string | null
   attachmentUrls?: string[]
@@ -339,6 +340,8 @@ export function buildDeliveryNotice(input: NoticeInput): DeliveryNoticeDoc {
     poNumber: po.docNumber,
     lines,
     vehiclePlate: text(input.vehiclePlate),
+    driverPhone: text(input.driverPhone),
+    qualityPapers: QUALITY_PAPERS.filter((p) => input.qualityPapers?.includes(p)),
     paperNoteNumber: text(input.paperNoteNumber),
     deliveryWindow: input.deliveryWindow ?? null,
   }

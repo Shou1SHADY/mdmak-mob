@@ -68,9 +68,10 @@ export default function CreateRFQScreen() {
     // One write at a time: "Save draft" and "Publish" are separate buttons, and
     // only the one that was pressed shows a spinner — the other stayed tappable.
     if (loading) return;
-    // The website gates RFQ creation on 'rfq.create'; firestore.rules requires
+    // The website gates RFQ creation on 'rfq.create' — or the purchasing manager's
+    // and buyers' offers.accept / po.approve; firestore.rules requires
     // it too, so an ungated member would just see the write fail.
-    if (!can("rfq.create")) {
+    if (!(can("rfq.create") || can("offers.accept") || can("po.approve"))) {
       Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
       return;
     }

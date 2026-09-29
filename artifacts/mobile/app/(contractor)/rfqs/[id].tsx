@@ -149,7 +149,7 @@ export default function RFQDetailScreen() {
   });
 
   const handleRepublish = () => {
-    if (!can("rfq.create")) { Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission); return; }
+    if (!(can("rfq.create") || can("offers.accept") || can("po.approve"))) { Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission); return; }
     Alert.alert(t.rfq.republish, t.rfq.republishConfirm, [
       { text: t.common.cancel, style: "cancel" },
       {

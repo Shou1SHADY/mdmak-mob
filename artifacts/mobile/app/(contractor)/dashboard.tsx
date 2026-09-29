@@ -316,7 +316,7 @@ export default function ContractorDashboard() {
           />
 
           <View style={[styles.quickRow, { flexDirection: row }]}>
-            {can("rfq.create") && (
+            {(can("rfq.create") || can("offers.accept") || can("po.approve")) && (
               <QuickActionCard
                 title={t.dashboard.createRfq}
                 icon="file-plus"
@@ -387,7 +387,7 @@ export default function ContractorDashboard() {
           {loading
             ? [1, 2, 3].map((k) => <CardSkeleton key={k} />)
             : rfqs.length === 0
-            ? <EmptyState icon="file-text" title={t.dashboard.noRfqs} subtitle={t.dashboard.noRfqsDesc} actionLabel={can("rfq.create") ? t.dashboard.createRfq : undefined} onAction={can("rfq.create") ? () => router.push("/(contractor)/rfqs/create") : undefined} />
+            ? <EmptyState icon="file-text" title={t.dashboard.noRfqs} subtitle={t.dashboard.noRfqsDesc} actionLabel={(can("rfq.create") || can("offers.accept") || can("po.approve")) ? t.dashboard.createRfq : undefined} onAction={(can("rfq.create") || can("offers.accept") || can("po.approve")) ? () => router.push("/(contractor)/rfqs/create") : undefined} />
             : rfqs.slice(0, 5).map((rfq) => (
               <RFQCard key={rfq.id} rfq={rfq} onPress={() => router.push(`/(contractor)/rfqs/${rfq.id}`)} showOffers />
             ))}
