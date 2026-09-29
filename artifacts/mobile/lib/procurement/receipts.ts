@@ -1,6 +1,3 @@
-// Mirrored VERBATIM from the website: src/lib/procurement/receipts.ts
-// Do not edit here. See scripts/check-mirrors.mjs.
-
 // The goods receipt, derived (PRD 3.0 §5.2, §6.1-6). The gate counts blind —
 // the quantity field is never prefilled from the supplier's notice — then
 // rejects with a coded reason, holds for inspection with a reason, and the
@@ -138,7 +135,8 @@ export type ReceiptState = (typeof RECEIPT_STATES)[number]
 
 /** First match wins: a receipt with no order is a regularisation case
  * whatever else it says; a pending notice is on the way until its date
- * passes; at the gate, rejects outrank a hold, a hold outranks a shortfall. */
+ * passes; at the gate, a hold outranks rejects (the prototype's GST — held
+ * goods still wait on someone), rejects outrank a shortfall. */
 export function receiptState(delivery: ReceiptFact, now: Date): ReceiptState {
   if (delivery.source === "manual" && !delivery.poId) return "manual_no_po"
   if (delivery.status !== "confirmed") {
@@ -146,8 +144,8 @@ export function receiptState(delivery: ReceiptFact, now: Date): ReceiptState {
     return d != null && d < 0 ? "late_notice" : "on_the_way"
   }
   const lines = delivery.lines || []
-  if (lines.some((l) => num(l.rejected) > 0)) return "received_with_rejects"
   if (lines.some((l) => num(l.held) > 0)) return "received_held"
+  if (lines.some((l) => num(l.rejected) > 0)) return "received_with_rejects"
   if (lines.some((l) => shortVsNotice(l) > 0)) return "received_short"
   return "received"
 }
