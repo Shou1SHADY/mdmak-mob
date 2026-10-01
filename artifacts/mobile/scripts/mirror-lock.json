@@ -10,7 +10,7 @@
     "src/components/crm/CrmActivityDialog.tsx": "aa796c84858cd54aa6129d91de6043a690c6048075b892b5b83c232a3633a7e7"
   },
   "lib/delivery-writes.ts": {
-    "src/components/contractor/RfqOffersView.tsx": "77a22a89a661cb68bbbec9b375d2a42b664aaa0ab020c1c4e4d8e60fa9d56366"
+    "src/components/contractor/RfqOffersView.tsx": "efca65345ae622af0a1707a54f6fa525ccdfd756758f09ea3c1170d1975fc807"
   },
   "lib/connection-writes.ts": {
     "src/app/[locale]/(supplier)/supplier/connections/page.tsx": "ddc34c019d7086696ff059a9cd3c5d47c3df889b98eac396980827ababa464f0"
