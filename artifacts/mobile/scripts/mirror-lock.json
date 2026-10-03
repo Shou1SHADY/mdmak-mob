@@ -7,7 +7,7 @@
     "src/lib/crm-writes.ts": "5e457a4eb6405af30cc290be2933f45def08acc83e9ee3f06796077c894a6967",
     "src/components/crm/CrmContactDialog.tsx": "21c34b8cc8cfee329f41d22b723d96edac999011270bc529adce8201d24e0f27",
     "src/components/crm/CrmOpportunityDialog.tsx": "ddeb0156a831580b8db971786402f0553cbbf1b721ab6edebf8fbde29c4435fb",
-    "src/components/crm/CrmActivityDialog.tsx": "aa796c84858cd54aa6129d91de6043a690c6048075b892b5b83c232a3633a7e7"
+    "src/components/crm/CrmActivityDialog.tsx": "7ebd5d0477fa0c877140d662d39b2810de7d04ce8ee73fe6cfe6077ad83ab63c"
   },
   "lib/delivery-writes.ts": {
     "src/components/contractor/RfqOffersView.tsx": "efca65345ae622af0a1707a54f6fa525ccdfd756758f09ea3c1170d1975fc807"
