@@ -44,7 +44,9 @@ export type PortalComponentId =
   | "sales"
   | "manufacturing"
   | "accounting"
-  | "users";
+  | "users"
+  | "activities"
+  | "documents";
 
 /** Keys into the palette in constants/colors.ts, resolved by useColors(). */
 export type AccentToken = "primary" | "secondary" | "accent" | "success" | "cta" | "warning" | "destructive" | "pm" | "teal";
@@ -73,6 +75,8 @@ export interface PortalComponentDef {
   accentToken: AccentToken;
   displayOrder: number;
   items: NavItem[];
+  /** False for a module the company switched off whose home must stay reachable (the website's `launcher`). */
+  launcher?: boolean;
 }
 
 /** Procurement's Today opens for anyone holding any of the module's
@@ -210,6 +214,7 @@ export const CONTRACTOR_COMPONENTS: PortalComponentDef[] = [
       { titleKey: "warehouses", href: "/(inventory)", icon: "home", requiredPermission: "warehouses.manage", built: true },
       { titleKey: "warehouse_requests", href: "/(inventory)/requests", icon: "clipboard", requiredPermission: "warehouses.manage", built: true },
       { titleKey: "waste", href: "/(inventory)/waste", icon: "trash-2", requiredPermission: "warehouses.manage", built: true },
+      { titleKey: "equipment_desk", href: "/contractor/warehouses/equipment", icon: "tool", requiredPermission: "warehouses.manage", built: false },
     ],
   },
   {
@@ -280,6 +285,26 @@ export const CONTRACTOR_COMPONENTS: PortalComponentDef[] = [
     displayOrder: 10,
     items: accountingItems("/contractor"),
   },
+  {
+    id: "activities",
+    labelKey: "activities",
+    descKey: "activities",
+    homeHref: "/contractor/activities",
+    icon: "check-square",
+    accentToken: "cta",
+    displayOrder: 11,
+    items: [{ titleKey: "my_todos", href: "/contractor/activities", icon: "check-square", built: false }],
+  },
+  {
+    id: "documents",
+    labelKey: "documents",
+    descKey: "documents",
+    homeHref: "/contractor/documents",
+    icon: "folder",
+    accentToken: "primary",
+    displayOrder: 12,
+    items: [{ titleKey: "documents", href: "/contractor/documents", icon: "folder", built: false }],
+  },
 ];
 
 // Same slots, same accents — Inventory/Finance/HR/CRM/Governance/Manufacturing/
@@ -299,20 +324,23 @@ export const SUPPLIER_COMPONENTS: PortalComponentDef[] = [
       { titleKey: "crm_leads", href: "/(crm)/leads", icon: "user-plus", requiredPermission: "crm.manage", built: true },
       { titleKey: "crm_opportunities", href: "/(crm)/opportunities", icon: "target", requiredPermission: "crm.manage", built: true },
       { titleKey: "crm_activities", href: "/(crm)/activities", icon: "clipboard", requiredPermission: "crm.manage", built: true },
-      { titleKey: "connections", href: "/(connections)", icon: "link", requiredPermission: "crm.manage", built: true },
     ],
   },
   {
     id: "project-management",
     labelKey: "order_management",
     descKey: "order_management",
-    homeHref: "/(supplier)/dashboard",
+    // The orders, as on the website (homeHref "/supplier/orders"): the home is the app's start screen.
+    homeHref: "/(supplier)/orders",
     icon: "grid",
     accentToken: "primary",
     displayOrder: 2,
     items: [
       { titleKey: "dashboard", href: "/(supplier)/dashboard", icon: "grid", built: true },
       { titleKey: "orders", href: "/(supplier)/orders", icon: "clipboard", built: true },
+      // Connections (contractors asking to link) belong to the selling relationship, so they stay when a
+      // sales-only supplier has no CRM — moved here from CRM as on the website (11 Oct 2026).
+      { titleKey: "connections", href: "/(connections)", icon: "link", requiredAnyPermission: ["crm.manage", "offers.view"], built: true },
     ],
   },
   {
@@ -402,6 +430,26 @@ export const SUPPLIER_COMPONENTS: PortalComponentDef[] = [
     displayOrder: 10,
     items: accountingItems("/supplier"),
   },
+  {
+    id: "activities",
+    labelKey: "activities",
+    descKey: "activities",
+    homeHref: "/supplier/activities",
+    icon: "check-square",
+    accentToken: "cta",
+    displayOrder: 9,
+    items: [{ titleKey: "my_todos", href: "/supplier/activities", icon: "check-square", built: false }],
+  },
+  {
+    id: "documents",
+    labelKey: "documents",
+    descKey: "documents",
+    homeHref: "/supplier/documents",
+    icon: "folder",
+    accentToken: "primary",
+    displayOrder: 10,
+    items: [{ titleKey: "documents", href: "/supplier/documents", icon: "folder", built: false }],
+  },
 ];
 
 export function componentsForRole(role: string | undefined): PortalComponentDef[] {
@@ -443,7 +491,7 @@ export function visibleComponents(
   can: PermissionCheck
 ): PortalComponentDef[] {
   return components
-    .filter((component) => isComponentVisible(component, can))
+    .filter((component) => component.launcher !== false && isComponentVisible(component, can))
     .slice()
     .sort((a, b) => a.displayOrder - b.displayOrder);
 }

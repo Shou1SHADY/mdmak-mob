@@ -8,6 +8,7 @@ import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useVisibleModules } from "@/hooks/useCompanyModules";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { scrollBottomPadding } from "@/lib/layout";
 import { type, space, radius } from "@/lib/design";
@@ -61,11 +62,9 @@ export default function AppsLauncherScreen() {
     return map[token];
   };
 
-  const modules = useMemo(
-    () => visibleComponents(componentsForRole(user?.role), can),
-    // `can` closes over the member's groups, which load asynchronously.
-    [user?.role, can]
-  );
+  // The role's modules, minus what the company switched off (sales-only
+  // suppliers and the like), minus what the member's permissions leave empty.
+  const { modules, loading: modulesLoading } = useVisibleModules();
   const onPhone = useMemo(() => modules.filter((m) => hasBuiltScreens(m, can)), [modules, can]);
   const onWebOnly = useMemo(() => modules.filter((m) => !hasBuiltScreens(m, can)), [modules, can]);
   const communication = useMemo(() => communicationForRole(user?.role), [user?.role]);
@@ -73,7 +72,7 @@ export default function AppsLauncherScreen() {
   // The launcher lists every module the caller may open, so it needs the same
   // guard they do. Without it a signed-out visitor saw a partial list built
   // from the implicit read-only permissions rather than the login screen.
-  if (loading || permsLoading) {
+  if (loading || permsLoading || modulesLoading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.cta} />

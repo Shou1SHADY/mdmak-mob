@@ -215,7 +215,7 @@ export default function CrmLeadDetailScreen() {
       Alert.alert(t.common.error, t.crm.titleRequired);
       return;
     }
-    if (!orgId) return;
+    if (!orgId || !user?.uid) return;
     setBusy(true);
     try {
       const parsed = parseFloat(dealValue.replace(/,/g, ""));
@@ -227,8 +227,8 @@ export default function CrmLeadDetailScreen() {
         track: dealTrack,
         value: Number.isFinite(parsed) ? Math.max(0, parsed) : 0,
         expectedCloseDate: dealClose || null,
-        ownerId: user?.uid ?? null,
-        ownerName: user?.displayName ?? null,
+        actorId: user.uid,
+        actorName: user.displayName ?? null,
       });
       setDealSheet(false);
       setDealTitle("");

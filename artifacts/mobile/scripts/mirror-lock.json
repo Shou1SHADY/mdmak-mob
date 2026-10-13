@@ -1,21 +1,24 @@
 {
   "lib/contracts.ts": {
-    "src/components/contractor/RfqForm.tsx": "d6e85fc97c0134beaa879d8c97cc3c981a600703a4b0523df490a0600a994c3f",
-    "src/components/supplier/SubmitOfferDialog.tsx": "0a07e45cf7210301f97d47ea3d390966c752402cc03a1ad0a276f293dbf6b71c"
+    "src/components/contractor/RfqForm.tsx": "40343e0fda72a427cc76d8f78a0e7f64796cc35dd6bc022b03953c3caf1f3f4b",
+    "src/components/supplier/SubmitOfferDialog.tsx": "6f98e7717fcf2836a683fa030e30a231a0ca4e63e7f0b570c8e04bd1371e2e4b"
   },
   "lib/crm-writes.ts": {
-    "src/lib/crm-writes.ts": "5e457a4eb6405af30cc290be2933f45def08acc83e9ee3f06796077c894a6967",
-    "src/components/crm/CrmContactDialog.tsx": "21c34b8cc8cfee329f41d22b723d96edac999011270bc529adce8201d24e0f27",
-    "src/components/crm/CrmOpportunityDialog.tsx": "ddeb0156a831580b8db971786402f0553cbbf1b721ab6edebf8fbde29c4435fb",
-    "src/components/crm/CrmActivityDialog.tsx": "7ebd5d0477fa0c877140d662d39b2810de7d04ce8ee73fe6cfe6077ad83ab63c"
+    "src/lib/crm-writes.ts": "12cddcd93f3ecb85a85bcf637f541c12f409ec103b77d01825c655c571aaf725",
+    "src/components/crm/CrmContactDialog.tsx": "7ec91c8499ba6e943f4014974ad2c2597d8b11784412c9ef61ec28551e70cdcb",
+    "src/components/crm/CrmOpportunityDialog.tsx": "adaf6f59b164a61a2deedd8c3e69fb90b7b97e3e2932d124578fe75f0c798f64",
+    "src/components/crm/CrmActivityDialog.tsx": "62b6cb9d7de92db7464f328e93d0c7d6e69db3bffa2778194dbb14fb9116f0ea"
   },
   "lib/delivery-writes.ts": {
-    "src/components/contractor/RfqOffersView.tsx": "efca65345ae622af0a1707a54f6fa525ccdfd756758f09ea3c1170d1975fc807"
+    "src/components/contractor/RfqOffersView.tsx": "ed8aebbdd95c6431a4e99effd33b875b500cb88a6376864e8ef9e4a5251292ab"
   },
   "lib/connection-writes.ts": {
-    "src/app/[locale]/(supplier)/supplier/connections/page.tsx": "ddc34c019d7086696ff059a9cd3c5d47c3df889b98eac396980827ababa464f0"
+    "src/app/[locale]/(supplier)/supplier/connections/page.tsx": "7fcefead98b8fa15b8e34d7d2d752da97e2f0a42429ba2d4734dd5c9c58b2326"
   },
   "lib/portal-components.ts": {
-    "src/lib/portal-components.ts": "f233b3c60addc992f80dfcce5bab5c8897151e0ca090c0b7f3d0505c7a31a817"
+    "src/lib/portal-components.ts": "fbbabfc9662aed685da7c79ac3371b4cfdfeee8bfc3e256d9455ec1c3e6adf44"
+  },
+  "lib/company-modules.ts": {
+    "src/lib/company-modules.ts": "3a5f2d15c7fcb2d6480dac31aaf66aa87478844e2c23e9ceaf0f253752a8a145"
   }
 }

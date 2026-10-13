@@ -95,7 +95,7 @@ export default function ConnectionsScreen() {
   if (!user) return <Redirect href="/auth/login" />;
   if (user.role !== "Supplier") return <Redirect href="/" />;
 
-  if (!can("crm.manage")) {
+  if (!can("crm.manage") && !can("offers.view")) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background, padding: 32 }]}>
         <Feather name="lock" size={32} color={colors.outline} />

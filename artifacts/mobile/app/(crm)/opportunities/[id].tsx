@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import * as WebBrowser from "expo-web-browser";
+import { siteUrl } from "@/lib/site-api";
 import { db } from "@/lib/firebase";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useToast } from "@/context/ToastContext";
@@ -92,7 +94,23 @@ export default function CrmOpportunityDetailScreen() {
       .catch(() => { if (!cancelled) setProfile(null); });
     return () => { cancelled = true; };
   }, [orgId]);
-  const gateCtx: GateContext = { profile: profile ?? null };
+  // Journey v1.1: «negotiation» and the award need an offer Sales has SENT on
+  // this deal (website src/lib/crm-journey.ts wasSent). Read it, so the phone
+  // blocks and allows exactly what the website does.
+  const [offerSent, setOfferSent] = useState(false);
+  useEffect(() => {
+    if (!orgId || !id) return;
+    let cancelled = false;
+    getDocs(query(collection(db, "crmQuotations"), where("organizationId", "==", orgId), where("opportunityId", "==", id)))
+      .then((snap) => {
+        if (cancelled) return;
+        setOfferSent(snap.docs.some((d) => ["sent", "accepted", "rejected"].includes(String(d.data().status))));
+      })
+      .catch(() => { if (!cancelled) setOfferSent(false); });
+    return () => { cancelled = true; };
+  }, [orgId, id]);
+  // A price recorded under the old CRM ladder (`submittedPrice`) is still an offer (web hasSentOffer).
+  const gateCtx: GateContext = { profile: profile ?? null, offerSent: offerSent || ((opp?.submittedPrice || 0) > 0) };
 
   const [editSheet, setEditSheet] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -184,6 +202,10 @@ export default function CrmOpportunityDetailScreen() {
         return t.crm.blockedClosed;
       case "terminal":
         return t.crm.blockedTerminal;
+      case "pricing":
+        return t.crm.blockedPricing;
+      case "offer":
+        return t.crm.blockedOffer;
       default:
         return t.crm.cannotAdvance;
     }
@@ -196,13 +218,22 @@ export default function CrmOpportunityDetailScreen() {
       Alert.alert(t.crm.cannotAdvance, t.crm.blockedTerminal);
       return;
     }
+    if (block === "pricing" || block === "offer" || block === "gates") {
+      // Asking Sales for a price, waiting for its offer and the stage checklist
+      // (files, fit, go/no-go) are desktop work: say so and offer the web page.
+      Alert.alert(t.crm.cannotAdvance, blockMessage(), [
+        { text: t.common.cancel, style: "cancel" },
+        { text: t.crm.openOnWeb, onPress: () => { void WebBrowser.openBrowserAsync(siteUrl(`/${user?.role === "Supplier" ? "supplier" : "contractor"}/crm/opportunities/${opp.id}`)); } },
+      ]);
+      return;
+    }
     if (block !== null) {
       Alert.alert(t.crm.cannotAdvance, blockMessage());
       return;
     }
     setBusy(true);
     try {
-      await advanceOpportunityStage(opp, target as Exclude<OpportunityStage, "won" | "lost">);
+      await advanceOpportunityStage(opp, target as Exclude<OpportunityStage, "won" | "lost">, user?.displayName ?? null);
     } catch (e: any) {
       if (__DEV__) console.warn("[CrmOpportunity] advance:", e?.message);
       Alert.alert(t.common.error, t.crm.saveFailed);

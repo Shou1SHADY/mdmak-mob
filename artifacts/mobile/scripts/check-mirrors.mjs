@@ -51,6 +51,7 @@ const MIRRORS = {
   "lib/sales-installments.ts": "src/lib/sales-installments.ts",
   "lib/sales-orders.ts": "src/lib/sales-orders.ts",
   "lib/sales-transfers.ts": "src/lib/sales-transfers.ts",
+  "lib/sales-receipts.ts": "src/lib/sales-receipts.ts",
   "lib/accounting/accounts.ts": "src/lib/accounting/accounts.ts",
   "lib/accounting/journal.ts": "src/lib/accounting/journal.ts",
   "lib/accounting/posting-rules.ts": "src/lib/accounting/posting-rules.ts",
@@ -78,6 +79,7 @@ const MIRRORS = {
   "lib/procurement/po.ts": "src/lib/procurement/po.ts",
   "lib/procurement/receipts.ts": "src/lib/procurement/receipts.ts",
   "lib/procurement/supplier.ts": "src/lib/procurement/supplier.ts",
+  "lib/supplier-home.ts": "src/lib/supplier-home.ts",
 };
 
 /**
@@ -119,6 +121,7 @@ const UPSTREAM_PINS = {
   "lib/delivery-writes.ts": ["src/components/contractor/RfqOffersView.tsx"],
   "lib/connection-writes.ts": ["src/app/[locale]/(supplier)/supplier/connections/page.tsx"],
   "lib/portal-components.ts": ["src/lib/portal-components.ts"],
+  "lib/company-modules.ts": ["src/lib/company-modules.ts"],
 };
 
 /** Drop the mobile copy's leading header comment and normalise line endings. */

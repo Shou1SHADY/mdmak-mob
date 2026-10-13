@@ -1,8 +1,9 @@
 import {
-  addDoc, collection, deleteDoc, doc, getDocs, query, serverTimestamp, updateDoc, where, writeBatch,
+  addDoc, collection, deleteDoc, doc, getDocs, query, runTransaction, serverTimestamp, updateDoc, where, writeBatch,
   type DocumentReference,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { drawYearlyDocNumber } from "@/lib/sales-numbering";
 import {
   CRM_ACTIVITIES,
   CRM_CONTACTS,
@@ -24,7 +25,7 @@ import {
 // indistinguishable from one written there:
 //
 //   contact      -> src/components/crm/CrmContactDialog.tsx
-//   opportunity  -> src/components/crm/CrmOpportunityDialog.tsx
+//   opportunity  -> src/lib/crm-opportunity-writes.ts createOpportunity (journey v1.1)
 //   activity     -> src/components/crm/CrmActivityDialog.tsx
 //   stage move   -> src/components/crm/CrmOpportunitiesView.tsx
 //
@@ -107,49 +108,59 @@ export interface CreateOpportunityInput {
   value: number;
   expectedCloseDate?: string | null;
   notes?: string | null;
-  ownerId?: string | null;
-  ownerName?: string | null;
+  /** Who opened it — journey v1.1 records the doer; a deal has no owner before handover. */
+  actorId: string;
+  actorName: string | null;
 }
 
 /**
- * Opens a deal at stage "new".
+ * Opens a deal at stage "new", as the website's createOpportunity does
+ * (src/lib/crm-opportunity-writes.ts, Opportunity journey v1.1): the yearly
+ * number «OP-yyyy/NNN» is drawn in the SAME transaction, the creator is
+ * recorded, and there is no owner until the deal is handed over.
  *
  * The seed fields (`stage`, `state`, `completedGates`, `approvalStatus`,
- * `stageHistory`, `addenda`) are exactly the website's, and they matter: the
- * security rules reject a create that starts already-closed, and the gate and
- * history helpers in lib/crm.ts assume these arrays exist.
+ * `stageHistory`, `addenda`, `fileCounts`) are exactly the website's: the
+ * rules reject a create that starts closed, and the gate helpers in
+ * lib/crm.ts read them.
  */
 export async function createOpportunity(input: CreateOpportunityInput): Promise<string> {
-  const created = await addDoc(collection(db, CRM_OPPORTUNITIES), {
-    contactId: input.contactId,
-    contactName: input.contactName,
-    title: input.title.trim(),
-    track: input.track,
-    value: input.value,
-    probability: null,
-    expectedCloseDate: input.expectedCloseDate || null,
-    ownerId: input.ownerId || null,
-    ownerName: input.ownerName || null,
-    notes: input.notes?.trim() || null,
-    scopeTypes: [],
-    customScopeType: null,
-    customScopeActivity: null,
-    route: null,
-    contractKind: null,
-    source: null,
-    consultantContactId: null,
-    consultantName: null,
-    stage: "new",
-    state: "open",
-    completedGates: [],
-    approvalStatus: "none",
-    stageHistory: [historyEntry("new", input.ownerName ?? null)],
-    addenda: [],
-    organizationId: input.orgId,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  const ref = doc(collection(db, CRM_OPPORTUNITIES));
+  await runTransaction(db, async (tx) => {
+    const docNumber = await drawYearlyDocNumber(db, tx, input.orgId, "OP");
+    tx.set(ref, {
+      contactId: input.contactId,
+      contactName: input.contactName,
+      title: input.title.trim(),
+      track: input.track,
+      value: input.value,
+      probability: null,
+      expectedCloseDate: input.expectedCloseDate || null,
+      notes: input.notes?.trim() || null,
+      scopeTypes: [],
+      customScopeType: null,
+      customScopeActivity: null,
+      route: null,
+      contractKind: null,
+      source: null,
+      consultantContactId: null,
+      consultantName: null,
+      docNumber,
+      organizationId: input.orgId,
+      stage: "new",
+      state: "open",
+      completedGates: [],
+      approvalStatus: "none",
+      addenda: [],
+      fileCounts: {},
+      createdById: input.actorId,
+      createdByName: input.actorName,
+      stageHistory: [historyEntry("new", input.actorName)],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
   });
-  return created.id;
+  return ref.id;
 }
 
 /**
@@ -161,13 +172,15 @@ export async function createOpportunity(input: CreateOpportunityInput): Promise<
  * flow lives on the website.
  */
 export async function advanceOpportunityStage(
-  opp: Pick<CrmOpportunity, "id" | "stageHistory" | "ownerName">,
-  stage: Exclude<OpportunityStage, "won" | "lost">
+  opp: Pick<CrmOpportunity, "id" | "stageHistory">,
+  stage: Exclude<OpportunityStage, "won" | "lost">,
+  /** Who moved it — every act is a fact in the doer's name (journey v1.1; a deal has no owner before handover). */
+  actorName: string | null
 ): Promise<void> {
   await updateDoc(doc(db, CRM_OPPORTUNITIES, opp.id), {
     stage,
     state: "open",
-    stageHistory: [...(opp.stageHistory ?? []), historyEntry(stage, opp.ownerName)],
+    stageHistory: [...(opp.stageHistory ?? []), historyEntry(stage, actorName)],
     updatedAt: serverTimestamp(),
   });
 }

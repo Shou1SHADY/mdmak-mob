@@ -9,10 +9,11 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
 
 /**
- * Connections — the supplier's invitation inbox, reached from the CRM module.
+ * Connections — the supplier's invitation inbox, reached from Order Management.
  *
- * Supplier-only, and gated on `crm.manage` like every other CRM item in the
- * registry. It had no layout of its own, so it was the one module screen that
+ * Supplier-only, gated on `crm.manage` OR `offers.view` as on the website (it
+ * moved out of CRM on 11 Oct 2026 so a sales-only supplier keeps it), and
+ * it had no layout of its own, so it was the one module screen that
  * opened with no bottom bar: a back arrow was the only way out, which is the
  * exact failure ModuleTabBar exists to prevent. One tab, like Goods Received.
  */
@@ -34,7 +35,7 @@ export default function ConnectionsLayout() {
   if (!user) return <Redirect href="/auth/login" />;
   if (user.role !== "Supplier") return <Redirect href="/" />;
 
-  if (!can("crm.manage")) {
+  if (!can("crm.manage") && !can("offers.view")) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background, padding: 32 }]}>
         <Feather name="lock" size={32} color={colors.outline} />
