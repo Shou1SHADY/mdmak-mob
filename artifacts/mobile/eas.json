@@ -24,7 +24,8 @@
         "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "studio-2889504658-6ee2a.firebasestorage.app",
         "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "374877124985",
         "EXPO_PUBLIC_FIREBASE_APP_ID": "1:374877124985:web:c7e928b56b265e9a2597a8"
-      }
+      },
+      "autoIncrement": true
     },
     "production-web": {
       "parent": "production",
