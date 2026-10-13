@@ -15,25 +15,30 @@ import { type Tone } from "@/lib/design";
 import { labelFor } from "@/lib/labels";
 import { formatSarCompact } from "@/lib/crm-display";
 import { orderGross, type SalesOrder } from "@/lib/sales-orders";
+import { useSalesScope } from "@/lib/sales-scope-hook";
 
 /**
  * Sales orders — the backbone between a quotation and the cash, read the way
  * the website derives it: the gross comes from the mirrored money functions,
  * and "awaiting the advance" is the state the Payments tab resolves by
- * reporting the client's transfer.
+ * reporting the client's transfer. A rep sees only his own clients' orders
+ * (the website's `inSalesScope`, lib/sales-scope.ts).
  */
 export default function SalesOrdersScreen() {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { items: orders, isLoading, error: loadError } = useOrgCollection<SalesOrder>("salesOrders");
+  const { items: orders, isLoading: oLoading, error: loadError } = useOrgCollection<SalesOrder>("salesOrders");
+  const { mine, isLoading: scopeLoading } = useSalesScope();
+  const isLoading = oLoading || scopeLoading;
 
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return orders
+      .filter(mine)
       .filter((o) =>
         q
           ? String(o.orderNumber).includes(q) ||
@@ -42,7 +47,7 @@ export default function SalesOrdersScreen() {
           : true
       )
       .sort((a, b) => (b.orderNumber || 0) - (a.orderNumber || 0));
-  }, [orders, search]);
+  }, [orders, search, mine]);
 
   const statusTone = (status: string): Tone =>
     status === "running" ? "cta" : status === "closed" ? "success" : status === "cancelled" ? "destructive" : "warning";

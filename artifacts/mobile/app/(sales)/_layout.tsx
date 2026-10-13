@@ -13,10 +13,13 @@ import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
  *
  * The seller never invoices and never collects: a client's "I paid" becomes a
  * transfer notice here, and only Finance answers it — which is why the gate
- * admits `invoices.manage` alongside the two sales permissions: the Finance
- * person opens this module for the notices inbox on Payments. Writing the
- * quotation itself (the live A4 composer) stays on the web; this module
- * tracks, reports and answers.
+ * admits Finance alongside the two sales permissions: the Finance person opens
+ * this module for the notices inbox on Payments. Finance is who firestore.rules
+ * let answer a notice and who the website's Finance → Sales desk admits:
+ * `invoices.manage` OR `accounting.post`. Finance sees only the Payments tab —
+ * on the website it has no Sales pages either. Writing the quotation itself
+ * (the live A4 composer) stays on the web; this module tracks, reports and
+ * answers.
  */
 export default function SalesLayout() {
   const colors = useColors();
@@ -35,7 +38,10 @@ export default function SalesLayout() {
 
   if (!user) return <Redirect href="/auth/login" />;
 
-  if (!can("sales.manage") && !can("sales.approve") && !can("invoices.manage")) {
+  const seller = can("sales.manage") || can("sales.approve");
+  const finance = can("invoices.manage") || can("accounting.post");
+
+  if (!seller && !finance) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background, padding: 32 }]}>
         <Feather name="lock" size={32} color={colors.outline} />
@@ -50,10 +56,11 @@ export default function SalesLayout() {
   }
 
   return (
-    <Tabs screenOptions={tabOptions}>
+    <Tabs screenOptions={tabOptions} initialRouteName={seller ? "quotations" : "payments"}>
       <Tabs.Screen
         name="quotations"
         options={{
+          href: seller ? undefined : null,
           title: t.sales.quotations,
           tabBarIcon: ({ focused }) => <ModuleTabIcon name="file-text" focused={focused} />,
         }}
@@ -61,6 +68,7 @@ export default function SalesLayout() {
       <Tabs.Screen
         name="orders"
         options={{
+          href: seller ? undefined : null,
           title: t.sales.orders,
           tabBarIcon: ({ focused }) => <ModuleTabIcon name="clipboard" focused={focused} />,
         }}
@@ -75,6 +83,7 @@ export default function SalesLayout() {
       <Tabs.Screen
         name="requests"
         options={{
+          href: seller ? undefined : null,
           title: t.sales.requests,
           tabBarIcon: ({ focused }) => <ModuleTabIcon name="inbox" focused={focused} />,
         }}

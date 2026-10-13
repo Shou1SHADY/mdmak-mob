@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform,
-  Animated, Modal,
+  Animated, Modal, Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { updateDoc, collection, query, where, getDocs, getDoc, doc } from "firebase/firestore";
+import * as WebBrowser from "expo-web-browser";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors } from "@/hooks/useColors";
@@ -18,7 +19,11 @@ import { identityDocRef } from "@/lib/org-identity";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { DocumentUploadRow } from "@/components/DocumentUploadRow";
+import { usePermissions } from "@/hooks/usePermissions";
+import { siteUrl } from "@/lib/site-api";
+import {
+  COMPANY_IDENTITY, profileWebPath, resolveIdentity, withoutSensitiveIdentity, type CompanyIdentity,
+} from "@/lib/company-identity";
 import { router } from "expo-router";
 import Constants from "expo-constants";
 import { ProfileTourGuide, useProfileTour } from "@/components/ProfileTourGuide";
@@ -60,6 +65,60 @@ function MenuRow({
   );
 }
 
+/* ─── Company identity: read-only on the phone (DEV-60) ─── */
+/**
+ * The CR and tax numbers and the legal documents are the owner's alone and
+ * live in `companyIdentity/{orgId}` on the website; the phone never writes
+ * them. The owner is sent to the website to change them; a member is told who
+ * can.
+ */
+function IdentityNotice({ isOwner, isRTL, onOpenWeb }: { isOwner: boolean; isRTL: boolean; onOpenWeb: () => void }) {
+  const colors = useColors();
+  const t = useT();
+  return (
+    <View style={[styles.identityNote, { backgroundColor: colors.muted, flexDirection: isRTL ? "row-reverse" : "row" }]}>
+      <Feather name="lock" size={14} color={colors.secondary} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <Text style={[styles.identityNoteText, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
+          {isOwner ? t.profile.identityOnWeb : t.profile.ownerOnlyNote}
+        </Text>
+        {isOwner && <Button title={t.profile.editOnWeb} variant="secondary" size="sm" onPress={onOpenWeb} />}
+      </View>
+    </View>
+  );
+}
+
+function DocStatusRow({ label, doc: legal, isRTL }: { label: string; doc?: LegalDoc; isRTL: boolean }) {
+  const colors = useColors();
+  const t = useT();
+  const uploaded = !!legal?.url;
+  const open = async () => {
+    if (!legal?.url) return;
+    try {
+      await Linking.openURL(legal.url);
+    } catch {
+      Alert.alert(t.common.error, t.profile.cannotOpenFile);
+    }
+  };
+  return (
+    <View style={[styles.docRow, { borderColor: uploaded ? colors.success + "35" : colors.border, flexDirection: isRTL ? "row-reverse" : "row" }]}>
+      <Feather name={uploaded ? "check-circle" : "file"} size={16} color={uploaded ? colors.success : colors.outline} />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[styles.infoValue, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]} numberOfLines={1}>{label}</Text>
+        <Text style={[styles.infoLabel, { color: uploaded ? colors.success : colors.outline, textAlign: isRTL ? "right" : "left" }]}>
+          {uploaded ? (legal?.expiryDate ? `${t.profile.expires}: ${legal.expiryDate}` : t.profile.docUploaded) : t.profile.docPending}
+        </Text>
+      </View>
+      {uploaded && (
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel={`${t.a11y.view}: ${label}`} onPress={open}
+          style={[styles.docView, { backgroundColor: colors.accentBlueSoft }]}>
+          <Feather name="eye" size={15} color={colors.cta} />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
 /* ─── Main Screen ─── */
 export default function ContractorProfileScreen() {
   const colors = useColors();
@@ -68,6 +127,10 @@ export default function ContractorProfileScreen() {
   // Company details live on users/{uid} for a solo company but on
   // organizations/{id} for a secondary one — write them wherever they are read.
   const identityRef = () => identityDocRef(user!.uid, user?.organizationId, user?.organizationRole);
+  // Only the owner edits the company (the website's profile page is owner-only,
+  // OwnerOnlyNotice). A member reads what he has and is told who can change it.
+  const { isOwner } = usePermissions();
+  const openProfileOnWeb = () => void WebBrowser.openBrowserAsync(siteUrl(profileWebPath(user?.role)));
   const t = useT();
   const { setLanguage, isRTL, language } = useLanguage();
 
@@ -76,13 +139,13 @@ export default function ContractorProfileScreen() {
   const orgCardY = useRef(0);
   const [orgName, setOrgName] = useState(organization?.name ?? "");
   const [city, setCity] = useState(organization?.city ?? "");
-  const [crNumber, setCrNumber] = useState(organization?.crNumber ?? "");
-  const [taxNumber, setTaxNumber] = useState(organization?.taxNumber ?? "");
   const [phone, setPhone] = useState(organization?.phone ?? user?.phone ?? "");
   const [location, setLocation] = useState(organization?.location ?? "");
   const [website, setWebsite] = useState(organization?.website ?? "");
   const [description, setDescription] = useState(organization?.description ?? "");
-  const [documents, setDocuments] = useState<Record<string, LegalDoc>>(organization?.documents ?? {});
+  // The owner's identity document (DEV-60) fills what the old profile fields
+  // lack — the website's resolveIdentity. Members cannot read it.
+  const [storedIdentity, setStoredIdentity] = useState<CompanyIdentity | null>(null);
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ totalRfqs: 0, activeRfqs: 0, totalOffers: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
@@ -91,10 +154,22 @@ export default function ContractorProfileScreen() {
   const docsY = useRef(0);
   const { showTour, markTourSeen } = useProfileTour();
 
-  // Sync documents when organization loads (auth may finish after mount)
   useEffect(() => {
-    if (organization?.documents) setDocuments(organization.documents);
-  }, [organization?.documents]);
+    const orgId = user?.organizationId;
+    if (!isOwner || !orgId) { setStoredIdentity(null); return; }
+    let cancelled = false;
+    getDoc(doc(db, COMPANY_IDENTITY, orgId))
+      .then((snap) => { if (!cancelled) setStoredIdentity(snap.exists() ? (snap.data() as CompanyIdentity) : null); })
+      .catch(() => { if (!cancelled) setStoredIdentity(null); });
+    return () => { cancelled = true; };
+  }, [isOwner, user?.organizationId]);
+
+  const identity = resolveIdentity(storedIdentity, {
+    crNumber: organization?.crNumber,
+    taxNumber: organization?.taxNumber,
+    legalDocuments: organization?.documents,
+  });
+  const documents = (identity.legalDocuments ?? {}) as Record<string, LegalDoc>;
 
   // Fade animation for edit mode
   const fadeAnim = useState(new Animated.Value(0))[0];
@@ -129,17 +204,18 @@ export default function ContractorProfileScreen() {
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const handleSave = async () => {
-    if (!user?.organizationId) return;
+    if (!user?.organizationId || !isOwner) return;
     setSaving(true);
-    const isProfileComplete = !!(orgName?.trim() && (phone?.trim()) && crNumber?.trim() && taxNumber?.trim() && city?.trim() && location?.trim());
+    // CR and tax count towards completeness but are never written from here.
+    const isProfileComplete = !!(orgName?.trim() && (phone?.trim()) && identity.crNumber?.trim() && identity.taxNumber?.trim() && city?.trim() && location?.trim());
     try {
-      await updateDoc(identityRef(), {
-        companyName: orgName, city, crNumber,
+      await updateDoc(identityRef(), withoutSensitiveIdentity({
+        companyName: orgName, city,
         // The website reads `phone` and its SMS routes fall back to
         // `phoneNumber`; write both so a number entered here is found either way.
-        taxNumber, phone, phoneNumber: phone, location, website, description,
+        phone, phoneNumber: phone, location, website, description,
         profileCompleted: isProfileComplete,
-      });
+      }));
       await refreshUser();
       setEditing(false);
     } catch {
@@ -149,22 +225,9 @@ export default function ContractorProfileScreen() {
     }
   };
 
-  const handleDocUpdate = async (docType: string, data: LegalDoc) => {
-    const updated = { ...documents, [docType]: data };
-    setDocuments(updated);
-    if (user?.uid) {
-      try {
-        // The website's field. `documents` was this app's own name for it,
-        // and nothing on the website ever read it.
-        await updateDoc(identityRef(), { legalDocuments: updated });
-      } catch {
-        Alert.alert(t.common.error, t.profile.saveFailed);
-      }
-    }
-  };
-
   const openEditMode = () => {
     setShowActions(false);
+    if (!isOwner) return;
     // Wait for modal close animation (~300ms) before scrolling + opening form
     setTimeout(() => {
       setEditing(true);
@@ -178,8 +241,6 @@ export default function ContractorProfileScreen() {
   const handleCancelEdit = () => {
     setOrgName(organization?.name ?? "");
     setCity(organization?.city ?? "");
-    setCrNumber(organization?.crNumber ?? "");
-    setTaxNumber(organization?.taxNumber ?? "");
     setPhone(organization?.phone ?? user?.phone ?? "");
     setLocation(organization?.location ?? "");
     setWebsite(organization?.website ?? "");
@@ -207,12 +268,12 @@ export default function ContractorProfileScreen() {
   const completenessChecks = [
     { ok: !!organization?.name,                        label: t.profile.companyName },
     { ok: !!(organization?.phone ?? user?.phone),      label: t.profile.phone },
-    { ok: !!organization?.crNumber,                    label: t.profile.crNumber },
-    { ok: !!organization?.taxNumber,                   label: t.profile.taxNumber },
+    { ok: !!identity.crNumber,                         label: t.profile.crNumber },
+    { ok: !!identity.taxNumber,                        label: t.profile.taxNumber },
     { ok: !!organization?.city,                        label: t.profile.city },
     { ok: !!organization?.location,                    label: t.profile.location },
-    { ok: !!organization?.documents?.cr?.url,          label: t.profile.docCR },
-    { ok: !!organization?.documents?.vat?.url,         label: t.profile.docVAT },
+    { ok: !!documents.cr?.url,                         label: t.profile.docCR },
+    { ok: !!documents.vat?.url,                        label: t.profile.docVAT },
   ];
   const completeness = Math.round((completenessChecks.filter((c) => c.ok).length / completenessChecks.length) * 100);
   const missingFields = completenessChecks.filter((c) => !c.ok).map((c) => c.label);
@@ -352,7 +413,7 @@ export default function ContractorProfileScreen() {
               </View>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>{t.profile.organization}</Text>
             </View>
-            {!editing && (
+            {!editing && isOwner && (
               <TouchableOpacity accessibilityRole="button" accessibilityLabel={t.a11y.edit} onPress={openEditMode} style={[styles.editBtn, { backgroundColor: colors.accentBlueSoft }]}>
                 <Feather name="edit-2" size={15} color={colors.cta} />
               </TouchableOpacity>
@@ -362,8 +423,6 @@ export default function ContractorProfileScreen() {
           {editing ? (
             <Animated.View style={{ opacity: fadeAnim, gap: 12 }}>
               <Input label={t.profile.companyName} value={orgName} onChangeText={setOrgName} leftIcon="briefcase" isRTL={isRTL} />
-              <Input label={t.profile.crNumber} value={crNumber} onChangeText={setCrNumber} leftIcon="hash" placeholder="1234567890" isRTL={isRTL} />
-              <Input label={t.profile.taxNumber} value={taxNumber} onChangeText={setTaxNumber} leftIcon="file-text" placeholder="300XXXXXXXXX" isRTL={isRTL} keyboardType="numeric" />
               <Input label={t.profile.phone} value={phone} onChangeText={setPhone} leftIcon="phone" keyboardType="phone-pad" isRTL={isRTL} />
               <Input label={t.profile.city} value={city} onChangeText={setCity} leftIcon="map-pin" isRTL={isRTL} />
               <Input label={t.profile.location} value={location} onChangeText={setLocation} leftIcon="navigation" placeholder={t.profile.locationPlaceholder} isRTL={isRTL} />
@@ -378,8 +437,8 @@ export default function ContractorProfileScreen() {
             <View style={{ gap: 4 }}>
               {[
                 { icon: "briefcase" as const, label: t.profile.companyName,  value: organization?.name,                      required: true },
-                { icon: "hash" as const,      label: t.profile.crNumber,      value: organization?.crNumber,                  required: true },
-                { icon: "file-text" as const, label: t.profile.taxNumber,     value: organization?.taxNumber,                 required: true },
+                { icon: "hash" as const,      label: t.profile.crNumber,      value: identity.crNumber,                       required: true, onWeb: true },
+                { icon: "file-text" as const, label: t.profile.taxNumber,     value: identity.taxNumber,                      required: true, onWeb: true },
                 { icon: "phone" as const,     label: t.profile.phone,         value: organization?.phone ?? user?.phone,      required: true },
                 { icon: "map-pin" as const,   label: t.profile.city,          value: organization?.city ?? user?.city,        required: true },
                 { icon: "navigation" as const,label: t.profile.location,      value: organization?.location,                  required: true },
@@ -388,6 +447,9 @@ export default function ContractorProfileScreen() {
               ].filter((item) => item.value || item.required).map((item, idx, arr) => {
                 const isEmpty = !item.value && item.required;
                 const isLast = idx === arr.length - 1;
+                // An empty field is a shortcut to fill it — for the owner only, and
+                // CR / tax only on the website.
+                const fix = isEmpty && isOwner ? ("onWeb" in item && item.onWeb ? openProfileOnWeb : () => setEditing(true)) : undefined;
                 return (
                   <React.Fragment key={item.label}>
                     <TouchableOpacity accessibilityRole="button"
@@ -396,8 +458,9 @@ export default function ContractorProfileScreen() {
                         { flexDirection: isRTL ? "row-reverse" : "row" },
                         isEmpty && [styles.infoRowEmpty, { borderColor: colors.warning + "40", backgroundColor: colors.warning + "08" }],
                       ]}
-                      onPress={() => isEmpty ? setEditing(true) : undefined}
-                      activeOpacity={isEmpty ? 0.7 : 1}
+                      onPress={fix}
+                      disabled={!fix}
+                      activeOpacity={fix ? 0.7 : 1}
                     >
                       <View style={[styles.infoIcon, { backgroundColor: isEmpty ? colors.warning + "18" : colors.muted }]}>
                         <Feather name={item.icon} size={15} color={isEmpty ? colors.warning : colors.secondary} />
@@ -412,12 +475,12 @@ export default function ContractorProfileScreen() {
                           </Text>
                         ) : (
                           <Text style={[styles.infoEmpty, { color: colors.warning, textAlign: isRTL ? "right" : "left" }]}>
-                            {t.profile.tapToAdd}
+                            {fix ? t.profile.tapToAdd : t.profile.notSet}
                           </Text>
                         )}
                       </View>
                       {isEmpty ? (
-                        <Feather name="edit-2" size={14} color={colors.warning} style={{ opacity: 0.7 }} />
+                        fix ? <Feather name={"onWeb" in item && item.onWeb ? "external-link" : "edit-2"} size={14} color={colors.warning} style={{ opacity: 0.7 }} /> : null
                       ) : (
                         item.value && <Feather name="check" size={14} color={colors.success} style={{ opacity: 0.6 }} />
                       )}
@@ -426,6 +489,7 @@ export default function ContractorProfileScreen() {
                   </React.Fragment>
                 );
               })}
+              <IdentityNotice isOwner={isOwner} isRTL={isRTL} onOpenWeb={openProfileOnWeb} />
             </View>
           )}
         </Card>
@@ -452,16 +516,9 @@ export default function ContractorProfileScreen() {
               { type: "cr",  label: t.profile.docCR,  required: true },
               { type: "vat", label: t.profile.docVAT, required: true },
             ].map((d) => (
-              <DocumentUploadRow
-                key={d.type}
-                docType={d.type}
-                label={d.label}
-                required={d.required}
-                doc={documents[d.type]}
-                orgId={user?.organizationId ?? ""}
-                onUpdate={handleDocUpdate}
-              />
+              <DocStatusRow key={d.type} label={d.label} doc={documents[d.type]} isRTL={isRTL} />
             ))}
+            <IdentityNotice isOwner={isOwner} isRTL={isRTL} onOpenWeb={openProfileOnWeb} />
           </View>
         </Card>
         </View>
@@ -511,7 +568,8 @@ export default function ContractorProfileScreen() {
               {t.profile.settings}
             </Text>
 
-            {/* Edit Profile */}
+            {/* Edit Profile — the owner's only */}
+            {isOwner && (
             <TouchableOpacity accessibilityRole="button" style={[styles.actionRow, { borderBottomColor: colors.border }]} onPress={openEditMode} activeOpacity={0.7}>
               <View style={[styles.actionIcon, { backgroundColor: colors.cta + "15" }]}>
                 <Feather name="edit-2" size={18} color={colors.cta} />
@@ -526,6 +584,7 @@ export default function ContractorProfileScreen() {
               </View>
               <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={16} color={colors.outline} />
             </TouchableOpacity>
+            )}
 
             {/* Language */}
             <TouchableOpacity accessibilityRole="button"
@@ -631,6 +690,10 @@ const styles = StyleSheet.create({
   editBtn: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   editActions: { flexDirection: "row", gap: 10, marginTop: 4 },
   infoRow: { alignItems: "center", gap: 12, paddingVertical: 10, paddingHorizontal: 4, borderRadius: 12, borderWidth: 0 },
+  identityNote: { alignItems: "flex-start", gap: 8, padding: 12, borderRadius: 12, marginTop: 8 },
+  identityNoteText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
+  docRow: { alignItems: "center", gap: 12, padding: 12, borderRadius: 12, borderWidth: 1 },
+  docView: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   infoRowEmpty: { borderWidth: 1, borderStyle: "dashed" as const, paddingHorizontal: 10, borderRadius: 12 },
   infoIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   infoLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold", },

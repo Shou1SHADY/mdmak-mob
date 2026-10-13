@@ -51,6 +51,8 @@ export const en = {
     payroll: "Monthly payroll",
     headcount: "Headcount",
     manageOnWeb: "Add and edit employees on the web app.",
+    peopleOnWebHint: "Read-only. Adding people, their files and anything about pay are on the website's HR.",
+    openHrOnWeb: "Open HR on the web",
   },
   goods: {
     title: "Goods Received",
@@ -124,6 +126,8 @@ export const ar: typeof en = {
     payroll: "الرواتب الشهرية",
     headcount: "عدد الموظفين",
     manageOnWeb: "إضافة وتعديل الموظفين على نسخة الويب.",
+    peopleOnWebHint: "للاطلاع فقط. إضافة الموظفين وملفاتهم وكل ما يخص الرواتب تتم في الموارد البشرية على الموقع.",
+    openHrOnWeb: "فتح الموارد البشرية على الويب",
   },
   goods: {
     title: "استلام البضائع",

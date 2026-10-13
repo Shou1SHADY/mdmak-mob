@@ -17,6 +17,8 @@ import { useProjectSite, type PurchaseRequest } from "@/hooks/useProjectSite";
 import { useProjectPermissions } from "@/hooks/usePermissions";
 import { decidePurchaseRequest } from "@/lib/project-site-writes";
 import { db } from "@/lib/firebase";
+import { PmWebNotice } from "@/components/PmWebNotice";
+import { isPmProject, projectWebPath } from "@/lib/pm-guard";
 
 /**
  * Purchase requests raised from this project, and the answer they are waiting
@@ -30,6 +32,10 @@ import { db } from "@/lib/firebase";
  * Approving authorises the spend and nothing else. It moves no stock and raises
  * no tender; routing a need to the plant is a separate act, and one this
  * release leaves on the website.
+ *
+ * On a Project Management project the list is read-only: its requests carry
+ * `pm: true` and a sequence the PM workflow owns, the rules refuse answering
+ * one in place, and the website is where they are raised and decided.
  */
 export default function ProjectRequestsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,12 +44,13 @@ export default function ProjectRequestsScreen() {
   const { isRTL } = useLanguage();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const { project } = useProject(id);
+  const { project, isLoading: projectLoading } = useProject(id);
   const { purchaseRequests, isLoading } = useProjectSite(id);
   const { can, isLoading: permsLoading } = useProjectPermissions(id);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const mayDecide = can("warehouses.manage");
+  const isPm = isPmProject(project);
+  const mayDecide = !isPm && can("warehouses.manage");
 
   const sorted = useMemo(() => {
     const rank = (s: string) => (s === "pending" ? 0 : 1);
@@ -87,7 +94,7 @@ export default function ProjectRequestsScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={t.site.requests} subtitle={project?.name ?? ""} showBack />
 
-      {isLoading || permsLoading ? (
+      {isLoading || permsLoading || projectLoading ? (
         <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
           <CardSkeleton />
           <CardSkeleton />
@@ -149,7 +156,7 @@ export default function ProjectRequestsScreen() {
                     />
                   </View>
                 )}
-                {pending && !mayDecide && (
+                {pending && !mayDecide && !isPm && (
                   <Text style={[styles.note, { color: colors.outline, textAlign: align }]}>{t.site.cannotAct}</Text>
                 )}
                 {!pending && item.decidedByUserName ? (
@@ -160,7 +167,14 @@ export default function ProjectRequestsScreen() {
               </View>
             );
           }}
-          ListEmptyComponent={<EmptyState icon="inbox" title={t.site.noRequests} subtitle={t.site.noRequestsHint} />}
+          ListHeaderComponent={
+            isPm && project ? (
+              <PmWebNotice message={t.projects.pmRequestsOnWeb} path={projectWebPath(project.id)} style={{ marginBottom: 12 }} />
+            ) : null
+          }
+          ListEmptyComponent={
+            <EmptyState icon="inbox" title={t.site.noRequests} subtitle={isPm ? undefined : t.site.noRequestsHint} />
+          }
         />
       )}
     </View>

@@ -20,6 +20,12 @@ import { onIpcClaimCollected } from "@/lib/accounting/hooks";
  * unclaimed, a purchase request may only move from pending to a terminal
  * answer, and a claim may only flip to collected. Writing a field outside the
  * allowlist does not warn — it is refused.
+ *
+ * All of them are LEGACY-project writes. On a Project Management project
+ * (`isPmProject`, lib/pm-guard.ts) the rules refuse a direct `executedQuantity`
+ * move and an in-place answer to a `pm: true` request, and the certificates
+ * replace these claims — the screens show such a project read-only and send
+ * the work to the website, so none of these is called for one.
  */
 
 export interface Actor {

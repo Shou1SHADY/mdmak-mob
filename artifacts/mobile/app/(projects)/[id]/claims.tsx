@@ -17,6 +17,8 @@ import { useProjectPermissions } from "@/hooks/usePermissions";
 import { markClaimCollected } from "@/lib/project-site-writes";
 import { formatSarCompact } from "@/lib/crm-display";
 import { db } from "@/lib/firebase";
+import { PmWebNotice } from "@/components/PmWebNotice";
+import { isPmProject, projectWebPath } from "@/lib/pm-guard";
 
 /**
  * The claims (مستخلصات) this project has asked for, and the one thing a phone
@@ -31,6 +33,11 @@ import { db } from "@/lib/firebase";
  * That single fact carries further than it looks. It writes the finance audit
  * log, and if the org keeps books it posts the collection to the ledger —
  * bank debited, the client's receivable cleared.
+ *
+ * A Project Management project bills through certificates
+ * (`projects/{id}/pmCertificates`), not these legacy claims, and they are
+ * prepared, certified and collected on the website — so there the screen says
+ * so and offers the way there instead of a list it would misrepresent.
  */
 export default function ProjectClaimsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -39,12 +46,13 @@ export default function ProjectClaimsScreen() {
   const { isRTL } = useLanguage();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const { project } = useProject(id);
+  const { project, isLoading: projectLoading } = useProject(id);
   const { claims, isLoading } = useProjectSite(id);
   const { can, isLoading: permsLoading } = useProjectPermissions(id);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const mayCollect = can("invoices.manage");
+  const isPm = isPmProject(project);
+  const mayCollect = !isPm && can("invoices.manage");
 
   const sorted = useMemo(
     () => [...claims].sort((a, b) => (b.claimNumber ?? 0) - (a.claimNumber ?? 0)),
@@ -85,10 +93,14 @@ export default function ProjectClaimsScreen() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={t.site.claims} subtitle={project?.name ?? ""} showBack />
 
-      {isLoading || permsLoading ? (
+      {isLoading || permsLoading || projectLoading ? (
         <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
           <CardSkeleton />
           <CardSkeleton />
+        </View>
+      ) : isPm && project ? (
+        <View style={{ padding: 16 }}>
+          <PmWebNotice message={t.projects.pmClaimsOnWeb} path={projectWebPath(project.id)} />
         </View>
       ) : (
         <FlatList

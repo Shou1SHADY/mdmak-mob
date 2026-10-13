@@ -24,12 +24,21 @@ import {
   type QuoteDeclineReason,
   type QuoteRequest,
 } from "@/lib/sales-transfers";
+import { useSalesScope } from "@/lib/sales-scope-hook";
 
 /**
  * The quote-request inbox — CRM's one door into Sales. Declining sends one of
  * the five factual reasons back (the mirrored write, notification included);
  * pricing opens the website's composer with the request pre-filled, because
  * a live A4 document is a desk job.
+ *
+ * A REVISION request (OPP-04 #7) is answered on the website by revising the
+ * SAME quotation (`reviseQuotation` — the old version is superseded, the draft
+ * answers the request), never by a new one; the phone shows the request and
+ * opens the website's inbox (it lives on the quotations page) for that. A
+ * request whose draft is already written opens that draft, as on the website.
+ * Actions follow the website's inbox (`sales.manage`); a rep sees only his own
+ * clients' requests (`inSalesScope`).
  */
 export default function SalesRequestsScreen() {
   const colors = useColors();
@@ -39,7 +48,10 @@ export default function SalesRequestsScreen() {
   const { user } = useAuth();
   const { can } = usePermissions();
   const { showToast } = useToast();
-  const { items: requests, isLoading, error: loadError } = useOrgCollection<QuoteRequest>("salesQuoteRequests");
+  const { items: allRequests, isLoading: rLoading, error: loadError } = useOrgCollection<QuoteRequest>("salesQuoteRequests");
+  const { mine, isLoading: scopeLoading } = useSalesScope();
+  const requests = useMemo(() => allRequests.filter(mine), [allRequests, mine]);
+  const isLoading = rLoading || scopeLoading;
 
   const canQuote = can("sales.manage");
   const rolePrefix = user?.role === "Supplier" ? "/supplier" : "/contractor";
@@ -140,9 +152,33 @@ export default function SalesRequestsScreen() {
                 <Text style={[styles.client, { color: colors.foreground, textAlign: align }]} numberOfLines={1}>
                   {item.contactName || "—"}
                 </Text>
-                <Text style={[styles.lines, { color: colors.mutedForeground, textAlign: align }]} numberOfLines={2}>
-                  {item.lines.map((l) => `${l.quantity} ${l.unit} ${l.name}`).join(" · ")}
-                </Text>
+                {item.kind === "revision" ? (
+                  <View style={{ gap: 4 }}>
+                    <View style={[styles.revisionRow, { flexDirection: row }]}>
+                      <StatusBadge label={t.sales.revisionBadge} tone="warning" size="sm" />
+                      {item.revisionOfQuotationNumber ? (
+                        <Text style={[styles.meta, { color: colors.mutedForeground }]} numberOfLines={1}>
+                          {t.sales.revisionOf.replace("{number}", item.revisionOfQuotationNumber)}
+                        </Text>
+                      ) : null}
+                    </View>
+                    {item.note ? (
+                      <Text style={[styles.lines, { color: colors.foreground, textAlign: align }]} numberOfLines={3}>
+                        {item.note}
+                      </Text>
+                    ) : null}
+                    {item.status === "new" && canQuote && !item.draftQuotationId ? (
+                      <Text style={[styles.meta, { color: colors.mutedForeground, textAlign: align }]}>
+                        {t.sales.revisionOnWebHint}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+                {(item.lines ?? []).length > 0 ? (
+                  <Text style={[styles.lines, { color: colors.mutedForeground, textAlign: align }]} numberOfLines={2}>
+                    {(item.lines ?? []).map((l) => `${l.quantity} ${l.unit} ${l.name}`).join(" · ")}
+                  </Text>
+                ) : null}
                 <Text style={[styles.meta, { color: late ? colors.destructive : colors.outline, textAlign: align }]}>
                   {t.sales.requestedBy.replace("{name}", item.requestedByUserName)}
                   {item.dueDate
@@ -157,13 +193,29 @@ export default function SalesRequestsScreen() {
                       variant="secondary"
                       onPress={() => { setDeclining(item); setReason(null); setNote(""); }}
                     />
-                    <Button
-                      title={t.sales.priceOnWeb}
-                      size="sm"
-                      onPress={() =>
-                        WebBrowser.openBrowserAsync(siteUrl(`${rolePrefix}/sales/quotations/new?request=${item.id}`))
-                      }
-                    />
+                    {item.draftQuotationId ? (
+                      <Button
+                        title={t.sales.finishDraftOnWeb}
+                        size="sm"
+                        onPress={() =>
+                          WebBrowser.openBrowserAsync(siteUrl(`${rolePrefix}/sales/quotations/new?draft=${item.draftQuotationId}`))
+                        }
+                      />
+                    ) : item.kind === "revision" ? (
+                      <Button
+                        title={t.sales.reviseOnWeb}
+                        size="sm"
+                        onPress={() => WebBrowser.openBrowserAsync(siteUrl(`${rolePrefix}/sales/quotations`))}
+                      />
+                    ) : (
+                      <Button
+                        title={t.sales.priceOnWeb}
+                        size="sm"
+                        onPress={() =>
+                          WebBrowser.openBrowserAsync(siteUrl(`${rolePrefix}/sales/quotations/new?request=${item.id}`))
+                        }
+                      />
+                    )}
                   </View>
                 )}
               </View>
@@ -238,6 +290,7 @@ const styles = StyleSheet.create({
   lines: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 24 },
   meta: { fontSize: 12, fontFamily: "Inter_400Regular" },
   actions: { gap: 8, marginTop: 4 },
+  revisionRow: { alignItems: "center", gap: 8, flexWrap: "wrap" },
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
   modalSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: "88%", gap: 8 },
   handle: { width: 40, height: 4, borderRadius: 2 },

@@ -87,6 +87,11 @@ export const en = {
     noRequests: "No quote requests",
     noRequestsHint: "CRM sends quote requests here; pricing opens the web composer.",
     saveFailed: "Could not save. Try again.",
+    revisionBadge: "Revision",
+    revisionOf: "Revises {number}",
+    revisionOnWebHint: "A revision is issued on the same quotation, from the inbox on the website's quotations page.",
+    reviseOnWeb: "Revise on the web",
+    finishDraftOnWeb: "Finish the draft (web)",
   },
 };
 
@@ -175,5 +180,10 @@ export const ar = {
     noRequests: "لا طلبات تسعير",
     noRequestsHint: "علاقات العملاء ترسل طلبات التسعير هنا؛ التسعير يفتح محرّر الويب.",
     saveFailed: "تعذّر الحفظ. حاول مرة أخرى.",
+    revisionBadge: "نسخة معدّلة",
+    revisionOf: "تعديل للعرض {number}",
+    revisionOnWebHint: "تصدر النسخة المعدّلة على العرض نفسه، من صندوق الطلبات في صفحة عروض الأسعار على الموقع.",
+    reviseOnWeb: "أصدر النسخة المعدّلة (الويب)",
+    finishDraftOnWeb: "أكمل المسودة (الويب)",
   },
 };

@@ -22,6 +22,8 @@ import { labelFor } from "@/lib/labels";
 import { formatSar, formatSarCompact } from "@/lib/crm-display";
 import type { CrmQuotation } from "@/lib/crm";
 import type { SalesOrder } from "@/lib/sales-orders";
+import { useSalesScope } from "@/lib/sales-scope-hook";
+import { useCompanyModules } from "@/hooks/useCompanyModules";
 import { collectInstallments, type InstallmentDue } from "@/lib/sales-installments";
 import {
   answerTransferNotice,
@@ -41,6 +43,11 @@ import {
  * nothing else; a confirmed answer records the payment on the quotation
  * through the same path the website uses (the accounting hook posts the
  * advance) and releases a deposit-gated order under the scoped rule.
+ *
+ * A rep sees only his own clients' instalments and notices (the website's
+ * `inSalesScope`); Finance sees every client, as on its desk. With Finance
+ * switched off (a sales-only supplier) the notice's link opens Sales →
+ * Payments instead of the accounting desk — the website's `financeOff`.
  */
 export default function SalesPaymentsScreen() {
   const colors = useColors();
@@ -51,10 +58,15 @@ export default function SalesPaymentsScreen() {
   const { can } = usePermissions();
   const { showToast } = useToast();
 
-  const { items: quotations, isLoading: qLoading } = useOrgCollection<CrmQuotation>("crmQuotations");
-  const { items: notices, isLoading: nLoading, error: loadError } = useOrgCollection<TransferNotice>("salesTransferNotices");
+  const { items: allQuotations, isLoading: qLoading } = useOrgCollection<CrmQuotation>("crmQuotations");
+  const { items: allNotices, isLoading: nLoading, error: loadError } = useOrgCollection<TransferNotice>("salesTransferNotices");
   const { items: orders } = useOrgCollection<SalesOrder>("salesOrders");
-  const isLoading = qLoading || nLoading;
+  const { mine, isLoading: scopeLoading } = useSalesScope({ finance: true });
+  const { off: modulesOff } = useCompanyModules();
+  const financeOff = modulesOff.has("payments");
+  const quotations = useMemo(() => allQuotations.filter(mine), [allQuotations, mine]);
+  const notices = useMemo(() => allNotices.filter(mine), [allNotices, mine]);
+  const isLoading = qLoading || nLoading || scopeLoading;
 
   const canReport = can("sales.manage") || can("sales.approve");
   const canAnswer = can("invoices.manage") || can("accounting.post") || can("sales.approve");
@@ -131,6 +143,7 @@ export default function SalesPaymentsScreen() {
         note,
         actor: { id: user.uid, name: user.displayName || user.email },
         recipients,
+        financeOff,
         notification: {
           i18n: {
             title: "sales_tn_notif_reported_title",
@@ -164,7 +177,7 @@ export default function SalesPaymentsScreen() {
     }
     setBusy(result);
     try {
-      const quotation = quotations.find((q) => q.id === answer.quotationId) ?? null;
+      const quotation = allQuotations.find((q) => q.id === answer.quotationId) ?? null;
       await answerTransferNotice(db, {
         notice: answer,
         quotation,

@@ -1,16 +1,15 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert,
-  Modal, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+  View, Text, ScrollView, StyleSheet, TouchableOpacity,
+  Modal, Pressable, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { formatSar } from "@/lib/crm-display";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
-import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { createdAtMs } from "@/lib/time";
 import { readRfqLineItems } from "@/lib/contracts";
@@ -19,7 +18,6 @@ import { RFQItem } from "@/components/RFQCard";
 import { OfferItem, OfferCard } from "@/components/OfferCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton, CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -28,8 +26,8 @@ import { BOQEditor } from "@/components/BOQEditor";
 import { exportRFQPDF, exportOfferComparisonPDF } from "@/lib/pdf-export";
 import { type, space, radius, MIN_TOUCH } from "@/lib/design";
 import * as WebBrowser from "expo-web-browser";
-import { awardPath } from "@/lib/award-writes";
 import { siteUrl } from "@/lib/site-api";
+import { deadlineLabel, offersPagePath, priceHiddenReason, sealPolicyOf, seesOfferPrices, type SealPolicy } from "@/lib/offer-sealing";
 
 type SortMode = "price" | "date";
 
@@ -47,7 +45,6 @@ export default function RFQDetailScreen() {
   const insets = useSafeAreaInsets();
   const t = useT();
   const { isRTL } = useLanguage();
-  const { user } = useAuth();
   const { can } = usePermissions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [rfq, setRfq] = useState<RFQItem | null>(null);
@@ -59,12 +56,9 @@ export default function RFQDetailScreen() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const [pdfLoading, setPdfLoading] = useState(false);
-
-  // Reduce price modal
-  const [reduceOffer, setReduceOffer] = useState<OfferItem | null>(null);
-  const [targetPrice, setTargetPrice] = useState("");
-  const [reductionNote, setReductionNote] = useState("");
-  const [isReducing, setIsReducing] = useState(false);
+  // The company's sealed-round policy; until it is read the round counts as
+  // sealed (the default), so a price never flashes up and disappears.
+  const [sealPolicy, setSealPolicy] = useState<SealPolicy>(() => sealPolicyOf(null));
 
   const rowDirection = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
@@ -96,6 +90,18 @@ export default function RFQDetailScreen() {
     try {
       const rfqDoc = await getDoc(doc(db, "rfqs", id));
       if (rfqDoc.exists()) setRfq({ id: rfqDoc.id, ...rfqDoc.data() } as RFQItem);
+
+      // procurementSettings/{orgId} — absent = the PRD reference (sealed). A
+      // failed read keeps the default too: hiding a price is the safe mistake.
+      const orgId = rfqDoc.exists() ? (rfqDoc.data() as { organizationId?: string }).organizationId : undefined;
+      if (orgId) {
+        try {
+          const settings = await getDoc(doc(db, "procurementSettings", orgId));
+          setSealPolicy(sealPolicyOf(settings.exists() ? settings.data() : null));
+        } catch {
+          setSealPolicy(sealPolicyOf(null));
+        }
+      }
 
       const offSnap = await getDocs(query(collection(db, "offers"), where("rfqId", "==", id)));
       const offerItems: OfferItem[] = offSnap.docs.map((d) => ({
@@ -143,146 +149,31 @@ export default function RFQDetailScreen() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Prices may be on screen only as the website allows (lib/offer-sealing.ts):
+  // while sealed — or for a role that sees no amounts — the list shows who
+  // quoted and when, ordered by arrival, with no price, rank or comparison.
+  const hiddenReason = priceHiddenReason(rfq, sealPolicy, new Date(), seesOfferPrices(can));
+  const showPrices = hiddenReason === null;
+  const sortMode: SortMode = showPrices ? sortBy : "date";
+  const hiddenPriceLabel = hiddenReason === "sealed" ? t.rfq.priceSealed : hiddenReason === "role" ? t.rfq.pricesHiddenRole : undefined;
+  const canDecide = can("offers.accept") || can("rfq.manage");
+  const openDecideOnWeb = () => {
+    if (!rfq) return;
+    void WebBrowser.openBrowserAsync(siteUrl(offersPagePath({ id: rfq.id, projectId: rfq.projectId })));
+  };
+
   const sortedOffers = [...offers].sort((a, b) => {
-    if (sortBy === "price") return (parseFloat(a.price || "0") || 0) - (parseFloat(b.price || "0") || 0);
+    if (sortMode === "price") return (parseFloat(a.price || "0") || 0) - (parseFloat(b.price || "0") || 0);
     return createdAtMs(b.createdAt) - createdAtMs(a.createdAt);
   });
 
-  const handleRepublish = () => {
-    if (!(can("rfq.create") || can("offers.accept") || can("po.approve"))) { Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission); return; }
-    Alert.alert(t.rfq.republish, t.rfq.republishConfirm, [
-      { text: t.common.cancel, style: "cancel" },
-      {
-        text: t.rfq.republish,
-        onPress: async () => {
-          try {
-            await updateDoc(doc(db, "rfqs", id), { status: "New", updatedAt: new Date().toISOString() });
-            Alert.alert(t.common.success ?? "Success", t.rfq.republished);
-            fetchData();
-          } catch (e: any) {
-            Alert.alert(t.common.error, e?.message || (t.rfq.failedToRepublish));
-          }
-        },
-      },
-    ]);
-  };
-
-  // The phone does not award. Awarding prepares a purchase order for Finance
-  // and tells the supplier nothing until that order is sent; writing only the
-  // first half here would leave an award nobody can approve and a supplier who
-  // never hears (see lib/award-writes.ts).
-  const handleAward = (offer: OfferItem) => {
-    if (!can("offers.accept")) {
-      Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
-      return;
-    }
-    Alert.alert(t.rfq.awardOnWeb, undefined, [
-      { text: t.common.cancel, style: "cancel" },
-      { text: t.rfq.openAward, onPress: () => void WebBrowser.openBrowserAsync(siteUrl(awardPath(id))) },
-    ]);
-  };
-
-  // Rejecting was never part of the order flow, and the supplier still hears
-  // at once — he is waiting on an answer either way.
-  const handleReject = async (offer: OfferItem) => {
-    if (!can("offers.accept")) {
-      Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
-      return;
-    }
-    Alert.alert(t.common.confirm, t.rfq.rejectOffer, [
-      { text: t.common.cancel, style: "cancel" },
-      {
-        text: t.common.confirm,
-        onPress: async () => {
-          const now = new Date().toISOString();
-          try {
-            await updateDoc(doc(db, "offers", offer.id), {
-              status: OFFER_STATUS.REJECTED,
-              decidedByUserId: user?.uid ?? null,
-              decidedByUserName: user?.displayName || user?.email || null,
-              decidedAt: now,
-              updatedAt: now,
-              readAt: null,
-            });
-          } catch {
-            Alert.alert(t.common.error, t.errors.generic);
-            return;
-          }
-
-          // A guest offer (share-link, no account) has nobody to notify in-app;
-          // the website reaches the guest over the share channel.
-          const supplierId = offer.supplierId || offer.organizationId;
-          if (supplierId && !offer.isGuestOffer) {
-            try {
-              await addDoc(collection(db, "users", supplierId, "notifications"), {
-                userId: supplierId,
-                type: "offer_rejected",
-                i18n: { title: "pn_offer_rejected_title", message: "pn_offer_rejected", params: { rfq: rfq?.title || "" } },
-                title: t.rfq.yourOfferWasRejected,
-                message: isRTL
-                  ? `تم رفض عرضك على مناقصة: ${rfq?.title || ""}`  // ui-ok: fallback text for push; readers get i18n
-                  : `Your offer for "${rfq?.title || ""}" was rejected.`,
-                offerId: offer.id,
-                rfqId: id,
-                createdAt: new Date().toISOString(),
-                read: false,
-              });
-            } catch {}
-          }
-
-          fetchData();
-        },
-      },
-    ]);
-  };
-
-  const handleReduce = async () => {
-    if (!can("offers.accept")) { Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission); return; }
-    if (!reduceOffer) return;
-    const priceNum = parseFloat(targetPrice);
-    if (!targetPrice || isNaN(priceNum) || priceNum <= 0) {
-      Alert.alert(t.common.error, t.rfq.invalidPrice);
-      return;
-    }
-    setIsReducing(true);
-    try {
-      await updateDoc(doc(db, "offers", reduceOffer.id), {
-        status: OFFER_STATUS.PRICE_REDUCTION,
-        targetPrice: priceNum,
-        reductionNote: reductionNote.trim() || null,
-        updatedAt: new Date().toISOString(),
-      });
-
-      // Notify supplier
-      const supplierId = reduceOffer.supplierId || reduceOffer.organizationId;
-      if (supplierId) {
-        try {
-          await addDoc(collection(db, "users", supplierId, "notifications"), {
-            userId: supplierId,
-            type: "price_reduction",
-            i18n: { title: "pn_price_reduction_title", message: "pn_price_reduction", params: { rfq: rfq?.title || "", price: priceNum.toLocaleString("en-US"), note: "" } },
-            title: isRTL ? "طُلب منك تخفيض السعر" : "Price reduction requested",  // ui-ok: fallback text for push; readers get i18n
-            message: isRTL
-              ? `يطلب المقاول تخفيض سعرك إلى ${priceNum.toLocaleString("ar-SA")} ر.س على مناقصة: ${rfq?.title || ""}`  // ui-ok: fallback text for push; readers get i18n
-              : `The contractor requests a price reduction to SAR ${priceNum.toLocaleString("en-SA")} for: ${rfq?.title || ""}`,
-            offerId: reduceOffer.id,
-            rfqId: id,
-            createdAt: new Date().toISOString(),
-            read: false,
-          });
-        } catch {}
-      }
-
-      setReduceOffer(null);
-      setTargetPrice("");
-      setReductionNote("");
-      fetchData();
-    } catch {
-      Alert.alert(t.common.error, t.rfq.failedToUpdateOffer);
-    } finally {
-      setIsReducing(false);
-    }
-  };
+  // Republishing, rejecting, asking a single supplier for a lower price and
+  // awarding are not made here. The website replaced them with acts the phone
+  // cannot reproduce faithfully: reopening is only an extension, an exclusion
+  // needs a logged reason, a reduction is one round per RFQ (refused while
+  // sealed), an award prepares a purchase order for Finance — and the rules
+  // also check the member's seat on a project's tender. One button hands all
+  // of them to the website's offers page.
 
   const statusData = rfq ? RFQ_STATUSES.find((s) => s.id === rfq.status) : null;
   const statusLabel = statusData ? (isRTL ? statusData.labelAr : statusData.label) : rfq?.status;
@@ -294,10 +185,10 @@ export default function RFQDetailScreen() {
   const moreActions: MoreAction[] = [
     { key: "exportRfq", icon: "file-text", label: t.boq.exportPDF, onPress: handleExportRFQ },
   ];
-  if (offers.length > 0) {
+  if (offers.length > 0 && showPrices) {
     moreActions.push({ key: "exportComparison", icon: "bar-chart-2", label: t.rfq.exportComparison, onPress: handleExportComparison });
   }
-  if (offers.length > 1) {
+  if (offers.length > 1 && showPrices) {
     moreActions.push(
       { key: "sortPrice", icon: "trending-down", label: t.rfq.sortByPrice, onPress: () => setSortBy("price"), selected: sortBy === "price" },
       { key: "sortDate", icon: "clock", label: t.rfq.sortByDate, onPress: () => setSortBy("date"), selected: sortBy === "date" },
@@ -393,15 +284,6 @@ export default function RFQDetailScreen() {
                 <Text style={[type.body, { color: colors.accentText }]}>{offers.length} {t.rfq.offersSuffix}</Text>
               </View>
             </View>
-            {(rfq.status === "Closed" || rfq.status === "Awarded") && (
-              <Button
-                title={t.rfq.republish}
-                onPress={handleRepublish}
-                size="sm"
-                variant="outline"
-                style={{ alignSelf: isRTL ? "flex-end" : "flex-start", marginTop: space.xs }}
-              />
-            )}
           </View>
         )}
 
@@ -418,7 +300,7 @@ export default function RFQDetailScreen() {
           <Text style={[type.title, { color: colors.foreground, flexShrink: 1 }]}>
             {t.rfq.submittedOffers} ({offers.length})
           </Text>
-          {offers.length > 1 && (
+          {offers.length > 1 && showPrices && (
             <TouchableOpacity
               onPress={() => setMoreOpen(true)}
               style={[styles.sortHint, { flexDirection: rowDirection }]}
@@ -434,8 +316,42 @@ export default function RFQDetailScreen() {
           )}
         </View>
 
+        {/* Why no price is shown — and, when sealed, when they open. */}
+        {hiddenReason && offers.length > 0 ? (
+          <View style={[styles.noteCard, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: rowDirection }]}>
+            <Feather name="lock" size={16} color={colors.mutedForeground} />
+            <View style={styles.noteBody}>
+              {hiddenReason === "sealed" ? (
+                <>
+                  <Text style={[type.bodyStrong, { color: colors.foreground, textAlign }]}>{t.rfq.pricesSealedTitle}</Text>
+                  <Text style={[type.caption, { color: colors.mutedForeground, textAlign }]}>
+                    {t.rfq.pricesSealedDesc.replace("{date}", deadlineLabel(rfq?.deadline, isRTL))}
+                  </Text>
+                </>
+              ) : (
+                <Text style={[type.caption, { color: colors.mutedForeground, textAlign }]}>{t.rfq.pricesHiddenRole}</Text>
+              )}
+            </View>
+          </View>
+        ) : null}
+
+        {/* Every decision on the offers is the website's. */}
+        {rfq?.status === "New" && offers.length > 0 && canDecide ? (
+          <View style={[styles.noteCard, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: rowDirection }]}>
+            <View style={styles.noteBody}>
+              <Text style={[type.caption, { color: colors.mutedForeground, textAlign }]}>{t.rfq.decideOnWebDesc}</Text>
+              <Button
+                title={t.rfq.decideOnWeb}
+                onPress={openDecideOnWeb}
+                size="sm"
+                style={{ alignSelf: isRTL ? "flex-end" : "flex-start" }}
+              />
+            </View>
+          </View>
+        ) : null}
+
         {/* Price summary bar */}
-        {offers.length >= 2 && (() => {
+        {showPrices && offers.length >= 2 && (() => {
           const prices = offers.map(o => parseFloat(o.price) || 0).filter(p => p > 0);
           if (!prices.length) return null;
           const lowest = Math.min(...prices);
@@ -469,21 +385,8 @@ export default function RFQDetailScreen() {
           </View>
         ) : (
           sortedOffers.map((offer, idx) => {
-            // The per-offer decisions stay on the card (OfferCard flags a
-            // share-link offer itself, beside its status).
-            const decisionRow = offer.status === OFFER_STATUS.UNDER_REVIEW && can("offers.accept") ? (
-              <View style={[styles.offerActions, { flexDirection: rowDirection }]}>
-                <Button title={t.rfq.accept} onPress={() => handleAward(offer)} size="sm" style={{ flex: 1 }} />
-                <Button
-                  title={t.rfq.reduce}
-                  onPress={() => { setReduceOffer(offer); setTargetPrice(""); setReductionNote(""); }}
-                  size="sm"
-                  variant="outline"
-                  style={{ flex: 1 }}
-                />
-                <Button title={t.rfq.reject} onPress={() => handleReject(offer)} size="sm" variant="destructive" style={{ flex: 1 }} />
-              </View>
-            ) : offer.status === OFFER_STATUS.ACCEPTED ? (
+            // An awarded offer keeps its chat; every decision is the website's.
+            const decisionRow = offer.status === OFFER_STATUS.ACCEPTED ? (
               <Button
                 title={t.chat.title}
                 onPress={() => router.push(`/chat/${offer.id}`)}
@@ -496,7 +399,8 @@ export default function RFQDetailScreen() {
               <OfferCard
                 key={offer.id}
                 offer={offer}
-                rank={sortBy === "price" ? idx + 1 : undefined}
+                rank={sortMode === "price" ? idx + 1 : undefined}
+                hiddenPriceLabel={hiddenPriceLabel}
                 actions={decisionRow ? <View style={styles.offerFooter}>{decisionRow}</View> : undefined}
               />
             );
@@ -545,79 +449,6 @@ export default function RFQDetailScreen() {
         </View>
       </Modal>
 
-      {/* ── Reduce Price Modal ── */}
-      <Modal
-        visible={!!reduceOffer}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setReduceOffer(null)}
-      >
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <Pressable accessible={false} style={[styles.modalOverlay, { backgroundColor: colors.overlay }]} onPress={() => setReduceOffer(null)}>
-            <Pressable accessible={false}
-              style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + space.lg }]}
-              onPress={(e) => e.stopPropagation()}
-            >
-              <View style={[styles.handle, { backgroundColor: colors.border }]} />
-
-              <Text style={[type.title, { color: colors.foreground, textAlign }]}>
-                {t.rfq.requestPriceReduction}
-              </Text>
-
-              {/* Current price */}
-              {reduceOffer?.price && (
-                <View style={[styles.currentPriceRow, { backgroundColor: colors.muted, borderColor: colors.border, flexDirection: rowDirection }]}>
-                  <Feather name="tag" size={14} color={colors.outline} />
-                  <Text style={[type.body, { color: colors.outline }]}>
-                    {t.rfq.currentPrice}
-                    {"  "}
-                    <Text style={[type.bodyStrong, { color: colors.foreground }]}>
-                      {fmtSar(parseFloat(reduceOffer.price))}
-                    </Text>
-                  </Text>
-                </View>
-              )}
-
-              <Input
-                label={t.rfq.targetPriceSar}
-                required
-                value={targetPrice}
-                onChangeText={setTargetPrice}
-                keyboardType="numeric"
-                placeholder={t.rfq.desiredPrice}
-                autoFocus
-                isRTL={isRTL}
-              />
-
-              <Input
-                label={t.rfq.noteToSupplierOptional}
-                value={reductionNote}
-                onChangeText={setReductionNote}
-                multiline
-                numberOfLines={3}
-                placeholder={t.rfq.explainWhyYouNeedA}
-                isRTL={isRTL}
-              />
-
-              <View style={{ flexDirection: rowDirection, gap: space.sm, marginTop: space.xs }}>
-                <Button
-                  title={t.common.cancel}
-                  variant="outline"
-                  style={{ flex: 1 }}
-                  onPress={() => setReduceOffer(null)}
-                />
-                <Button
-                  title={t.rfq.sendRequest}
-                  style={{ flex: 2 }}
-                  loading={isReducing}
-                  onPress={handleReduce}
-                  disabled={!targetPrice.trim()}
-                />
-              </View>
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Modal>
     </View>
   );
 }
@@ -634,7 +465,8 @@ const styles = StyleSheet.create({
 
   emptyOffers: { borderWidth: 1, borderRadius: radius.card, padding: space.xxl, alignItems: "center", gap: space.sm },
   offerFooter: { width: "100%", gap: space.sm },
-  offerActions: { gap: space.sm, flexWrap: "wrap", alignItems: "center" },
+  noteCard: { borderWidth: 1, borderRadius: radius.card, padding: space.md, gap: space.sm, alignItems: "flex-start" },
+  noteBody: { flex: 1, gap: space.sm },
 
   priceSummary: { borderWidth: 1, borderRadius: radius.card, paddingVertical: space.md, paddingHorizontal: space.sm },
   priceSumItem: { flex: 1, alignItems: "center", gap: 2 },
@@ -656,20 +488,4 @@ const styles = StyleSheet.create({
   handle: { width: 40, height: 4, borderRadius: radius.hairline, alignSelf: "center", marginBottom: space.sm },
   actionRow: { minHeight: 48, alignItems: "center", gap: space.md, paddingHorizontal: space.md, borderRadius: radius.control },
   actionDivider: { height: 1, marginVertical: space.xs, marginHorizontal: space.md },
-
-  // Reduce-price sheet
-  modalOverlay: { flex: 1, justifyContent: "flex-end" },
-  modalSheet: {
-    borderTopLeftRadius: radius.card,
-    borderTopRightRadius: radius.card,
-    padding: space.lg,
-    gap: space.md,
-  },
-  currentPriceRow: {
-    alignItems: "center",
-    gap: space.sm,
-    borderWidth: 1,
-    borderRadius: radius.control,
-    padding: space.md,
-  },
 });

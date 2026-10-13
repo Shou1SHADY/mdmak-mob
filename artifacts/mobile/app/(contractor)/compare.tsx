@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
   Platform, ActivityIndicator, ScrollView, Alert,
 } from "react-native";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -14,8 +14,8 @@ import { db } from "@/lib/firebase";
 import { usePermissions } from "@/hooks/usePermissions";
 import { EmptyState } from "@/components/ui/EmptyState";
 import * as WebBrowser from "expo-web-browser";
-import { awardPath } from "@/lib/award-writes";
 import { siteUrl } from "@/lib/site-api";
+import { deadlineLabel, offersPagePath, priceHiddenReason, sealPolicyOf, seesOfferPrices, type SealPolicy } from "@/lib/offer-sealing";
 
 interface RFQRow {
   id: string;
@@ -23,6 +23,8 @@ interface RFQRow {
   status: string;
   deadline?: string;
   offersCount: number;
+  projectId?: string | null;
+  closedEarly?: { at?: string | null } | null;
 }
 
 interface OfferRow {
@@ -59,6 +61,8 @@ export default function CompareScreen() {
   const [offersLoading, setOffersLoading] = useState(false);
   const [offersError, setOffersError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>("price");
+  // The company's sealed-round policy; sealed (the default) until read.
+  const [sealPolicy, setSealPolicy] = useState<SealPolicy>(() => sealPolicyOf(null));
 
   /* ── Load RFQs that have offers ── */
   // `rfqReload` is what Retry bumps: the loader lives in this effect, so
@@ -69,6 +73,10 @@ export default function CompareScreen() {
       const orgId = user?.organizationId;
       if (!orgId) { setRfqLoading(false); return; }
       setRfqError(null);
+      // procurementSettings/{orgId} — absent or unreadable = the default (sealed).
+      getDoc(doc(db, "procurementSettings", orgId))
+        .then((settings) => setSealPolicy(sealPolicyOf(settings.exists() ? settings.data() : null)))
+        .catch(() => setSealPolicy(sealPolicyOf(null)));
       try {
         const snap = await getDocs(query(
           collection(db, "rfqs"),
@@ -129,10 +137,10 @@ export default function CompareScreen() {
       Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission);
       return;
     }
-    const rfqId = selectedRfq.id;
+    const path = offersPagePath(selectedRfq);
     Alert.alert(t.rfq.awardOnWeb, undefined, [
       { text: t.common.cancel, style: "cancel" },
-      { text: t.rfq.openAward, onPress: () => void WebBrowser.openBrowserAsync(siteUrl(awardPath(rfqId))) },
+      { text: t.rfq.openAward, onPress: () => void WebBrowser.openBrowserAsync(siteUrl(path)) },
     ]);
   };
 
@@ -153,13 +161,21 @@ export default function CompareScreen() {
     return unit;
   };
 
+  // Prices may be on screen only as the website allows (lib/offer-sealing.ts):
+  // while sealed — or for a role that sees no amounts — the cards show who
+  // quoted and when, with no price, no "best" and no award.
+  const hiddenReason = selectedRfq ? priceHiddenReason(selectedRfq, sealPolicy, new Date(), seesOfferPrices(can)) : null;
+  const showPrices = hiddenReason === null;
+  const sortKey: SortKey = !showPrices && sortBy === "price" ? "date" : sortBy;
+  const sortKeys: SortKey[] = showPrices ? ["price", "duration", "date"] : ["duration", "date"];
+
   const sortedOffers = [...offers].sort((a, b) => {
-    if (sortBy === "price") return (parseFloat(String(a.price)) || 0) - (parseFloat(String(b.price)) || 0);
-    if (sortBy === "duration") return durInDays(a) - durInDays(b);
+    if (sortKey === "price") return (parseFloat(String(a.price)) || 0) - (parseFloat(String(b.price)) || 0);
+    if (sortKey === "duration") return durInDays(a) - durInDays(b);
     return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
   });
 
-  const lowestPrice = sortedOffers.length > 0
+  const lowestPrice = showPrices && sortedOffers.length > 0
     ? Math.min(...sortedOffers.map(o => parseFloat(String(o.price)) || 0))
     : null;
 
@@ -286,14 +302,15 @@ export default function CompareScreen() {
 
       {/* Sort bar */}
       <View style={[styles.sortBar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        {(["price", "duration", "date"] as SortKey[]).map(key => (
+        {sortKeys.map(key => (
           <TouchableOpacity accessibilityRole="button"
             key={key}
-            style={[styles.sortChip, sortBy === key && { backgroundColor: colors.cta + "18" }]}
+            style={[styles.sortChip, sortKey === key && { backgroundColor: colors.cta + "18" }]}
             onPress={() => setSortBy(key)}
             activeOpacity={0.7}
+            accessibilityState={{ selected: sortKey === key }}
           >
-            <Text style={[styles.sortLabel, { color: sortBy === key ? colors.cta : colors.outline }]}>
+            <Text style={[styles.sortLabel, { color: sortKey === key ? colors.cta : colors.outline }]}>
               {key === "price" ? t.compare.sortPrice : key === "duration" ? t.compare.sortDuration : t.compare.sortDate}
             </Text>
           </TouchableOpacity>
@@ -324,6 +341,28 @@ export default function CompareScreen() {
           contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
           showsVerticalScrollIndicator={false}
         >
+          {/* Why no price is shown — and, when sealed, when they open. */}
+          {hiddenReason ? (
+            <View style={[styles.noteCard, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: isRTL ? "row-reverse" : "row" }]}>
+              <Feather name="lock" size={16} color={colors.mutedForeground} />
+              <View style={{ flex: 1, gap: 4 }}>
+                {hiddenReason === "sealed" ? (
+                  <>
+                    <Text style={[styles.supplierName, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+                      {t.rfq.pricesSealedTitle}
+                    </Text>
+                    <Text style={[styles.metricLabel, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
+                      {t.rfq.pricesSealedDesc.replace("{date}", deadlineLabel(selectedRfq.deadline, isRTL))}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={[styles.metricLabel, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
+                    {t.rfq.pricesHiddenRole}
+                  </Text>
+                )}
+              </View>
+            </View>
+          ) : null}
           {sortedOffers.map((offer, idx) => {
             const price = parseFloat(String(offer.price)) || 0;
             const isBest = price === lowestPrice && offer.status !== "مرفوض";  // ui-ok: stored offer status value
@@ -344,11 +383,13 @@ export default function CompareScreen() {
               >
                 {/* Rank + Best badge */}
                 <View style={[styles.offerCardTop, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <View style={[styles.rankBadge, { backgroundColor: isBest ? colors.success : colors.border }]}>
-                    <Text style={[styles.rankText, { color: isBest ? colors.successForeground : colors.outline }]}>
-                      {isBest ? t.compare.bestLabel : `#${idx + 1}`}
-                    </Text>
-                  </View>
+                  {showPrices ? (
+                    <View style={[styles.rankBadge, { backgroundColor: isBest ? colors.success : colors.border }]}>
+                      <Text style={[styles.rankText, { color: isBest ? colors.successForeground : colors.outline }]}>
+                        {isBest ? t.compare.bestLabel : `#${idx + 1}`}
+                      </Text>
+                    </View>
+                  ) : null}
                   <View style={[styles.statusPill, { backgroundColor: sColor + "15" }]}>
                     <Text style={[styles.statusText, { color: sColor }]}>{statusLabel(offer.status)}</Text>
                   </View>
@@ -364,12 +405,19 @@ export default function CompareScreen() {
 
                 {/* Price + Duration + Date row */}
                 <View style={[styles.metricsRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                  <View style={[styles.metricBlock, { backgroundColor: (isBest ? colors.success : colors.primaryText) + "0D" }]}>
-                    <Text style={[styles.metricValue, { color: isBest ? colors.success : colors.primaryText }]}>
-                      {price.toLocaleString(isRTL ? "ar-SA" : "en-US")}
-                    </Text>
-                    <Text style={[styles.metricLabel, { color: colors.outline }]}>{t.compare.currency}</Text>
-                  </View>
+                  {showPrices ? (
+                    <View style={[styles.metricBlock, { backgroundColor: (isBest ? colors.success : colors.primaryText) + "0D" }]}>
+                      <Text style={[styles.metricValue, { color: isBest ? colors.success : colors.primaryText }]}>
+                        {price.toLocaleString(isRTL ? "ar-SA" : "en-US")}
+                      </Text>
+                      <Text style={[styles.metricLabel, { color: colors.outline }]}>{t.compare.currency}</Text>
+                    </View>
+                  ) : hiddenReason === "sealed" ? (
+                    <View style={[styles.metricBlock, { backgroundColor: colors.border + "80" }]}>
+                      <Feather name="lock" size={14} color={colors.mutedForeground} />
+                      <Text style={[styles.metricLabel, { color: colors.outline }]}>{t.rfq.priceSealed}</Text>
+                    </View>
+                  ) : null}
 
                   {offer.executionDuration ? (
                     <View style={[styles.metricBlock, { backgroundColor: colors.cta + "0D" }]}>
@@ -390,8 +438,9 @@ export default function CompareScreen() {
                   ) : null}
                 </View>
 
-                {/* Award — only for pending offers, and only on the website */}
-                {isPending && (
+                {/* Award — only for pending offers, only once prices are open
+                    (the website's `canPick`), and only on the website */}
+                {isPending && showPrices && (
                   <TouchableOpacity accessibilityRole="button"
                     style={[styles.acceptBtn, { backgroundColor: isBest ? colors.success : colors.cta }]}
                     onPress={() => handleAward(offer)}
@@ -512,6 +561,13 @@ const styles = StyleSheet.create({
   },
 
   /* Offer cards */
+  noteCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 12,
+    gap: 8,
+    alignItems: "flex-start",
+  },
   offerCard: {
     borderRadius: 16,
     padding: 16,

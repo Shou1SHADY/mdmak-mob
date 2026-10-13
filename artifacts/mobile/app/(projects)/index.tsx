@@ -7,24 +7,21 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
-import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
-import { Input } from "@/components/ui/Input";
-import { CrmSheet } from "@/components/crm/CrmSheet";
-import { CrmChoice } from "@/components/crm/CrmChoice";
 import { useProjects, type Project } from "@/hooks/useProjects";
-import { createProject } from "@/lib/project-writes";
+import { siteUrl } from "@/lib/site-api";
+import { isPmProject, PROJECTS_WEB_PATH } from "@/lib/pm-guard";
 import { PROJECT_STATUSES, resolveProjectStatus, type ProjectStatus } from "@/lib/project-status";
 import { formatSarCompact } from "@/lib/crm-display";
 import { projectStatusColor } from "@/lib/project-display";
@@ -34,22 +31,17 @@ export default function ProjectsListScreen() {
   const t = useT();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
   const { can } = usePermissions();
-  const { projects, orgId, isLoading } = useProjects();
+  const { projects, isLoading } = useProjects();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
 
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [name, setName] = useState("");
-  const [clientName, setClientName] = useState("");
-  const [location, setLocation] = useState("");
-  const [budget, setBudget] = useState("");
-  const [status, setStatus] = useState<ProjectStatus>("todo");
-
-  const canCreate = can("projects.edit");
+  // A project is started on the website: it is born with a Project Management
+  // block (contract terms, lifecycle) the phone does not compose, and the rules
+  // let only the owner or a project manager (`pm.manage`) create one.
+  const canCreate = can("pm.manage");
+  const openNewOnWeb = () => void WebBrowser.openBrowserAsync(siteUrl(PROJECTS_WEB_PATH));
 
   const counts = useMemo(() => {
     const map = new Map<ProjectStatus | "all", number>();
@@ -76,40 +68,6 @@ export default function ProjectsListScreen() {
       })
       .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   }, [projects, search, statusFilter]);
-
-  const handleCreate = async () => {
-    if (!canCreate) { Alert.alert(t.errors.noPermissionTitle, t.errors.noPermission); return; }
-    if (!name.trim()) {
-      Alert.alert(t.common.error, t.projects.nameRequired);
-      return;
-    }
-    if (!orgId || !user) return;
-    setSaving(true);
-    try {
-      const parsed = parseFloat(budget.replace(/,/g, ""));
-      const id = await createProject({
-        orgId,
-        uid: user.uid,
-        name,
-        clientName: clientName || null,
-        location: location || null,
-        budget: Number.isFinite(parsed) ? Math.max(0, parsed) : null,
-        status,
-      });
-      setSheetOpen(false);
-      setName("");
-      setClientName("");
-      setLocation("");
-      setBudget("");
-      setStatus("todo");
-      router.push(`/(projects)/${id}` as never);
-    } catch (e: any) {
-      if (__DEV__) console.warn("[Projects] create:", e?.message);
-      Alert.alert(t.common.error, t.projects.saveFailed);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const chips: { value: ProjectStatus | "all"; label: string }[] = [
     { value: "all", label: t.common.all },
@@ -169,6 +127,11 @@ export default function ProjectsListScreen() {
                 </Text>
               </View>
             )}
+            {isPmProject(item) && (
+              <View style={[styles.pill, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+                <Text style={[styles.pillText, { color: colors.mutedForeground }]}>{t.projects.pmManaged}</Text>
+              </View>
+            )}
             {item.handover?.status === "pending" && (
               <Feather name="clock" size={13} color={colors.warning} />
             )}
@@ -186,12 +149,13 @@ export default function ProjectsListScreen() {
         right={
           canCreate ? (
             <TouchableOpacity
-              onPress={() => setSheetOpen(true)}
+              onPress={openNewOnWeb}
               accessibilityRole="button"
-              accessibilityLabel={t.projects.newProject}
+              accessibilityLabel={t.projects.newProjectOnWeb}
+              accessibilityHint={t.projects.newProjectOnWebHint}
               style={[styles.addBtn, { backgroundColor: colors.cta }]}
             >
-              <Feather name="plus" size={20} color={colors.ctaForeground} />
+              <Feather name="external-link" size={20} color={colors.ctaForeground} />
             </TouchableOpacity>
           ) : undefined
         }
@@ -282,46 +246,19 @@ export default function ProjectsListScreen() {
               icon="folder"
               title={t.projects.noProjects}
               subtitle={t.projects.noProjectsHint}
-              actionLabel={canCreate ? t.projects.newProject : undefined}
-              onAction={canCreate ? () => setSheetOpen(true) : undefined}
+              actionLabel={canCreate ? t.projects.newProjectOnWeb : undefined}
+              onAction={canCreate ? openNewOnWeb : undefined}
             />
           }
         />
       )}
 
-      <CrmSheet
-        visible={sheetOpen}
-        title={t.projects.newProject}
-        onClose={() => setSheetOpen(false)}
-        onSubmit={handleCreate}
-        submitLabel={t.common.save}
-        submitting={saving}
-      >
-        <Input label={t.projects.title} value={name} onChangeText={setName} required isRTL={isRTL} />
-        <Input label={t.projects.client} value={clientName} onChangeText={setClientName} isRTL={isRTL} />
-        <Input label={t.projects.location} value={location} onChangeText={setLocation} isRTL={isRTL} />
-        <Input
-          label={t.projects.budget}
-          value={budget}
-          onChangeText={setBudget}
-          keyboardType="numeric"
-          isRTL={isRTL}
-        />
-        <CrmChoice
-          label={t.projects.changeStatus}
-          options={PROJECT_STATUSES.map((s) => ({ value: s, label: t.projects.statuses[s] }))}
-          value={status}
-          onChange={setStatus}
-          scroll
-          required
-        />
-      </CrmSheet>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  addBtn: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  addBtn: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   controls: { paddingHorizontal: 16, paddingTop: 12, gap: 8 },
   searchBox: {
     alignItems: "center",

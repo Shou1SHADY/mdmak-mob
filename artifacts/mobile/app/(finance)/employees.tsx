@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, FlatList, TextInput, StyleSheet } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
@@ -9,26 +10,37 @@ import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { StatsCard } from "@/components/StatsCard";
+import { Button } from "@/components/ui/Button";
 import { useOrgCollection } from "@/hooks/useOrgCollection";
 import { usePermissions } from "@/hooks/usePermissions";
-import { formatSarCompact } from "@/lib/crm-display";
+import { useAuth } from "@/context/AuthContext";
+import { siteUrl } from "@/lib/site-api";
+import { matchesSearch } from "@/lib/search-text";
+import { canReadHrPeople, empNo, employeeName, hrPeopleWebPath } from "@/lib/hr-people";
 
 interface Employee {
   id: string;
-  name: string;
-  role?: string;
-  salary?: number;
+  /** HR 1.0 — permanent number, never reused. */
+  no?: number | null;
+  names?: { ar?: string | null; en?: string | null } | null;
+  /** Records from before HR 1.0. */
+  name?: string | null;
+  role?: string | null;
+  status?: string | null;
   organizationId: string;
 }
 
 /**
- * The team roster, read-only.
+ * The people list, read-only — who works here and under which number.
  *
- * Salaries are shown only to `employees.manage` — the same permission that
- * reveals the website's HR pages, where the figure is already visible. The
+ * No pay of any kind: HR 1.0 moved wages off `employees` into `employeePay`,
+ * which only the pay roles may read, so a total computed here would be a
+ * false zero. Adding people, their files and anything about pay is the
+ * website's HR (the button opens its People tab).
+ *
+ * The gate is the list rule's own (`hrOffice()` — see lib/hr-people.ts). The
  * module door opens for Finance OR HR, so this screen checks for itself rather
- * than trusting the door: reaching it by a link must not hand the payroll to
- * someone who only keeps the ledger.
+ * than trusting the door.
  */
 export default function EmployeesScreen() {
   const colors = useColors();
@@ -39,22 +51,23 @@ export default function EmployeesScreen() {
 
   const [search, setSearch] = useState("");
   const { can, isLoading: permsLoading } = usePermissions();
+  const { user } = useAuth();
+  const openHr = () => void WebBrowser.openBrowserAsync(siteUrl(hrPeopleWebPath(user?.role)));
 
-  const payroll = useMemo(
-    () => employees.reduce((sum, e) => sum + (e.salary ?? 0), 0),
-    [employees]
-  );
+  // Someone who has left is not on the team any more.
+  const current = useMemo(() => employees.filter((e) => e.status !== "left"), [employees]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return employees
+    return current
       .filter((e) =>
-        q ? e.name?.toLowerCase().includes(q) || e.role?.toLowerCase().includes(q) : true
+        search.trim()
+          ? matchesSearch(search, [e.names?.ar, e.names?.en, e.name, e.role, e.no != null ? String(e.no) : null])
+          : true
       )
-      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-  }, [employees, search]);
+      .sort((a, b) => (a.no ?? Number.MAX_SAFE_INTEGER) - (b.no ?? Number.MAX_SAFE_INTEGER) || employeeName(a, isRTL).localeCompare(employeeName(b, isRTL)));
+  }, [current, search, isRTL]);
 
-  if (!permsLoading && !can("employees.manage")) {
+  if (!permsLoading && !canReadHrPeople(can)) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScreenHeader title={t.hr.employees} subtitle={t.hr.title} showBack />
@@ -103,26 +116,15 @@ export default function EmployeesScreen() {
             paddingBottom: tabScreenBottomPadding(insets.bottom),
           }}
           ListHeaderComponent={
-            employees.length > 0 ? (
-              <View style={[styles.statRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
-                <View style={{ flex: 1 }}>
-                  <StatsCard
-                    title={t.hr.headcount}
-                    value={employees.length}
-                    icon="users"
-                    color={colors.cta}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <StatsCard
-                    title={t.hr.payroll}
-                    value={formatSarCompact(payroll, isRTL)}
-                    icon="credit-card"
-                    color={colors.success}
-                  />
-                </View>
-              </View>
-            ) : null
+            <View style={styles.header}>
+              {current.length > 0 ? (
+                <StatsCard title={t.hr.headcount} value={current.length} icon="users" color={colors.cta} />
+              ) : null}
+              <Text style={[styles.hint, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
+                {t.hr.peopleOnWebHint}
+              </Text>
+              <Button title={t.hr.openHrOnWeb} variant="secondary" onPress={openHr} fullWidth />
+            </View>
           }
           renderItem={({ item }) => (
             <View
@@ -137,7 +139,7 @@ export default function EmployeesScreen() {
             >
               <View style={[styles.avatar, { backgroundColor: colors.cta + "1A" }]}>
                 <Text style={[styles.avatarText, { color: colors.cta }]}>
-                  {(item.name || "?").trim().charAt(0).toUpperCase()}
+                  {employeeName(item, isRTL).charAt(0).toUpperCase()}
                 </Text>
               </View>
               <View style={{ flex: 1, gap: 4 }}>
@@ -145,19 +147,19 @@ export default function EmployeesScreen() {
                   style={[styles.name, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}
                   numberOfLines={1}
                 >
-                  {item.name}
+                  {employeeName(item, isRTL)}
                 </Text>
-                <Text
-                  style={[styles.role, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}
-                  numberOfLines={1}
-                >
-                  {item.role || "—"}
-                </Text>
+                {item.role ? (
+                  <Text
+                    style={[styles.role, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}
+                    numberOfLines={1}
+                  >
+                    {item.role}
+                  </Text>
+                ) : null}
               </View>
-              {item.salary != null && (
-                <Text style={[styles.salary, { color: colors.foreground }]}>
-                  {formatSarCompact(item.salary, isRTL)}
-                </Text>
+              {item.no != null && (
+                <Text style={[styles.number, { color: colors.mutedForeground }]}>{empNo(item.no)}</Text>
               )}
             </View>
           )}
@@ -187,7 +189,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   searchInput: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", paddingVertical: 0 },
-  statRow: { gap: 12, marginBottom: 12 },
+  header: { gap: 12, marginBottom: 12 },
+  hint: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
   row: {
     alignItems: "center",
     gap: 12,
@@ -202,5 +205,5 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
   name: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   role: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
-  salary: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
+  number: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", fontVariant: ["tabular-nums"] },
 });

@@ -45,9 +45,13 @@ interface OfferCardProps {
   onPress?: () => void;
   actions?: React.ReactNode;
   rank?: number;
+  /** Set when the buyer may not see this price (a sealed round, or a role that
+   * sees no amounts — lib/offer-sealing.ts): shown in its place, and the rank
+   * and any target price go with it. */
+  hiddenPriceLabel?: string;
 }
 
-export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
+export function OfferCard({ offer, onPress, actions, rank: rankIn, hiddenPriceLabel }: OfferCardProps) {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
@@ -56,6 +60,7 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
   const tone: Tone = statusData?.tone ?? "neutral";
   const statusInfo = { label: statusData ? (isRTL ? statusData.labelAr : statusData.label) : offer.status };
   const accentColor = toneColors(colors, tone).fg;
+  const rank = hiddenPriceLabel ? undefined : rankIn;
   // Rank is coloured by meaning too: the lowest price is the good news.
   const rankTone: Tone | undefined = rank === 1 ? "success" : rank === 2 ? "warning" : rank === 3 ? "accent" : undefined;
   const rankC = rankTone ? toneColors(colors, rankTone) : undefined;
@@ -90,7 +95,7 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
       ]}
       onPress={onPress}
       activeOpacity={onPress ? 0.82 : 1}
-      accessibilityLabel={`${t.rfq.quotedPrice}: ${formatCurrency(offer.price)}, ${statusInfo.label}`}
+      accessibilityLabel={`${t.rfq.quotedPrice}: ${hiddenPriceLabel ?? formatCurrency(offer.price)}, ${statusInfo.label}`}
       accessibilityRole={onPress ? "button" : "none"}
     >
       {/* Rank + status row */}
@@ -120,9 +125,18 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
         <Text style={[styles.priceLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
           {t.rfq.quotedPrice}
         </Text>
-        <Text style={[styles.price, { color: rankColor ?? colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-          {formatCurrency(offer.price)}
-        </Text>
+        {hiddenPriceLabel ? (
+          <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+            <Feather name="lock" size={14} color={colors.mutedForeground} />
+            <Text style={[styles.metaText, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
+              {hiddenPriceLabel}
+            </Text>
+          </View>
+        ) : (
+          <Text style={[styles.price, { color: rankColor ?? colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+            {formatCurrency(offer.price)}
+          </Text>
+        )}
       </View>
 
       {/* Supplier name */}
@@ -169,7 +183,7 @@ export function OfferCard({ offer, onPress, actions, rank }: OfferCardProps) {
       ) : null}
 
       {/* Price reduction info — shown when contractor has set a target price */}
-      {offer.status === "مطلوب تخفيض" && (offer.targetPrice || offer.reductionNote) && (  // ui-ok: stored offer status value
+      {!hiddenPriceLabel && offer.status === "مطلوب تخفيض" && (offer.targetPrice || offer.reductionNote) && (  // ui-ok: stored offer status value
         <View style={[styles.reductionBox, { backgroundColor: colors.warningSoft, borderColor: colors.warningSoft }]}>
           {offer.targetPrice ? (
             <View style={[styles.reductionRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>

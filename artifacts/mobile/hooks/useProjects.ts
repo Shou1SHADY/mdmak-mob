@@ -26,6 +26,9 @@ export interface Project {
   /** Present only on projects handed over from a CRM deal. */
   sourceOpportunityId?: string | null;
   handover?: { status?: string; pmId?: string; pmName?: string } | null;
+  /** Present on a Project Management 1.0 project (see lib/pm-guard.ts). The
+   * phone reads it only to decide that the project is PM-run. */
+  pm?: { no?: string; lifecycle?: string } | null;
   createdAt?: unknown;
   updatedAt?: unknown;
 }

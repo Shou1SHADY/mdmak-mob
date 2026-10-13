@@ -1,13 +1,12 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
   View, Text, FlatList, TouchableOpacity, RefreshControl,
-  Platform, StyleSheet, ScrollView, Modal, Alert, TextInput, Pressable, KeyboardAvoidingView } from "react-native";
+  StyleSheet, ScrollView, Modal, Alert, Pressable } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc, increment } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
-import { formatSar } from "@/lib/crm-display";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
@@ -21,6 +20,9 @@ import { Button } from "@/components/ui/Button";
 import { OFFER_STATUSES, OFFER_STATUS } from "@/constants/data";
 import { useSupplierOrders } from "@/hooks/useSupplierOrders";
 import { asSupplierSees } from "@/lib/procurement/supplier";
+import * as WebBrowser from "expo-web-browser";
+import { siteUrl } from "@/lib/site-api";
+import { SUPPLIER_OFFERS_PATH } from "@/lib/offer-sealing";
 
 export default function MyOffersScreen() {
   const colors = useColors();
@@ -33,11 +35,6 @@ export default function MyOffersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [fetchError, setFetchError] = useState<string | null>(null);
-
-  // Update price state
-  const [updatePriceOffer, setUpdatePriceOffer] = useState<OfferItem | null>(null);
-  const [newPrice, setNewPrice] = useState("");
-  const [isUpdatingPrice, setIsUpdatingPrice] = useState(false);
 
   // Withdraw state
   const [withdrawOffer, setWithdrawOffer] = useState<OfferItem | null>(null);
@@ -102,45 +99,15 @@ export default function MyOffersScreen() {
   const acceptedCount = offers.filter((o) => o.status === OFFER_STATUS.ACCEPTED).length;
   const rejectedCount = offers.filter((o) => o.status === OFFER_STATUS.REJECTED).length;
 
-  const handleUpdatePrice = async () => {
-    if (!updatePriceOffer || !newPrice.trim()) return;
-    const priceNum = parseFloat(newPrice);
-    if (isNaN(priceNum) || priceNum <= 0) {
-      Alert.alert(t.common.error, t.rfq.invalidPrice);
-      return;
-    }
-    setIsUpdatingPrice(true);
-    try {
-      await updateDoc(doc(db, "offers", updatePriceOffer.id), {
-        price: newPrice,
-        status: OFFER_STATUS.UNDER_REVIEW,
-        updatedAt: new Date().toISOString(),
-      });
-      // Notify contractor
-      const contractorId = (updatePriceOffer as any).contractorId;
-      if (contractorId) {
-        try {
-          await addDoc(collection(db, "users", contractorId, "notifications"), {
-            userId: contractorId,
-            type: "price_updated",
-            i18n: { title: "pn_price_updated_title", message: "pn_price_updated", params: { rfq: updatePriceOffer.rfqTitle || "", price: String(newPrice) } },
-            title: "قام المورد بتحديث سعر عرضه",  // ui-ok: fallback text for push; readers get i18n
-            message: `تم تحديث السعر لمناقصة: ${updatePriceOffer.rfqTitle || ""}. السعر الجديد: ${newPrice} ر.س`,  // ui-ok: fallback text for push; readers get i18n
-            offerId: updatePriceOffer.id,
-            rfqId: updatePriceOffer.rfqId,
-            createdAt: new Date().toISOString(),
-            read: false,
-          });
-        } catch {}
-      }
-      setUpdatePriceOffer(null);
-      setNewPrice("");
-      fetchOffers();
-    } catch {
-      Alert.alert(t.common.error, t.offers.failedToUpdatePrice);
-    } finally {
-      setIsUpdatingPrice(false);
-    }
+  // A revised price is not written here. On the website it updates the
+  // offer's every line and delivery batch with the price (offer-pricing.ts
+  // `revisePrice`); writing `price` alone left the lines at the old figure,
+  // and the purchase order raised at award was priced from them.
+  const handleReviseOnWeb = () => {
+    Alert.alert(t.offers.reviseOnWeb, t.offers.reviseOnWebDesc, [
+      { text: t.common.cancel, style: "cancel" },
+      { text: t.rfq.openWebsite, onPress: () => void WebBrowser.openBrowserAsync(siteUrl(SUPPLIER_OFFERS_PATH)) },
+    ]);
   };
 
   const handleWithdraw = async () => {
@@ -205,10 +172,10 @@ export default function MyOffersScreen() {
     if (item.status === OFFER_STATUS.PRICE_REDUCTION) {
       nodes.push(
         <Button
-          key="update"
-          title={t.offers.updatePrice}
+          key="revise"
+          title={t.offers.reviseOnWeb}
           size="sm"
-          onPress={() => { setUpdatePriceOffer(item); setNewPrice(item.price || ""); }}
+          onPress={handleReviseOnWeb}
         />
       );
     }
@@ -353,102 +320,6 @@ export default function MyOffersScreen() {
         />
       )}
 
-      {/* ── Update Price Modal ── */}
-      <Modal
-        visible={!!updatePriceOffer}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setUpdatePriceOffer(null)}
-      >
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <Pressable accessible={false} style={styles.modalOverlay} onPress={() => setUpdatePriceOffer(null)}>
-            <Pressable accessible={false}
-              style={[styles.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}
-              onPress={(e) => e.stopPropagation()}
-            >
-              {/* Handle */}
-              <View style={{ alignItems: "center", paddingBottom: 8 }}>
-                <View style={[styles.handle, { backgroundColor: colors.border }]} />
-              </View>
-
-              <Text style={[styles.modalTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-                {t.offers.updateOfferPrice}
-              </Text>
-
-              {/* Show contractor's target price if set */}
-              {(updatePriceOffer as any)?.targetPrice && (
-                <View style={[styles.targetPriceBox, { backgroundColor: colors.warning + "12", borderColor: colors.warning + "40" }]}>
-                  <Feather name="alert-circle" size={14} color={colors.warning} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.targetLabel, { color: colors.warning }]}>
-                      {t.offers.contractorSTargetPrice}
-                    </Text>
-                    <Text style={[styles.targetValue, { color: colors.warning }]}>
-                      {formatSar((updatePriceOffer as any).targetPrice, isRTL)}
-                    </Text>
-                  </View>
-                </View>
-              )}
-
-              {/* Show contractor's note if present */}
-              {(updatePriceOffer as any)?.reductionNote && (
-                <View style={[styles.noteBox, { backgroundColor: colors.muted, borderColor: colors.border }]}>
-                  <Feather name="message-square" size={13} color={colors.outline} />
-                  <Text style={[styles.noteText, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
-                    {(updatePriceOffer as any).reductionNote}
-                  </Text>
-                </View>
-              )}
-
-              <Text style={[styles.currentLabel, { color: colors.outline, textAlign: isRTL ? "right" : "left" }]}>
-                {t.offers.yourCurrentPrice}
-                {"  "}
-                <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold" }}>
-                  {updatePriceOffer?.price ? `${Number(updatePriceOffer.price).toLocaleString(isRTL ? "ar-SA" : "en-SA")} ${t.offers.sarUnit}` : "-"}
-                </Text>
-              </Text>
-
-              <Text style={[styles.newPriceLabel, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-                {t.offers.newPriceSar}
-              </Text>
-              <TextInput
-                style={[
-                  styles.priceInput,
-                  {
-                    color: colors.foreground,
-                    backgroundColor: colors.background,
-                    borderColor: colors.border,
-                    textAlign: isRTL ? "right" : "left",
-                  },
-                ]}
-                value={newPrice}
-                onChangeText={setNewPrice}
-                keyboardType="numeric"
-                placeholder={t.offers.enterNewPrice}
-                placeholderTextColor={colors.outline}
-                autoFocus
-              />
-
-              <View style={{ flexDirection: isRTL ? "row-reverse" : "row", gap: 10, marginTop: 16 }}>
-                <Button
-                  title={t.common.cancel}
-                  variant="outline"
-                  style={{ flex: 1 }}
-                  onPress={() => { setUpdatePriceOffer(null); setNewPrice(""); }}
-                />
-                <Button
-                  title={t.offers.updatePrice}
-                  style={{ flex: 2 }}
-                  loading={isUpdatingPrice}
-                  onPress={handleUpdatePrice}
-                  disabled={!newPrice.trim()}
-                />
-              </View>
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Modal>
-
       {/* ── Withdraw Confirm Modal ── */}
       <Modal
         visible={!!withdrawOffer}
@@ -532,51 +403,6 @@ const styles = StyleSheet.create({
 
   // Modals
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
-  modalSheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 20,
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 24,
-  },
-  handle: { width: 40, height: 4, borderRadius: 4 },
-  modalTitle: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold" },
-
-  targetPriceBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-  },
-  targetLabel: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", },
-  targetValue: { fontSize: 17, lineHeight: 28, fontFamily: "Inter_600SemiBold", marginTop: 2 },
-
-  noteBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-  },
-  noteText: { flex: 1, fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
-
-  currentLabel: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular" },
-  newPriceLabel: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold", marginTop: 4 },
-  priceInput: {
-    height: 52,
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    fontSize: 17, lineHeight: 28,
-    fontFamily: "Inter_600SemiBold",
-  },
 
   // Withdraw modal
   withdrawSheet: {

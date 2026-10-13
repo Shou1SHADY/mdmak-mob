@@ -23,6 +23,8 @@ import { PROJECT_STATUSES, resolveProjectStatus, type ProjectStatus } from "@/li
 import { projectStatusColor } from "@/lib/project-display";
 import { formatSar, formatSarCompact } from "@/lib/crm-display";
 import { RFQ_STATUSES } from "@/constants/data";
+import { PmWebNotice } from "@/components/PmWebNotice";
+import { isPmProject, projectWebPath } from "@/lib/pm-guard";
 
 /**
  * One project.
@@ -33,8 +35,10 @@ import { RFQ_STATUSES } from "@/constants/data";
  * the transition to the website. Publishing a tender likewise stays there — it
  * writes across the RFQ, the project's rfqIds and the BOQ draws at once.
  *
- * Status IS writable, because "this job is on hold now" is exactly the kind of
- * thing that gets decided on site.
+ * Status IS writable on a legacy project, because "this job is on hold now" is
+ * exactly the kind of thing that gets decided on site. A Project Management
+ * project's stage moves through its lifecycle on the website, so there the
+ * status is shown read-only (lib/pm-guard.ts).
  */
 export default function ProjectDetailScreen() {
   const colors = useColors();
@@ -85,7 +89,8 @@ export default function ProjectDetailScreen() {
 
   const resolved = resolveProjectStatus(project.status as string);
   const tint = projectStatusColor(resolved, colors);
-  const canEdit = can("projects.edit");
+  const isPm = isPmProject(project);
+  const canEdit = can("projects.edit") && !isPm;
 
   const handleStatus = async (status: ProjectStatus) => {
     if (status === resolved || busy) return;
@@ -129,6 +134,13 @@ export default function ProjectDetailScreen() {
                 </Text>
               </View>
             )}
+            {isPm && (
+              <View style={[styles.pill, { backgroundColor: colors.muted, borderColor: colors.border }]}>
+                <Text style={[styles.pillText, { color: colors.mutedForeground }]}>
+                  {project.pm?.no ? `${t.projects.pmManaged} · ${project.pm.no}` : t.projects.pmManaged}
+                </Text>
+              </View>
+            )}
             {project.sourceOpportunityId && (
               <View style={[styles.pill, { backgroundColor: colors.muted, borderColor: colors.border }]}>
                 <Text style={[styles.pillText, { color: colors.mutedForeground }]}>
@@ -147,16 +159,29 @@ export default function ProjectDetailScreen() {
           )}
         </View>
 
-        {/* Status */}
+        {/* Status — read-only on a PM project: its stage is the PM lifecycle,
+            moved on the website. */}
         <View style={[styles.panel, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <CrmChoice
-            label={t.projects.changeStatus}
-            options={PROJECT_STATUSES.map((s) => ({ value: s, label: t.projects.statuses[s] }))}
-            value={resolved}
-            onChange={handleStatus}
-            scroll
-          />
-          {!canEdit && (
+          {isPm ? (
+            <>
+              <Text style={[styles.panelTitle, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
+                {t.projects.changeStatus}
+              </Text>
+              <Text style={[styles.statusValue, { color: tint, textAlign: isRTL ? "right" : "left" }]}>
+                {t.projects.statuses[resolved]}
+              </Text>
+              <PmWebNotice message={t.projects.pmStatusOnWeb} path={projectWebPath(project.id)} style={{ marginTop: 12 }} />
+            </>
+          ) : (
+            <CrmChoice
+              label={t.projects.changeStatus}
+              options={PROJECT_STATUSES.map((s) => ({ value: s, label: t.projects.statuses[s] }))}
+              value={resolved}
+              onChange={handleStatus}
+              scroll
+            />
+          )}
+          {!isPm && !canEdit && (
             <Text style={[styles.hint, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
               {t.errors.noPermission}
             </Text>
@@ -344,6 +369,7 @@ const styles = StyleSheet.create({
   pillText: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
   notice: { alignItems: "center", gap: 8, borderRadius: 12, padding: 8, marginTop: 12 },
   noticeText: { flex: 1, fontSize: 12, lineHeight: 20, fontFamily: "Inter_600SemiBold" },
+  statusValue: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
   hint: { fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular", marginTop: 8 },
   emptyLine: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", paddingVertical: 4 },
   statRow: { gap: 8, marginBottom: 12 },

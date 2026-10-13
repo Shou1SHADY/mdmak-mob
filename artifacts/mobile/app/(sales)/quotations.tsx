@@ -21,12 +21,14 @@ import { formatSarCompact } from "@/lib/crm-display";
 import { siteUrl } from "@/lib/site-api";
 import { isFullyPaid, paidSoFar } from "@/lib/sales-installments";
 import type { CrmQuotation } from "@/lib/crm";
+import { useSalesScope } from "@/lib/sales-scope-hook";
 
 /**
  * Quotations, tracked from the phone. Writing one is the web composer's job
  * (a live A4 document has no phone shape) — the button opens it in the
  * browser; the list, statuses and payment progress live here, derived with
- * the same mirrored calculus the website runs.
+ * the same mirrored calculus the website runs. A rep sees only his own
+ * clients' quotations (the website's `inSalesScope`, lib/sales-scope.ts).
  */
 export default function SalesQuotationsScreen() {
   const colors = useColors();
@@ -35,7 +37,9 @@ export default function SalesQuotationsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { can } = usePermissions();
-  const { items: quotations, isLoading, error: loadError } = useOrgCollection<CrmQuotation>("crmQuotations");
+  const { items: quotations, isLoading: qLoading, error: loadError } = useOrgCollection<CrmQuotation>("crmQuotations");
+  const { mine, isLoading: scopeLoading } = useSalesScope();
+  const isLoading = qLoading || scopeLoading;
 
   const [search, setSearch] = useState("");
 
@@ -44,13 +48,14 @@ export default function SalesQuotationsScreen() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return quotations
+      .filter(mine)
       .filter((quo) =>
         q
           ? quo.quotationNumber?.toLowerCase().includes(q) || (quo.contactName || "").toLowerCase().includes(q)
           : true
       )
       .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  }, [quotations, search]);
+  }, [quotations, search, mine]);
 
   const statusTone = (status: string): Tone =>
     status === "accepted" ? "success" : status === "sent" ? "cta" : status === "rejected" ? "destructive" : "neutral";

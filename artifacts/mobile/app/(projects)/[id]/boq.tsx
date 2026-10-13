@@ -21,6 +21,8 @@ import { useProjectPermissions } from "@/hooks/usePermissions";
 import { recordMeasurement } from "@/lib/project-site-writes";
 import { computeProgress } from "@/lib/ipc";
 import { db } from "@/lib/firebase";
+import { PmWebNotice } from "@/components/PmWebNotice";
+import { isPmProject, projectWebPath } from "@/lib/pm-guard";
 
 /**
  * The bill of quantities, and the act it exists for: recording what was built.
@@ -49,7 +51,11 @@ export default function ProjectBoqScreen() {
   const [search, setSearch] = useState("");
   const [target, setTarget] = useState<BoqItem | null>(null);
 
-  const mayMeasure = can("projects.edit") || can("projects.publish");
+  // On a Project Management project the executed quantity moves only when a
+  // measurement sheet is approved (rules: boqUpdateOk) — the phone shows the
+  // bill and sends the measuring to the website.
+  const isPm = isPmProject(project);
+  const mayMeasure = !isPm && (can("projects.edit") || can("projects.publish"));
 
   const progress = useMemo(
     () =>
@@ -109,6 +115,7 @@ export default function ProjectBoqScreen() {
             style={[styles.searchInput, { color: colors.foreground, textAlign: align }]}
           />
         </View>
+        {isPm && project ? <PmWebNotice message={t.projects.pmMeasureOnWeb} path={projectWebPath(project.id)} /> : null}
       </View>
 
       {isLoading || permsLoading ? (
@@ -173,7 +180,7 @@ export default function ProjectBoqScreen() {
       )}
 
       <MeasureSheet
-        target={target}
+        target={isPm ? null : target}
         projectId={id}
         actor={user ? { uid: user.uid, name: user.displayName || user.email, organizationId: user.organizationId } : null}
         onClose={() => setTarget(null)}
@@ -310,7 +317,7 @@ function MeasureSheet({
 }
 
 const styles = StyleSheet.create({
-  controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
+  controls: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 8 },
   searchBox: { alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, minHeight: MIN_TOUCH },
   searchInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", paddingVertical: 10 },
   progress: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_700Bold" },

@@ -7,6 +7,7 @@ import { useT } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
+import { canReadHrPeople } from "@/lib/hr-people";
 
 /**
  * Finance and HR.
@@ -17,8 +18,10 @@ import { ModuleTabIcon, useModuleTabOptions } from "@/components/ModuleTabBar";
  *
  * One route group covers both: they are two short lists sharing the same gate
  * shape, and splitting them would mean two layouts differing only in a
- * permission id. `invoices.manage` guards Finance and `employees.manage` guards
- * HR, matching the website's nav items — and each TAB carries its own gate, so
+ * permission id. `invoices.manage` guards Finance; HR's people list opens to
+ * whoever firestore.rules let LIST `employees` (`hrOffice()`: the HR manager,
+ * government relations, payroll, management — lib/hr-people.ts), and the list
+ * shows no pay — and each TAB carries its own gate, so
  * an AP clerk is not handed the payroll and an HR member is not handed the
  * ledger. The door opens for either permission; the bar shows only what the
  * member may open.
@@ -50,7 +53,7 @@ export default function FinanceLayout() {
   if (!user) return <Redirect href="/auth/login" />;
 
   const canFinance = can("invoices.manage");
-  const canHr = can("employees.manage");
+  const canHr = canReadHrPeople(can);
 
   if (!canFinance && !canHr) {
     return (

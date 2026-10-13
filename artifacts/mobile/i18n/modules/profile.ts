@@ -58,6 +58,9 @@ export const en = {
     languageToggle: "العربية",
     languageToggleHint: "التبديل إلى العربية",
     cannotOpenFile: "Cannot open this file",
+    identityOnWeb: "The CR and tax numbers and the legal documents are changed on the website.",
+    ownerOnlyNote: "Only the company owner can change company details.",
+    editOnWeb: "Edit on the web",
   },
   supplierProfile: {
     title: "Profile",
@@ -126,6 +129,9 @@ export const ar: typeof en = {
     languageToggle: "English",
     languageToggleHint: "Switch to English",
     cannotOpenFile: "تعذر فتح الملف",
+    identityOnWeb: "يُعدَّل السجل التجاري والرقم الضريبي والمستندات النظامية من الموقع.",
+    ownerOnlyNote: "لا يعدّل بيانات الشركة إلا مالك الحساب.",
+    editOnWeb: "التعديل على الويب",
   },
   supplierProfile: {
     title: "حسابي",
