@@ -77,6 +77,9 @@ export interface PortalComponentDef {
   items: NavItem[];
   /** False for a module the company switched off whose home must stay reachable (the website's `launcher`). */
   launcher?: boolean;
+  /** Part of a subscription the company is not on (a free supplier — `applySupplierPlan` in company-modules):
+   * nothing inside it opens. The website shows it as a locked tile; this app leaves it out. */
+  planLocked?: boolean;
 }
 
 /** Procurement's Today opens for anyone holding any of the module's
@@ -491,7 +494,7 @@ export function visibleComponents(
   can: PermissionCheck
 ): PortalComponentDef[] {
   return components
-    .filter((component) => component.launcher !== false && isComponentVisible(component, can))
+    .filter((component) => component.launcher !== false && !component.planLocked && isComponentVisible(component, can))
     .slice()
     .sort((a, b) => a.displayOrder - b.displayOrder);
 }

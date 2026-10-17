@@ -104,6 +104,17 @@ export interface PoLogEntry {
     | "closed"
     | "cancelled"
     | "rated"
+    | "supplier_declined"
+    | "delivery_reported"
+    | "delivery_reminded"
+    | "invoice_uploaded"
+    | "transfer_confirmed"
+    | "transfer_missing"
+    | "transfer_arrived_later"
+    | "payment_reminded"
+    | "warranty_registered"
+    | "warranty_accepted"
+    | "supplier_rated"
   note?: string | null
   /** Free parameters for the rendered sentence (channel, date, quantity…). */
   params?: Record<string, string | number> | null
@@ -123,6 +134,29 @@ export interface PoRating {
   byId: string
   byName: string
   at: string
+}
+
+/** The supplier's "I delivered": a date and a note, no quantity. It waits until the contractor records a receipt. */
+export interface PoDeliveryReport {
+  id: string
+  at: string
+  date: string
+  note: string | null
+  byId: string
+  byName: string
+  reminders: string[]
+  closedAt?: string | null
+  /** The receipt that answered it. */
+  closedBy?: string | null
+}
+
+/** The supplier's decline of an order he had not accepted yet. */
+export interface PoSupplierDecline {
+  at: string
+  reason: "stock" | "price" | "date" | "other"
+  note?: string
+  byId: string
+  byName: string
 }
 
 export interface PurchaseOrder {
@@ -201,6 +235,11 @@ export interface PurchaseOrder {
   cancelledReason?: string | null
 
   rating?: PoRating | null
+  /** The payment terms frozen on the order when it was issued — shares of the invoice and the days each is due after its date. */
+  termsList?: { pct: number; days: number }[] | null
+  supplierAcceptNote?: string | null
+  supplierDecline?: PoSupplierDecline | null
+  deliveryReports?: PoDeliveryReport[] | null
   log: PoLogEntry[]
   updatedAt?: unknown
 }

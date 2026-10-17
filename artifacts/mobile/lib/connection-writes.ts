@@ -1,24 +1,19 @@
-import {
-  addDoc,
-  collection,
-  doc,
-  serverTimestamp,
-  updateDoc,
-  type Firestore,
-} from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import type { Firestore } from "firebase/firestore";
+import { answerSupplierInvitation } from "@/lib/site-api";
 
 // Accepting and declining a contractor's invitation, mirroring the website's
-// src/app/[locale]/(supplier)/supplier/connections/page.tsx.
+// src/app/[locale]/(supplier)/supplier/connections/page.tsx and its
+// answerInvitation (src/lib/supplier-free/connections.ts).
 //
-// Accepting is TWO writes that must both happen: create the link, then mark the
-// invitation accepted. The website does them in that order and so does this —
-// if the link write fails the invitation stays pending, which is recoverable;
-// the reverse would leave an accepted invitation with no connection behind it
-// and nothing in the UI to retry from.
-//
-// The already-linked case matters more than it looks: a contractor can invite a
-// supplier they have already favourited (which auto-creates an active link), so
-// accepting must NOT create a second link for the same pair.
+// Since Supplier 1.0 (15 Oct 2026) the answer is the SERVER's:
+// /api/supplier-free/invitations checks the invitation is addressed to this
+// supplier (by e-mail or mobile), opens the connection — reusing an existing
+// link for the pair, so a contractor who had already favourited the supplier
+// never gets a second one — marks the invitation, and tells the inviter in his
+// own language. firestore.rules now refuse a supplier who writes a link with
+// status "active", which is what this file used to do; the phone sends the
+// same request the website does instead, with the caller's ID token.
 
 export interface Invitation {
   id: string;
@@ -32,56 +27,27 @@ export interface Invitation {
 export interface AcceptInvitationInput {
   firestore: Firestore;
   invitation: Invitation;
+  // The fields below are kept so callers keep compiling; the server now reads
+  // the active company's name, field and existing links itself.
   supplierOrgId: string;
   supplierName: string;
   supplierCategories: string[];
-  /** Org ids this supplier is already linked to — checked to avoid a duplicate link. */
+  /** Org ids this supplier is already linked to — the server checks this now. */
   alreadyLinkedOrgIds: Set<string>;
 }
 
+async function answer(firestore: Firestore, invitationId: string, value: "accepted" | "declined"): Promise<void> {
+  const idToken = await getAuth(firestore.app).currentUser?.getIdToken();
+  if (!idToken) throw new Error("UNAUTHENTICATED");
+  const result = await answerSupplierInvitation(idToken, invitationId, value);
+  if (!result.ok) throw new Error(result.code);
+}
+
 export async function acceptInvitation(input: AcceptInvitationInput): Promise<void> {
-  const { firestore, invitation, supplierOrgId, supplierName, supplierCategories, alreadyLinkedOrgIds } =
-    input;
-  if (!invitation.contractorOrgId) throw new Error("missing_contractor_org");
-
-  if (!alreadyLinkedOrgIds.has(invitation.contractorOrgId)) {
-    await addDoc(collection(firestore, "contractorSupplierLinks"), {
-      contractorOrgId: invitation.contractorOrgId,
-      supplierOrgId,
-      supplierName,
-      supplierCategories,
-      status: "active",
-      // "contractor" — the contractor initiated this, and the supplier is
-      // accepting. firestore.rules keys the create permission off this value.
-      requestedBy: "contractor",
-      requestedAt: serverTimestamp(),
-      connectedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  }
-
-  await updateDoc(doc(firestore, "invitations", invitation.id), {
-    status: "accepted",
-    acceptedAt: serverTimestamp(),
-  });
-
-  // Best-effort: the acceptance itself has already landed and must not be
-  // reported as failed because a notification could not be written.
-  try {
-    if (invitation.invitedBy) {
-      await addDoc(collection(firestore, "users", invitation.invitedBy, "notifications"), {
-        title: "تم قبول دعوة المورد",
-        message: `${supplierName} قبل دعوتك وانضم إلى دليل مورّديك.`,
-        type: "supplier_invite_accepted",
-        createdAt: new Date().toISOString(),
-        read: false,
-      });
-    }
-  } catch (err) {
-    if (__DEV__) console.warn("[acceptInvitation] inviter notification failed:", err);
-  }
+  if (!input.invitation.contractorOrgId) throw new Error("missing_contractor_org");
+  await answer(input.firestore, input.invitation.id, "accepted");
 }
 
 export async function declineInvitation(firestore: Firestore, invitationId: string): Promise<void> {
-  await updateDoc(doc(firestore, "invitations", invitationId), { status: "declined" });
+  await answer(firestore, invitationId, "declined");
 }

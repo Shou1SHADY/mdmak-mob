@@ -5,7 +5,6 @@ import {
   where,
   getDocs,
   limit,
-  addDoc,
   updateDoc,
   getDoc,
   doc as fsDoc,
@@ -15,7 +14,7 @@ import {
 } from 'firebase/firestore';
 import { router } from 'expo-router';
 import { auth, db } from '@/lib/firebase';
-import { SITE_URL } from '@/lib/site-api';
+import { SITE_URL, supplierAct } from '@/lib/site-api';
 import { useAuth, type AppUser, type UserRole } from '@/context/AuthContext';
 import type { Language } from '@/context/LanguageContext';
 
@@ -156,20 +155,19 @@ async function executeAction(action: PendingAction, user: AppUser): Promise<void
       if (!p.rfqId) throw new Error('Missing rfqId');
       router.push(`/(supplier)/submit-offer/${p.rfqId}` as never);
       break;
-    case 'createInquiry':
-      // Same shape the website's supplier RFQ page writes, so the contractor
-      // sees who asked.
-      await addDoc(collection(db, `rfqs/${p.rfqId}/inquiries`), {
-        question: p.question,
-        userId: user.uid,
-        supplierId: user.uid,
-        organizationId: user.organizationId,
-        supplierName: user.orgName || user.displayName,
-        submittedByUserId: user.uid,
-        submittedByUserName: user.displayName,
-        createdAt: new Date().toISOString(),
-      });
+    case 'createInquiry': {
+      // A question is a server act since Supplier 1.0 (website `quote.ask`, as
+      // the supplier RFQ page asks it): the server checks the RFQ is open and
+      // reaches this supplier, writes the question in the active company's
+      // name and tells the RFQ's creator and its rfq.manage holders — the
+      // direct write this replaced told nobody.
+      if (!p.rfqId || !p.question?.trim()) throw new Error('Missing rfqId or question');
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error('UNAUTHENTICATED');
+      const result = await supplierAct(idToken, { action: 'quote.ask', rfqId: p.rfqId, question: p.question.trim().slice(0, 1000) });
+      if (!result.ok) throw new Error(result.code);
       break;
+    }
     case 'favoriteSupplier':
       await updateDoc(fsDoc(db, 'users', user.uid), {
         favoriteSuppliers: arrayUnion(p.supplierId),

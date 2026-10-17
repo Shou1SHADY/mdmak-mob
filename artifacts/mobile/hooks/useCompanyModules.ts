@@ -5,10 +5,14 @@ import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
   COMPANY_MODULES,
+  COMPANY_PLANS,
   applyModuleSwitches,
   offSet,
+  planOf,
   portalOfRole,
+  supplierRegistry,
   type OptionalModule,
+  type SupplierPlan,
 } from "@/lib/company-modules";
 import { componentsForRole, visibleComponents, type PortalComponentDef } from "@/lib/portal-components";
 
@@ -49,18 +53,55 @@ export function useCompanyModules(): { off: ReadonlySet<OptionalModule>; loading
 }
 
 /**
- * The modules this member sees, in order: the role's registry, minus what the company switched off,
+ * The supplier company's plan — the website's useSupplierPlan. No document = free, as on the website. A read that
+ * FAILS reads as "full", like the switches above: an outage (or rules not yet deployed) must not hide modules.
+ * Not a supplier = "full" (the plan shapes only the supplier registry).
+ */
+export function useSupplierPlan(): { plan: SupplierPlan; loading: boolean } {
+  const { user } = useAuth();
+  const orgId = user?.organizationId ?? null;
+  const isSupplier = user?.role === "Supplier";
+  const [plan, setPlan] = useState<SupplierPlan>("full");
+  const [loading, setLoading] = useState(Boolean(orgId && isSupplier));
+
+  useEffect(() => {
+    if (!orgId || !isSupplier) {
+      setPlan("full");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    return onSnapshot(
+      doc(db, COMPANY_PLANS, orgId),
+      (snap) => {
+        setPlan(planOf(snap.exists() ? (snap.data() as { supplierPlan?: unknown }) : null));
+        setLoading(false);
+      },
+      () => {
+        setPlan("full");
+        setLoading(false);
+      }
+    );
+  }, [orgId, isSupplier]);
+
+  return { plan, loading };
+}
+
+/**
+ * The modules this member sees, in order: the role's registry (a supplier's as his plan shapes it), minus what the company switched off,
  * minus what the member's permissions leave empty. Every screen that lists modules goes through this.
  */
 export function useVisibleModules(): { modules: PortalComponentDef[]; loading: boolean; on: (id: OptionalModule) => boolean } {
   const { user } = useAuth();
   const { can, isLoading: permsLoading } = usePermissions();
   const { off, loading: modulesLoading } = useCompanyModules();
+  const { plan, loading: planLoading } = useSupplierPlan();
   const portal = portalOfRole(user?.role);
   const modules = useMemo(() => {
-    const all = componentsForRole(user?.role);
+    // A supplier's registry is shaped by his plan first (website usePortalRegistry), then by the switches.
+    const all = portal === "supplier" ? supplierRegistry(plan) : componentsForRole(user?.role);
     return visibleComponents(portal ? applyModuleSwitches(all, off, portal) : all, can);
-  }, [user?.role, portal, off, can]);
+  }, [user?.role, portal, plan, off, can]);
   const on = useMemo(() => (id: OptionalModule) => !off.has(id), [off]);
-  return { modules, loading: permsLoading || modulesLoading, on };
+  return { modules, loading: permsLoading || modulesLoading || planLoading, on };
 }

@@ -45,7 +45,7 @@ export const REJECT_REASON_CODES = ["damaged", "wrong_item", "wrong_spec", "samp
 export const HOLD_REASON_CODES = ["certificate", "test", "consultant"] as const satisfies readonly HoldReasonCode[]
 export const REJECT_DECISIONS = ["replace", "discount", "reduce"] as const satisfies readonly RejectDecision[]
 export const RECEIPT_CHECKS = ["delivery_note", "weighbridge", "certificate", "photos", "driver_signature"] as const satisfies readonly ReceiptCheck[]
-export const PO_LOG_ACTIONS = ["created", "approved", "returned", "resubmitted", "sent", "supplier_accepted", "date_updated", "reminded", "received", "remainder_cancelled", "reject_decided", "closed", "cancelled", "rated"] as const satisfies readonly PoLogEntry["action"][]
+export const PO_LOG_ACTIONS = ["created", "approved", "returned", "resubmitted", "sent", "supplier_accepted", "date_updated", "reminded", "received", "remainder_cancelled", "reject_decided", "closed", "cancelled", "rated", "supplier_declined", "delivery_reported", "delivery_reminded", "invoice_uploaded", "transfer_confirmed", "transfer_missing", "transfer_arrived_later", "warranty_registered", "warranty_accepted", "supplier_rated"] as const satisfies readonly PoLogEntry["action"][]
 
 // ---------------------------------------------------------------------------
 // Days — dates are `YYYY-MM-DD` or ISO strings; offsets are calendar days
@@ -163,10 +163,21 @@ export function poLate(po: PurchaseOrder, now: Date): boolean {
   return daysLate(po, now) > 0
 }
 
-/** Days past the promised date while goods are still owed; 0 otherwise. */
+/** The supplier reported a delivery dated on or before the promised day and no receipt has answered it yet:
+ * the clock stops until the contractor's receipt carries the real date (conflict 2, SUP-05 — the supplier's
+ * screen reads the same rule, `isLate` in supplier-free/deal-logic). */
+export function deliveryReportedInTime(po: Pick<PurchaseOrder, "promisedDate" | "deliveryReports">): boolean {
+  const promised = dayOf(po.promisedDate)
+  if (!promised) return false
+  return (po.deliveryReports || []).some((r) => !r.closedAt && !!dayOf(r.date) && dayOf(r.date) <= promised)
+}
+
+/** Days past the promised date while goods are still owed; 0 otherwise — and 0 while a delivery the supplier
+ * reported in time waits for its receipt. */
 export function daysLate(po: PurchaseOrder, now: Date): number {
   if (!DELIVERING.has(poStatus(po)) || !po.promisedDate) return 0
   if (!po.lines.some((l) => lineOutstanding(l) > 0)) return 0
+  if (deliveryReportedInTime(po)) return 0
   const d = daysFromNow(po.promisedDate, now)
   return d == null || d >= 0 ? 0 : -d
 }
@@ -193,11 +204,21 @@ export function requiredApprover(po: PurchaseOrder, policies: ProcurementPolicie
   return poValue(po) > policies.managerApprovalLimit ? "owner" : "manager"
 }
 
-export const BLOCK_CODES = ["split_orders", "supplier_cr_expired", "supplier_unverified", "supplier_no_vat"] as const
+export const BLOCK_CODES = ["split_orders", "supplier_cr_expired", "supplier_unverified"] as const
 export type BlockCode = (typeof BLOCK_CODES)[number]
+
+/** Said beside the approval, never in its way. The VAT number is optional (Supplier 1.0 B-11, decision 9):
+ * a supplier who is not VAT-registered invoices without VAT. */
+export const WARNING_CODES = ["supplier_no_vat"] as const
+export type WarningCode = (typeof WARNING_CODES)[number]
 
 export interface PoBlock {
   code: BlockCode
+  params: Record<string, string | number>
+}
+
+export interface PoWarning {
+  code: WarningCode
   params: Record<string, string | number>
 }
 
@@ -243,9 +264,14 @@ export function poBlocks(po: PurchaseOrder, ctx: BlockContext): PoBlock[] {
     const expiry = s.crExpiry ? daysFromNow(s.crExpiry, ctx.now) : null
     if (expiry != null && expiry < 0) out.push({ code: "supplier_cr_expired", params: { date: s.crExpiry as string, daysAgo: -expiry } })
     if (s.verified === false) out.push({ code: "supplier_unverified", params: {} })
-    if (s.hasVatNumber === false) out.push({ code: "supplier_no_vat", params: {} })
   }
   return out
+}
+
+/** What the approver should know and may approve over. Unknown facts say nothing. */
+export function poWarnings(po: Pick<PurchaseOrder, "isGuestSupplier">, ctx: Pick<BlockContext, "supplier">): PoWarning[] {
+  const s = po.isGuestSupplier ? null : ctx.supplier
+  return s && s.hasVatNumber === false ? [{ code: "supplier_no_vat", params: {} }] : []
 }
 
 export const REFUSAL_CODES = ["not_awaiting", "no_permission", "own_order", "owner_only_retroactive", "above_limit"] as const
@@ -410,7 +436,7 @@ export function supplierScore(orders: PurchaseOrder[], receipts: ReceiptFact[], 
     n++
     const facts = poFacts(po, receipts)
     const promise = po.promisedDate ? daysFromNow(po.promisedDate, now) : null
-    const isLate = facts.lastReceiptDay != null ? facts.lateByDays > 0 : promise != null && promise < 0 ? true : poLate(po, now)
+    const isLate = facts.lastReceiptDay != null ? facts.lateByDays > 0 : promise != null && promise < 0 ? !deliveryReportedInTime(po) : poLate(po, now)
     if (isLate) late++
     if (isLate || facts.lastReceiptDay != null || po.lines.some((l) => num(l.accepted) + num(l.rejected) > 0)) judged++
     for (const l of po.lines) {

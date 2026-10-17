@@ -8,7 +8,7 @@
 // "Off" is a product switch, not a security boundary: the data rules still go by permission. A
 // company with no switch document has everything on. Pure: no I/O.
 
-import type { PortalComponentDef } from "@/lib/portal-components";
+import { SUPPLIER_COMPONENTS, type NavItem, type PortalComponentDef, type PortalComponentId } from "@/lib/portal-components";
 
 export const COMPANY_MODULES = "companyModules";
 
@@ -81,4 +81,65 @@ export function applyModuleSwitches(
     }
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// The supplier's plan (website Supplier 1.0, 15 Oct 2026 — src/lib/supplier-plan.ts and the plan half of
+// company-modules.ts). A supplier company is on the FREE journey unless `companyPlans/{orgId}.supplierPlan` is
+// "full" (no document = free; the platform admin switches it). The plan shapes the registry: free keeps Sales
+// (quote requests, my quotes), Order Management (home, orders, invoices & transfers, contractors) and Governance
+// (the company account), ungated — a free account is its company's only user — and locks every other module.
+// The website shows a locked module as a tile that says what a subscription adds; this app leaves it out.
+// ---------------------------------------------------------------------------
+
+export const COMPANY_PLANS = "companyPlans";
+
+export type SupplierPlan = "free" | "full";
+
+export const planOf = (data: { supplierPlan?: unknown } | null | undefined): SupplierPlan =>
+  data && data.supplierPlan === "full" ? "full" : "free";
+
+/** The free journey's pages by the module that hosts them — the website's FREE_SUPPLIER_NAV, on this app's routes
+ * (a page with no screen here keeps the website's path and opens there). */
+export const FREE_SUPPLIER_NAV: Partial<Record<PortalComponentId, readonly string[]>> = {
+  procurement: ["/(supplier)/rfqs", "/(supplier)/offers"],
+  "project-management": ["/(supplier)/dashboard", "/(supplier)/orders", "/supplier/invoices", "/(connections)"],
+  users: ["/(supplier)/profile"],
+};
+
+/** Items the full registry does not carry (the free account's invoices & transfers live on the website). */
+const FREE_ONLY_ITEMS: Record<string, NavItem> = {
+  "/supplier/invoices": { titleKey: "invoices", href: "/supplier/invoices", icon: "file", built: false },
+};
+
+function itemFor(components: PortalComponentDef[], href: string): NavItem | null {
+  for (const c of components) {
+    const found = c.items.find((i) => i.href === href);
+    if (found) return found;
+  }
+  return FREE_ONLY_ITEMS[href] ?? null;
+}
+
+/** The supplier registry for a plan. "full" is the registry untouched (the same array); "free" keeps the free
+ * journey's pages, ungated, and locks every other module. Pure. */
+export function applySupplierPlan(components: PortalComponentDef[], plan: SupplierPlan): PortalComponentDef[] {
+  if (plan === "full") return components;
+  return components.map((c): PortalComponentDef => {
+    const nav = FREE_SUPPLIER_NAV[c.id];
+    if (!nav) return { ...c, items: [], planLocked: true };
+    const items = nav
+      .map((href) => itemFor(components, href))
+      .filter((i): i is NavItem => i !== null)
+      .map(({ requiredPermission: _p, requiredAnyPermission: _a, ...item }) => item);
+    return { ...c, items };
+  });
+}
+
+let freeRegistry: PortalComponentDef[] | null = null;
+
+/** The whole supplier registry as a company on this plan sees it, before any module switch. */
+export function supplierRegistry(plan: SupplierPlan): PortalComponentDef[] {
+  if (plan === "full") return SUPPLIER_COMPONENTS;
+  if (!freeRegistry) freeRegistry = applySupplierPlan(SUPPLIER_COMPONENTS, "free");
+  return freeRegistry;
 }

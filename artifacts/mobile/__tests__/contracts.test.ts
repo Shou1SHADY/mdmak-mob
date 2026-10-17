@@ -1,6 +1,6 @@
 // The document contracts both apps share — the fields the website queries on.
 
-import { buildOfferDoc, buildRfqDoc, readRfqLineItems } from "@/lib/contracts";
+import { buildOfferDoc, buildRfqDoc, readRfqLineItems, riyadhYear } from "@/lib/contracts";
 import { OFFER_STATUS, RFQ_ACCEPTING_OFFERS } from "@/constants/data";
 
 const rfqArgs = {
@@ -95,5 +95,16 @@ describe("buildOfferDoc", () => {
 describe("RFQ_ACCEPTING_OFFERS", () => {
   it("is the one definition of an RFQ a supplier may still bid on", () => {
     expect(RFQ_ACCEPTING_OFFERS).toEqual(["New", "Active", "Under Review"]);
+  });
+});
+
+describe("RFQ numbering and terms (website Supplier 1.0)", () => {
+  it("numbers by Riyadh's year — 31 Dec 22:00 UTC is already next year there", () => {
+    expect(riyadhYear(new Date("2026-12-31T20:59:00.000Z"))).toBe(2026);
+    expect(riyadhYear(new Date("2026-12-31T21:00:00.000Z"))).toBe(2027);
+  });
+
+  it("stores no payment terms when the buyer set none, as the website's untouched form", () => {
+    expect(buildRfqDoc(rfqArgs).paymentTermsList).toBeNull();
   });
 });

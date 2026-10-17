@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView, useWindowDimensions,
 } from "react-native";
 import { router } from "expo-router";
-import { collection, addDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -13,7 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { auth, db } from "@/lib/firebase";
 import { notifyFavoritesOfPublish } from "@/lib/site-api";
-import { buildRfqDoc } from "@/lib/contracts";
+import { buildRfqDoc, createRfqWithNumber } from "@/lib/contracts";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Input } from "@/components/ui/Input";
 import { DateField } from "@/components/ui/DateField";
@@ -81,8 +80,9 @@ export default function CreateRFQScreen() {
     }
     setLoading(true);
     try {
-      const ref = await addDoc(
-        collection(db, "rfqs"),
+      // Numbered RFQ-yyyy/NNN in the same transaction, as every RFQ the website creates.
+      const ref = await createRfqWithNumber(
+        db,
         buildRfqDoc({
           uid: user.uid,
           organizationId: user.organizationId,

@@ -156,3 +156,52 @@ export async function announceNewOffer(idToken: string, offerId: string): Promis
     return false;
   }
 }
+
+/** POST /api/supplier-free/invitations — the supplier answers a contractor's
+ * connection invitation (website CON-02). The server checks the invitation is
+ * addressed to him (e-mail or mobile), opens the connection with the Admin SDK
+ * and tells the inviter: firestore.rules let a supplier create only a PENDING
+ * link, so an accepted invitation can no longer be written from the phone. */
+export async function answerSupplierInvitation(
+  idToken: string,
+  id: string,
+  answer: "accepted" | "declined"
+): Promise<ApiResult<{ answer: "accepted" | "declined" }>> {
+  try {
+    const res = await fetch(`${SITE_URL}/api/supplier-free/invitations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ id, answer }),
+    });
+    const json = await readJson(res);
+    if (!res.ok || !json?.success) {
+      return { ok: false, code: json?.code || "ANSWER_FAILED", message: json?.message, status: res.status };
+    }
+    return { ok: true, data: json.data ?? { answer } };
+  } catch {
+    return { ok: false, code: "NETWORK" };
+  }
+}
+
+/** POST /api/supplier-free/act — the supplier's acts on a document another
+ * company owns run on the server (website NFR-08), which re-reads the RFQ and
+ * tells whoever must hear. The phone uses `quote.ask` (a question on an RFQ). */
+export async function supplierAct<T = Record<string, unknown>>(
+  idToken: string,
+  body: { action: string } & Record<string, unknown>
+): Promise<ApiResult<T>> {
+  try {
+    const res = await fetch(`${SITE_URL}/api/supplier-free/act`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify(body),
+    });
+    const json = await readJson(res);
+    if (!res.ok || !json?.success) {
+      return { ok: false, code: json?.code || "ACT_FAILED", message: json?.message, status: res.status };
+    }
+    return { ok: true, data: (json.data ?? {}) as T };
+  } catch {
+    return { ok: false, code: "NETWORK" };
+  }
+}

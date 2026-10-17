@@ -9,6 +9,9 @@
 //   RFQ   -> src/components/contractor/RfqForm.tsx      (rfqData)
 //   Offer -> src/components/supplier/SubmitOfferDialog.tsx (offerData)
 
+import { collection, doc, runTransaction, type Firestore } from "firebase/firestore";
+import { drawYearlyDocNumber } from "@/lib/sales-numbering";
+
 /** A single RFQ line item, in the shape the website's RFQ views render. */
 export interface RfqProduct {
   name: string;
@@ -97,6 +100,10 @@ export function buildRfqDoc(args: BuildRfqArgs): Record<string, unknown> {
     allowedSupplierOrgIds: [] as string[],
     orderedFromMdmakDirect: false,
     requiresWarranty: false,
+    // The buyer's payment terms (RFQ-11). The phone has no terms picker, and an
+    // RFQ whose buyer set none stores none — the award then freezes the offer's
+    // own terms (RFQ › offer › 100% at 30 days), as the website's untouched form.
+    paymentTermsList: null,
     offersCount: 0,
     createdAt: now,
     updatedAt: now,
@@ -188,4 +195,34 @@ export function buildOfferDoc(args: BuildOfferArgs): Record<string, unknown> {
     doc.executionDurationUnit = args.executionDurationUnit;
   }
   return doc;
+}
+
+/** The RFQ's document type in the yearly `mfgCounters` sequences (website procurement/numbering.ts). */
+export const RFQ_DOC_TYPE = "RFQ";
+
+/** The year an RFQ is numbered in: Riyadh's (UTC+3, no daylight saving), as the website's `riyadhYear`. */
+export const riyadhYear = (now: Date = new Date()): number =>
+  Number(new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 4));
+
+/**
+ * A new RFQ with its number (`RFQ-2026/031`) drawn in the same transaction —
+ * the website's createRfqWithNumber (procurement/rfq-writes.ts, NAV-08): every
+ * RFQ is numbered at creation, a draft included, from the org's yearly
+ * `{orgId}__RFQ__{year}` counter, so two buyers never hold the same number and
+ * a phone-made RFQ reads like any other on the website.
+ */
+export async function createRfqWithNumber(
+  firestore: Firestore,
+  data: Record<string, unknown>,
+  now: Date = new Date()
+): Promise<{ id: string; rfqNumber: string }> {
+  const organizationId = typeof data.organizationId === "string" ? data.organizationId : "";
+  if (!organizationId) throw new Error("missing_organization");
+  const ref = doc(collection(firestore, "rfqs"));
+  const rfqNumber = await runTransaction(firestore, async (tx) => {
+    const no = await drawYearlyDocNumber(firestore, tx, organizationId, RFQ_DOC_TYPE, riyadhYear(now));
+    tx.set(ref, { ...data, rfqNumber: no });
+    return no;
+  });
+  return { id: ref.id, rfqNumber };
 }
