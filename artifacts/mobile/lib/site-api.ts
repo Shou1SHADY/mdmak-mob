@@ -206,6 +206,19 @@ export async function submitSupplierOffer(idToken: string, rfqId: string, offer:
   }
 }
 
+/** The supplier's pending connection invitations, found by the website by his e-mail AND his mobile number (an
+ * invitation sent to a number only never matched the e-mail query this app used to run itself). */
+export async function listSupplierInvitations(idToken: string): Promise<ApiResult<Array<{ id: string; contractorOrgId: string | null; contractorName: string | null; invitedBy: string | null; message: string }>>> {
+  try {
+    const res = await fetch(`${SITE_URL}/api/supplier-free/invitations`, { headers: { Authorization: `Bearer ${idToken}` } });
+    const json = await readJson(res);
+    if (!res.ok || !json?.success) return { ok: false, code: json?.code || "INVITES_FAILED", message: json?.message, status: res.status };
+    return { ok: true, data: Array.isArray(json.data) ? json.data : [] };
+  } catch {
+    return { ok: false, code: "NETWORK" };
+  }
+}
+
 export async function supplierAct<T = Record<string, unknown>>(
   idToken: string,
   body: { action: string } & Record<string, unknown>

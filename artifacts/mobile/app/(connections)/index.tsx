@@ -3,7 +3,6 @@ import { View, Text, SectionList, TouchableOpacity, StyleSheet, Alert, ActivityI
 import { Redirect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
@@ -12,7 +11,8 @@ import { ScreenHeader } from "@/components/ScreenHeader";
 import { scrollBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { listSupplierInvitations } from "@/lib/site-api";
 import { useOrgCollection } from "@/hooks/useOrgCollection";
 import { acceptInvitation, declineInvitation, type Invitation } from "@/lib/connection-writes";
 
@@ -32,9 +32,9 @@ interface SupplierLink {
  * the registry here. Accepting on a phone is reasonable: it is a yes/no on a
  * named company, not a form.
  *
- * Invitations are matched on EMAIL, not org: firestore.rules only lets a caller
- * list invitations addressed to their own `request.auth.token.email`, so the
- * query has to filter on exactly that or it is denied outright.
+ * Invitations come from the website (`/api/supplier-free/invitations`), which
+ * matches them on his e-mail AND his mobile number — the rules let a device list
+ * only those addressed to its own e-mail, so a phone-only invitation never showed.
  */
 export default function ConnectionsScreen() {
   const colors = useColors();
@@ -53,31 +53,28 @@ export default function ConnectionsScreen() {
   const [invLoading, setInvLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const email = user?.email?.toLowerCase();
-
+  // The website finds his invitations by e-mail AND mobile number (a phone-only invitation never matched the e-mail
+  // query this screen used to run itself); re-read after every answer.
+  const [reload, setReload] = useState(0);
   useEffect(() => {
-    if (!email) {
+    if (!user) {
       setInvLoading(false);
       return;
     }
+    let alive = true;
     setInvLoading(true);
-    const unsub = onSnapshot(
-      query(
-        collection(db, "invitations"),
-        where("email", "==", email),
-        where("status", "==", "pending")
-      ),
-      (snap) => {
-        setInvitations(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Invitation));
-        setInvLoading(false);
-      },
-      (e) => {
-        if (__DEV__) console.warn("[Connections] invitations:", e.message);
-        setInvLoading(false);
-      }
-    );
-    return unsub;
-  }, [email]);
+    void (async () => {
+      const token = await auth.currentUser?.getIdToken().catch(() => null);
+      const res = token ? await listSupplierInvitations(token) : null;
+      if (!alive) return;
+      if (res?.ok) setInvitations(res.data.map((i) => ({ ...i, status: "pending" }) as Invitation));
+      else if (__DEV__) console.warn("[Connections] invitations:", res?.code);
+      setInvLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [user, reload]);
 
   const activeLinks = useMemo(() => links.filter((l) => l.status === "active"), [links]);
   const linkedOrgIds = useMemo(
@@ -122,6 +119,7 @@ export default function ConnectionsScreen() {
         alreadyLinkedOrgIds: linkedOrgIds,
       });
       Alert.alert(t.common.success, t.connections.accepted);
+      setReload((n) => n + 1);
     } catch (e: any) {
       if (__DEV__) console.warn("[Connections] accept:", e?.message);
       Alert.alert(t.common.error, t.connections.failed);
@@ -135,6 +133,7 @@ export default function ConnectionsScreen() {
     try {
       await declineInvitation(db, inv.id);
       Alert.alert(t.common.success, t.connections.declined);
+      setReload((n) => n + 1);
     } catch (e: any) {
       if (__DEV__) console.warn("[Connections] decline:", e?.message);
       Alert.alert(t.common.error, t.connections.failed);

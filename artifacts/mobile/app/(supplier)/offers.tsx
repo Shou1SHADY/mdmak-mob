@@ -3,14 +3,15 @@ import {
   View, Text, FlatList, TouchableOpacity, RefreshControl,
   StyleSheet, ScrollView, Modal, Alert, Pressable } from "react-native";
 import { router, useFocusEffect } from "expo-router";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc, increment } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { supplierAct } from "@/lib/site-api";
 import { byNewest } from "@/lib/time";
 import { OfferCard, OfferItem } from "@/components/OfferCard";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
@@ -114,33 +115,11 @@ export default function MyOffersScreen() {
     if (!withdrawOffer) return;
     setIsWithdrawing(true);
     try {
-      const contractorId = (withdrawOffer as any).contractorId;
-      const rfqTitle = withdrawOffer.rfqTitle || "";
-      await deleteDoc(doc(db, "offers", withdrawOffer.id));
-      // Submitting incremented this; without the matching decrement the RFQ
-      // keeps reporting an offer the contractor can no longer open. Best
-      // effort, exactly as the increment is on submission.
-      if (withdrawOffer.rfqId) {
-        try {
-          await updateDoc(doc(db, "rfqs", withdrawOffer.rfqId), { offersCount: increment(-1) });
-        } catch {}
-      }
-      if (contractorId) {
-        try {
-          await addDoc(collection(db, "users", contractorId, "notifications"), {
-            userId: contractorId,
-            type: "offer_withdrawn",
-            i18n: { title: "pn_offer_withdrawn_title", message: "pn_offer_withdrawn", params: { rfq: rfqTitle || "" } },
-            title: isRTL ? "تم سحب العرض" : "Offer Withdrawn",  // ui-ok: fallback text for push; readers get i18n
-            message: isRTL
-              ? `قام المورد بسحب عرضه على مناقصة: ${rfqTitle}`  // ui-ok: fallback text for push; readers get i18n
-              : `The supplier withdrew their offer for: ${rfqTitle}`,
-            rfqId: withdrawOffer.rfqId,
-            createdAt: new Date().toISOString(),
-            read: false,
-          });
-        } catch {}
-      }
+      // The website marks it withdrawn (never deleted — the contractor keeps it, out of comparison and award), logs
+      // who and when, and tells the contractor. Deleting it from the phone took the contractor's record with it.
+      const token = await auth.currentUser?.getIdToken();
+      const res = token ? await supplierAct(token, { action: "quote.withdraw", offerId: withdrawOffer.id }) : null;
+      if (!res?.ok) throw new Error(res?.code || "no session");
       setWithdrawOffer(null);
       fetchOffers();
     } catch {

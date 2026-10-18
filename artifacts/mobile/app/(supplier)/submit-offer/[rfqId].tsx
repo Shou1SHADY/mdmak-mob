@@ -192,6 +192,17 @@ export default function SubmitOfferScreen() {
     );
   }
 
+  // No quotation before the platform approves the company (onboarding, 18 Oct 2026) — said before he fills the form;
+  // the website refuses it as well.
+  if (organization && !organization.verified) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScreenHeader title={t.rfq.submitOffer} showBack />
+        <EmptyState icon="shield" title={t.rfq.notApprovedTitle} subtitle={t.rfq.notApproved} actionLabel={t.common.back} onAction={() => router.back()} />
+      </View>
+    );
+  }
+
   if (rfqError) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
