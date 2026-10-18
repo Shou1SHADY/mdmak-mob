@@ -1,7 +1,7 @@
 {
   "lib/contracts.ts": {
     "src/components/contractor/RfqForm.tsx": "1643d0ffe2a150b66106f69462e5df14e6433c7185dfebee6a2a9fab6ace63cf",
-    "src/components/supplier/SubmitOfferDialog.tsx": "6f98e7717fcf2836a683fa030e30a231a0ca4e63e7f0b570c8e04bd1371e2e4b"
+    "src/components/supplier/SubmitOfferDialog.tsx": "af9081d69c7017dab156d31a926af84906a9a9563375349719fd27083bcbd62d"
   },
   "lib/crm-writes.ts": {
     "src/lib/crm-writes.ts": "12cddcd93f3ecb85a85bcf637f541c12f409ec103b77d01825c655c571aaf725",

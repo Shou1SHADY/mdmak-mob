@@ -186,6 +186,26 @@ export async function answerSupplierInvitation(
 /** POST /api/supplier-free/act — the supplier's acts on a document another
  * company owns run on the server (website NFR-08), which re-reads the RFQ and
  * tells whoever must hear. The phone uses `quote.ask` (a question on an RFQ). */
+/** A supplier's quotation, written by the website after it checks the company's approval and the request (onboarding,
+ * 18 Oct 2026 — the rules no longer take a supplier's quote from a device). Codes: not_approved · quota · rfq_closed ·
+ * rfq_missing · too_large. */
+export async function submitSupplierOffer(idToken: string, rfqId: string, offer: Record<string, unknown>): Promise<ApiResult<{ id: string }>> {
+  try {
+    const res = await fetch(`${SITE_URL}/api/supplier/offers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ rfqId, offer }),
+    });
+    const json = await readJson(res);
+    if (!res.ok || !json?.success || !json?.data?.id) {
+      return { ok: false, code: json?.code || "OFFER_FAILED", message: json?.message, status: res.status };
+    }
+    return { ok: true, data: { id: String(json.data.id) } };
+  } catch {
+    return { ok: false, code: "NETWORK" };
+  }
+}
+
 export async function supplierAct<T = Record<string, unknown>>(
   idToken: string,
   body: { action: string } & Record<string, unknown>

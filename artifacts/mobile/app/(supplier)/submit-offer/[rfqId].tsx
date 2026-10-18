@@ -3,7 +3,7 @@ import {
   View, Text, ScrollView, Alert, TouchableOpacity, Platform, KeyboardAvoidingView, Modal, Pressable, TextInput,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { collection, addDoc, getDocs, query, where, getDoc, doc, setDoc, updateDoc, increment } from "firebase/firestore";
+import { collection, getDocs, query, where, getDoc, doc, setDoc } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -12,7 +12,7 @@ import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { auth, db } from "@/lib/firebase";
-import { announceNewOffer } from "@/lib/site-api";
+import { announceNewOffer, submitSupplierOffer } from "@/lib/site-api";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -132,7 +132,16 @@ export default function SubmitOfferScreen() {
         executionDurationUnit,
       });
 
-      const offerRef = await addDoc(collection(db, "offers"), offerData);
+      // The website writes the quote, after checking the company is approved and the request still open (onboarding).
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("no session");
+      const sent = await submitSupplierOffer(token, rfqId, offerData as Record<string, unknown>);
+      if (!sent.ok) {
+        const why = sent.code === "not_approved" ? t.rfq.notApproved : sent.code === "quota" ? t.rfq.quotaReached : sent.code === "rfq_closed" ? t.rfq.rfqClosed : t.rfq.submitFailed;
+        Alert.alert(t.common.error, why);
+        return;
+      }
+      const offerRef = { id: sent.data.id };
 
       // Notify contractor + increment offersCount (best-effort — don't fail the whole submit)
       if (contractorId) {
@@ -160,11 +169,6 @@ export default function SubmitOfferScreen() {
           }
         } catch (e: any) {
           if (__DEV__) console.warn("[SubmitOffer] Contractor notification failed:", e.message);
-        }
-        try {
-          await updateDoc(doc(db, "rfqs", rfqId), { offersCount: increment(1) });
-        } catch (e: any) {
-          if (__DEV__) console.warn("[SubmitOffer] offersCount increment failed:", e.message);
         }
       }
 
