@@ -109,7 +109,9 @@ const REBASED = {
  */
 const UPSTREAM_PINS = {
   "lib/contracts.ts": [
-    "src/components/contractor/RfqForm.tsx",
+    // RfqForm.tsx was replaced by the RFQ editor (Procurement 1.5, PUR-02, 20 Oct 2026).
+    "src/components/procurement/rfq-editor/RfqEditor.tsx",
+    "src/lib/procurement/rfq-editor.ts",
     "src/components/supplier/SubmitOfferDialog.tsx",
   ],
   "lib/crm-writes.ts": [

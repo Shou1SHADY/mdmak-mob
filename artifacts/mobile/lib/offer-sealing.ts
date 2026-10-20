@@ -89,12 +89,11 @@ export function deadlineLabel(deadline: string | null | undefined, isRTL: boolea
 // ---------------------------------------------------------------------------
 
 /** The website's offers page for an RFQ — where an award, an exclusion (with
- * its reason) and the one reduction round per RFQ are made. A project's tender
- * lives under its project (the website's src/hooks/useWorkQueue.ts:305). */
+ * its reason) and the one reduction round per RFQ are made. Since Procurement 1.5
+ * (PUR-09 #5, 20 Oct 2026) an RFQ has ONE page, with or without a project; the
+ * project's tender address only redirects to it. */
 export function offersPagePath(rfq: { id: string; projectId?: string | null }): string {
-  return rfq.projectId
-    ? `/contractor/projects/${rfq.projectId}/tenders/${rfq.id}/offers`
-    : `/contractor/rfqs/${rfq.id}/offers`;
+  return `/contractor/rfqs/${rfq.id}/offers`;
 }
 
 /** The supplier's offers page on the website, where a price is revised across

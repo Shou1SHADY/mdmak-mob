@@ -1,6 +1,7 @@
 {
   "lib/contracts.ts": {
-    "src/components/contractor/RfqForm.tsx": "1643d0ffe2a150b66106f69462e5df14e6433c7185dfebee6a2a9fab6ace63cf",
+    "src/components/procurement/rfq-editor/RfqEditor.tsx": "a5f89c43f0dd9b97737a21d51dd462ef40098eb25e96406eb159c535f26d4cc9",
+    "src/lib/procurement/rfq-editor.ts": "7abdf688edac996db1ba0ef9c3ec3e4d0c6ced8c15d3690935f5d80b92f45650",
     "src/components/supplier/SubmitOfferDialog.tsx": "af9081d69c7017dab156d31a926af84906a9a9563375349719fd27083bcbd62d"
   },
   "lib/crm-writes.ts": {
@@ -10,13 +11,13 @@
     "src/components/crm/CrmActivityDialog.tsx": "62b6cb9d7de92db7464f328e93d0c7d6e69db3bffa2778194dbb14fb9116f0ea"
   },
   "lib/delivery-writes.ts": {
-    "src/components/contractor/RfqOffersView.tsx": "2fdf3a1814f96b29bb596bf32a389dc6e59f55da632b9e31ec0d19c26cb5a421"
+    "src/components/contractor/RfqOffersView.tsx": "7879cac7dc384cf860b6948062d6b9875b8c2a928bfc764679feb8e3f1dc4f21"
   },
   "lib/connection-writes.ts": {
     "src/app/[locale]/(supplier)/supplier/connections/page.tsx": "3a4bd595207ae51521a5d1fb94698237766da4b5885dbcac822051ef4e193819"
   },
   "lib/portal-components.ts": {
-    "src/lib/portal-components.ts": "bbc5f9b3a4720a5e350f6ddd9cd9551c9d4c9f1b1ac2544b18c078e251a2fb01"
+    "src/lib/portal-components.ts": "2b8af1c68d0274329538c3960d54ce75dd98d334570a53ef3c7dd489931acc9b"
   },
   "lib/company-modules.ts": {
     "src/lib/company-modules.ts": "67ac6485e4e25404af53081fae04b5e6b34abaa27780665ba970013218c6e58c"

@@ -6,7 +6,10 @@
 // contract lives in exactly one file instead of being spread across screens.
 //
 // Website counterparts, for when this needs re-checking:
-//   RFQ   -> src/components/contractor/RfqForm.tsx      (rfqData)
+//   RFQ   -> src/components/procurement/rfq-editor/RfqEditor.tsx + src/lib/procurement/rfq-editor.ts
+//            (`rfqLinesDoc`; RfqForm.tsx before 20 Oct 2026). The editor adds the material tree
+//            (`subCategoryIds`, a line's `material`); an RFQ without them — this app's — still reaches
+//            suppliers by its category name, as a legacy RFQ does on the website.
 //   Offer -> src/components/supplier/SubmitOfferDialog.tsx (offerData)
 
 import { collection, doc, runTransaction, type Firestore } from "firebase/firestore";

@@ -129,8 +129,8 @@ describe("decisions handed to the website", () => {
     expect(offersPagePath({ id: "r1" })).toBe("/contractor/rfqs/r1/offers");
     expect(offersPagePath({ id: "r1", projectId: null })).toBe("/contractor/rfqs/r1/offers");
   });
-  it("opens a project tender's offers under its project (useWorkQueue.ts:305)", () => {
-    expect(offersPagePath({ id: "r1", projectId: "p9" })).toBe("/contractor/projects/p9/tenders/r1/offers");
+  it("a project's tender opens on the same one RFQ page (website PUR-09 #5)", () => {
+    expect(offersPagePath({ id: "r1", projectId: "p9" })).toBe("/contractor/rfqs/r1/offers");
   });
   it("sends the supplier's price revision to his offers page", () => {
     expect(SUPPLIER_OFFERS_PATH).toBe("/supplier/offers");

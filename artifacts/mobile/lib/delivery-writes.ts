@@ -13,7 +13,10 @@ import { onGoodsReceived } from "@/lib/accounting/hooks";
 import { markPurchaseArrived } from "@/lib/manufacturing-writes";
 
 // Confirming a delivery, mirroring the website's handleConfirmDelivery in
-// src/components/contractor/RfqOffersView.tsx.
+// src/components/contractor/RfqOffersView.tsx — which the website REMOVED on 20 Oct 2026
+// (Procurement 1.5, PUR-06: one way to receive — the receiving desk's blind count). Here it
+// still confirms a legacy delivery with NO order; every delivery with one already goes to the
+// website's desk (`RECEIVE_ON_WEB`). Moving the rest there too is the open follow-up.
 //
 // Confirmation is three things, in this order and with these failure semantics:
 //

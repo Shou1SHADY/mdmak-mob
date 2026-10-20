@@ -194,6 +194,9 @@ export const CONTRACTOR_COMPONENTS: PortalComponentDef[] = [
     displayOrder: 3,
     items: [
       { titleKey: "proc_today", href: "/contractor/rfqs/today", icon: "sunrise", requiredAnyPermission: PROC_ANY_ROLE, built: false },
+      // Second, as on the website's rail (Procurement 1.5, PUR-08): the requests that reach Procurement — and,
+      // without Project Management, where the team raises «طلب مواد» (PUR-10). Desktop work.
+      { titleKey: "proc_requests", href: "/contractor/rfqs/requests", icon: "inbox", requiredAnyPermission: ["rfq.manage", "rfq.create", "offers.accept", "po.approve"], built: false },
       { titleKey: "rfqs", href: "/(contractor)/rfqs", icon: "file-text", requiredPermission: "rfq.manage", built: true },
       { titleKey: "purchase_orders", href: "/contractor/rfqs/orders", icon: "clipboard", requiredAnyPermission: PROC_ORDER_ROLES, built: false },
       { titleKey: "compare_offers", href: "/(contractor)/compare", icon: "bar-chart-2", requiredPermission: "offers.view", built: true },
