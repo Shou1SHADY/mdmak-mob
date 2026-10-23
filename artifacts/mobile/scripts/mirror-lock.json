@@ -22,6 +22,9 @@
   "lib/portal-components.ts": {
     "src/lib/portal-components.ts": "f6cee989b629ca6077ae9b0de8625da45d38f8a5f0c6196d383bcdab1b4e2544"
   },
+  "lib/offer-buyer-view.ts": {
+    "src/hooks/useOfferDecisions.ts": "d507a3da7fe77d150610612db72309db809f273436e303b5de5302c7fbdab4dd"
+  },
   "lib/company-modules.ts": {
     "src/lib/company-modules.ts": "af72fc7a874516a357e4aede3c5a405af80863e1492c5dceeed039cc22db5b03"
   }

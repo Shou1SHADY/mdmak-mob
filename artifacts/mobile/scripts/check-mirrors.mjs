@@ -136,6 +136,8 @@ const UPSTREAM_PINS = {
   ],
   "lib/connection-writes.ts": ["src/app/[locale]/(supplier)/supplier/connections/page.tsx"],
   "lib/portal-components.ts": ["src/lib/portal-components.ts"],
+  // Procurement 2.0: the buyer's decisions read as the website's hook reads them (query by organisation + RFQ).
+  "lib/offer-buyer-view.ts": ["src/hooks/useOfferDecisions.ts"],
   "lib/company-modules.ts": ["src/lib/company-modules.ts"],
 };
 

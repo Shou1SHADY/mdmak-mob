@@ -29,6 +29,8 @@ import * as WebBrowser from "expo-web-browser";
 import { siteUrl } from "@/lib/site-api";
 import { offersPagePath, priceHiddenReason, seesOfferPrices } from "@/lib/offer-sealing";
 import { useAuth } from "@/context/AuthContext";
+import { OFFER_DECISIONS, decisionMapOf, inTheRunning, offerMarks } from "@/lib/offer-buyer-view";
+import type { DecisionMap } from "@/lib/procurement/offer-decisions";
 
 type SortMode = "price" | "date";
 
@@ -52,6 +54,8 @@ export default function RFQDetailScreen() {
   const [rfq, setRfq] = useState<RFQItem | null>(null);
   const rfqLineItems = useMemo(() => readRfqLineItems(rfq as any), [rfq]);
   const [offers, setOffers] = useState<OfferItem[]>([]);
+  // The buyer's decisions (shortlist, exclusion), kept apart from the offers since Procurement 2.0.
+  const [decisions, setDecisions] = useState<DecisionMap>({});
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortMode>("price");
@@ -132,6 +136,17 @@ export default function RFQDetailScreen() {
       }
 
       setOffers(offerItems);
+
+      // offerDecisions/{offerId} — readable only by the buying company, so the query names it (rules: ownsDoc()).
+      // Unreadable = none: a legacy «مرفوض» offer still reads as excluded through offer-decisions.ts.
+      if (orgId) {
+        try {
+          const decSnap = await getDocs(query(collection(db, OFFER_DECISIONS), where("organizationId", "==", orgId), where("rfqId", "==", id)));
+          setDecisions(decisionMapOf(decSnap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }))));
+        } catch {
+          setDecisions({});
+        }
+      }
     } catch (e: any) {
       setFetchError(e?.message || (t.rfq.failedToLoadDetails));
     } finally {
@@ -154,8 +169,16 @@ export default function RFQDetailScreen() {
     void WebBrowser.openBrowserAsync(siteUrl(offersPagePath({ id: rfq.id, projectId: rfq.projectId })));
   };
 
+  // By price, the offers still in the running come first and only they are ranked: an excluded (either way)
+  // or withdrawn quote is shown, never «lowest».
+  const running = (o: OfferItem) => inTheRunning(o, decisions[o.id]);
   const sortedOffers = [...offers].sort((a, b) => {
-    if (sortMode === "price") return (parseFloat(a.price || "0") || 0) - (parseFloat(b.price || "0") || 0);
+    if (sortMode === "price") {
+      const ra = running(a) ? 0 : 1;
+      const rb = running(b) ? 0 : 1;
+      if (ra !== rb) return ra - rb;
+      return (parseFloat(a.price || "0") || 0) - (parseFloat(b.price || "0") || 0);
+    }
     return createdAtMs(b.createdAt) - createdAtMs(a.createdAt);
   });
 
@@ -382,8 +405,9 @@ export default function RFQDetailScreen() {
               <OfferCard
                 key={offer.id}
                 offer={offer}
-                rank={sortMode === "price" ? idx + 1 : undefined}
+                rank={sortMode === "price" && running(offer) ? idx + 1 : undefined}
                 hiddenPriceLabel={hiddenPriceLabel}
+                marks={offerMarks(offer, decisions[offer.id])}
                 actions={decisionRow ? <View style={styles.offerFooter}>{decisionRow}</View> : undefined}
               />
             );

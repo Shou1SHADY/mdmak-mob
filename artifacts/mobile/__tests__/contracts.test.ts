@@ -134,6 +134,9 @@ describe("publishing goes through the website (Procurement 2.0, /api/procurement
     expect(body.doc.products).toHaveLength(2);
     expect(body.doc.products[0]).toMatchObject({ name: "باب HDF بحلق", quantity: 40, unitOfMeasure: "باب", category: rfqArgs.category });
     expect(body.doc.city).toBe("Riyadh");
+    // The phone has no audience, terms, recipients or reach of its own: it sends none, so the route takes its defaults
+    // (public, no terms — the award then freezes the offer's — and no reach list) rather than a guess.
+    for (const key of ["terms", "recipients", "reach", "directSupplierOrgId", "budget", "link"]) expect(body).not.toHaveProperty(key);
     for (const key of ["status", "organizationId", "contractorId", "rfqNumber", "visibility"]) {
       expect(body).not.toHaveProperty(key);
       expect(body.doc).not.toHaveProperty(key);

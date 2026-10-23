@@ -7,6 +7,9 @@ import { useT, useLanguage } from "@/context/LanguageContext";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { OFFER_STATUSES } from "@/constants/data";
 import { type, space, radius, toneColors, type Tone } from "@/lib/design";
+import { bafoOf, bafoReplyBy, LEGACY_REDUCTION, type OfferBafo, type OfferReval } from "@/lib/procurement/offer-decisions";
+import type { OfferMarks as Marks } from "@/lib/offer-buyer-view";
+import { OfferMarks } from "@/components/OfferMarks";
 
 export interface OfferItem {
   /** Share-link offer with no account behind it: nobody to chat with or notify in-app. */
@@ -27,8 +30,16 @@ export interface OfferItem {
   contractorOrgId?: string;
   submittedByUserId?: string;
   submittedByUserName?: string;
+  /** A price cut asked the old way (the legacy reduction status, LEGACY_REDUCTION). */
   targetPrice?: number;
   reductionNote?: string;
+  reductionBy?: string | null;
+  reductionAt?: string | null;
+  /** Procurement 2.0's requests riding on the offer (offer-decisions.ts): a better price — a note and a
+   * reply-by day, no target figure — and a price confirmation. */
+  bafo?: OfferBafo | null;
+  reval?: OfferReval | null;
+  withdrawnAt?: unknown;
   executionDuration?: string;
   executionDurationUnit?: string;
   deliveryLocation?: string;
@@ -49,9 +60,11 @@ interface OfferCardProps {
    * sees no amounts — lib/offer-sealing.ts): shown in its place, and the rank
    * and any target price go with it. */
   hiddenPriceLabel?: string;
+  /** The buyer's decisions on this offer (lib/offer-buyer-view.ts) — buyer screens only. */
+  marks?: Marks;
 }
 
-export function OfferCard({ offer, onPress, actions, rank: rankIn, hiddenPriceLabel }: OfferCardProps) {
+export function OfferCard({ offer, onPress, actions, rank: rankIn, hiddenPriceLabel, marks }: OfferCardProps) {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
@@ -72,6 +85,12 @@ export function OfferCard({ offer, onPress, actions, rank: rankIn, hiddenPriceLa
     : rank === 3
     ? t.cards.rankThird
     : undefined;
+
+  // A price cut, wherever it is stored: Procurement 2.0's `bafo` (note + reply-by day) first, the old
+  // `targetPrice` / `reductionNote` of a «مطلوب تخفيض» offer as the fallback.
+  const reduction = offer.status === LEGACY_REDUCTION ? bafoOf(offer) : null;
+  const reductionNote = reduction ? reduction.note || offer.reductionNote || null : null;
+  const reductionReplyBy = reduction?.open ? bafoReplyBy(offer) : "";
 
   const formatCurrency = (amount: string) => {
     const n = parseFloat(amount);
@@ -151,6 +170,8 @@ export function OfferCard({ offer, onPress, actions, rank: rankIn, hiddenPriceLa
         </View>
       )}
 
+      {marks ? <OfferMarks marks={marks} /> : null}
+
       {/* RFQ title */}
       {offer.rfqTitle && (
         <View style={[styles.metaItem, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
@@ -182,8 +203,8 @@ export function OfferCard({ offer, onPress, actions, rank: rankIn, hiddenPriceLa
         </View>
       ) : null}
 
-      {/* Price reduction info — shown when contractor has set a target price */}
-      {!hiddenPriceLabel && offer.status === "مطلوب تخفيض" && (offer.targetPrice || offer.reductionNote) && (  // ui-ok: stored offer status value
+      {/* Price reduction info — the buyer's note, the day to reply by and, on an old request, the target price */}
+      {!hiddenPriceLabel && reduction && (offer.targetPrice || reductionNote || reductionReplyBy) && (
         <View style={[styles.reductionBox, { backgroundColor: colors.warningSoft, borderColor: colors.warningSoft }]}>
           {offer.targetPrice ? (
             <View style={[styles.reductionRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
@@ -197,11 +218,19 @@ export function OfferCard({ offer, onPress, actions, rank: rankIn, hiddenPriceLa
               </Text>
             </View>
           ) : null}
-          {offer.reductionNote ? (
+          {reductionReplyBy ? (
+            <View style={[styles.reductionRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
+              <Feather name="calendar" size={12} color={colors.warning} />
+              <Text style={[styles.reductionLabel, { color: colors.warning }]}>
+                {t.cards.replyBy.replace("{date}", reductionReplyBy)}
+              </Text>
+            </View>
+          ) : null}
+          {reductionNote ? (
             <View style={[styles.reductionRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <Feather name="message-circle" size={12} color={colors.warning} />
               <Text style={[styles.reductionNote, { color: colors.warning, textAlign: isRTL ? "right" : "left", flex: 1 }]} numberOfLines={2}>
-                {offer.reductionNote}
+                {reductionNote}
               </Text>
             </View>
           ) : null}

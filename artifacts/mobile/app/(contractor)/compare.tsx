@@ -16,6 +16,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import * as WebBrowser from "expo-web-browser";
 import { siteUrl } from "@/lib/site-api";
 import { offersPagePath, priceHiddenReason, seesOfferPrices } from "@/lib/offer-sealing";
+import { OFFER_DECISIONS, decisionMapOf, inTheRunning, offerMarks } from "@/lib/offer-buyer-view";
+import type { DecidableOffer, DecisionMap } from "@/lib/procurement/offer-decisions";
+import { OfferMarks } from "@/components/OfferMarks";
 
 interface RFQRow {
   id: string;
@@ -27,7 +30,7 @@ interface RFQRow {
   closedEarly?: { at?: string | null } | null;
 }
 
-interface OfferRow {
+interface OfferRow extends DecidableOffer {
   isGuestOffer?: boolean;
   id: string;
   supplierName?: string;
@@ -58,6 +61,8 @@ export default function CompareScreen() {
 
   const [selectedRfq, setSelectedRfq] = useState<RFQRow | null>(null);
   const [offers, setOffers] = useState<OfferRow[]>([]);
+  // The buyer's decisions on the selected RFQ's offers (Procurement 2.0: kept apart from the offers).
+  const [decisions, setDecisions] = useState<DecisionMap>({});
   const [offersLoading, setOffersLoading] = useState(false);
   const [offersError, setOffersError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>("price");
@@ -107,6 +112,7 @@ export default function CompareScreen() {
     setSelectedRfq(rfq);
     setOffersLoading(true);
     setOffersError(null);
+    setDecisions({});
     try {
       const orgId = user?.organizationId;
       if (!orgId) { setOffers([]); return; }
@@ -122,6 +128,14 @@ export default function CompareScreen() {
           .map(d => ({ id: d.id, ...d.data() } as OfferRow))
           .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
       );
+      // offerDecisions — the buying company's own records, so the query names it (rules: ownsDoc()). Unreadable =
+      // none: a legacy «مرفوض» offer still reads as excluded through offer-decisions.ts.
+      try {
+        const decSnap = await getDocs(query(collection(db, OFFER_DECISIONS), where("organizationId", "==", orgId), where("rfqId", "==", rfq.id)));
+        setDecisions(decisionMapOf(decSnap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }))));
+      } catch {
+        setDecisions({});
+      }
     } catch (e: any) {
       setOffersError(e?.message || (t.compare.failedToLoadOffers));
     } finally {
@@ -178,8 +192,10 @@ export default function CompareScreen() {
     return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
   });
 
-  const lowestPrice = showPrices && sortedOffers.length > 0
-    ? Math.min(...sortedOffers.map(o => parseFloat(String(o.price)) || 0))
+  // «Best» is among the offers still in the running: neither excluded (the record or a legacy «مرفوض») nor withdrawn.
+  const runningOffers = sortedOffers.filter((o) => inTheRunning(o, decisions[o.id]));
+  const lowestPrice = showPrices && runningOffers.length > 0
+    ? Math.min(...runningOffers.map(o => parseFloat(String(o.price)) || 0))
     : null;
 
   const fmtDate = (ts?: string) => {
@@ -357,7 +373,8 @@ export default function CompareScreen() {
           ) : null}
           {sortedOffers.map((offer, idx) => {
             const price = parseFloat(String(offer.price)) || 0;
-            const isBest = price === lowestPrice && offer.status !== "مرفوض";  // ui-ok: stored offer status value
+            const isBest = price === lowestPrice && inTheRunning(offer, decisions[offer.id]);
+            const marks = offerMarks(offer, decisions[offer.id]);
             const isPending = offer.status === "قيد المراجعة";  // ui-ok: stored offer status value
             const sColor = statusColor(offer.status);
 
@@ -394,6 +411,7 @@ export default function CompareScreen() {
                 >
                   {offer.companyName ?? offer.supplierName ?? "—"}
                 </Text>
+                <OfferMarks marks={marks} />
 
                 {/* Price + Duration + Date row */}
                 <View style={[styles.metricsRow, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
