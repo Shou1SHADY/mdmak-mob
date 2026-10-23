@@ -188,11 +188,10 @@ export default function ContractorProfileScreen() {
       const rfqSnap = await getDocs(query(collection(db, "rfqs"), where("organizationId", "==", user.organizationId)));
       const rfqs = rfqSnap.docs;
       const active = rfqs.filter((d) => [...RFQ_ACCEPTING_OFFERS, "Awarded"].includes(d.data().status)).length;
-      let offers = 0;
-      for (const rfqDoc of rfqs) {
-        const offSnap = await getDocs(query(collection(db, "offers"), where("rfqId", "==", rfqDoc.id)));
-        offers += offSnap.size;
-      }
+      // Every offer made to this company's RFQs, in one query named by the buying side
+      // (`contractorOrgId`, website G-06): the rules refuse an `rfqId` filter alone.
+      const offSnap = await getDocs(query(collection(db, "offers"), where("contractorOrgId", "==", user.organizationId)));
+      const offers = offSnap.size;
       setStats({ totalRfqs: rfqs.length, activeRfqs: active, totalOffers: offers });
     } catch (e) {
       if (__DEV__) console.warn("[Profile] Stats fetch failed:", e);

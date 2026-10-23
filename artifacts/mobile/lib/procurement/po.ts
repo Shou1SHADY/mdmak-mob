@@ -41,11 +41,11 @@ export const PO_STATUSES = ["awaiting_approval", "approved", "sent", "accepted",
 export const PO_BASES = ["rfq", "direct", "retroactive"] as const satisfies readonly PoBasis[]
 export const PO_SEND_CHANNELS = ["portal", "whatsapp", "email"] as const satisfies readonly PoSendChannel[]
 export const AWARD_REASON_CODES = ["delivery_time", "quality", "payment_terms", "past_performance", "availability", "other"] as const satisfies readonly AwardReasonCode[]
-export const REJECT_REASON_CODES = ["damaged", "wrong_item", "wrong_spec", "sample", "expired", "excess", "other"] as const satisfies readonly RejectReasonCode[]
+export const REJECT_REASON_CODES = ["damaged", "wrong_item", "wrong_spec", "short", "sample", "expired", "excess", "other"] as const satisfies readonly RejectReasonCode[]
 export const HOLD_REASON_CODES = ["certificate", "test", "consultant"] as const satisfies readonly HoldReasonCode[]
 export const REJECT_DECISIONS = ["replace", "discount", "reduce"] as const satisfies readonly RejectDecision[]
 export const RECEIPT_CHECKS = ["delivery_note", "weighbridge", "certificate", "photos", "driver_signature"] as const satisfies readonly ReceiptCheck[]
-export const PO_LOG_ACTIONS = ["created", "approved", "returned", "resubmitted", "sent", "supplier_accepted", "date_updated", "reminded", "received", "remainder_cancelled", "reject_decided", "closed", "cancelled", "rated", "supplier_declined", "delivery_reported", "delivery_reminded", "invoice_uploaded", "transfer_confirmed", "transfer_missing", "transfer_arrived_later", "warranty_registered", "warranty_accepted", "supplier_rated"] as const satisfies readonly PoLogEntry["action"][]
+export const PO_LOG_ACTIONS = ["created", "approved", "returned", "resubmitted", "sent", "supplier_accepted", "date_updated", "reminded", "received", "remainder_cancelled", "reject_decided", "closed", "cancelled", "rated", "supplier_declined", "delivery_reported", "delivery_reminded", "invoice_uploaded", "transfer_confirmed", "transfer_missing", "transfer_arrived_later", "warranty_registered", "warranty_accepted", "supplier_rated", "message"] as const satisfies readonly PoLogEntry["action"][]
 
 // ---------------------------------------------------------------------------
 // Days — dates are `YYYY-MM-DD` or ISO strings; offsets are calendar days
@@ -201,13 +201,19 @@ export function isReceived(po: PurchaseOrder): boolean {
 // Approval — who, and what stands in the way (§6.1)
 // ---------------------------------------------------------------------------
 
+/** The amount the manager's limit is compared with: INCLUDING VAT (PRD §14, G-18). An order stored without a `vatRate` — one
+ * written before this basis — counts as it always did, excluding VAT, so nothing in flight changes owner. */
+export function approvalAmount(po: PurchaseOrder): number {
+  return round2(poValue(po) * (1 + num(po.vatRate)))
+}
+
 /** Who the order is routed to. The owner takes anything above the manager's
  * limit, every retroactive order, and any order prepared by someone who could
  * approve it — the purchasing manager never approves their own (prototype:
  * `v > mgrLimit || role === 'mgr'`). */
 export function requiredApprover(po: PurchaseOrder, policies: ProcurementPolicies, preparerApproves = false): "manager" | "owner" {
-  if (po.basis === "retroactive" || preparerApproves) return "owner"
-  return poValue(po) > policies.managerApprovalLimit ? "owner" : "manager"
+  if (po.basis === "retroactive" || preparerApproves || po.tags?.directOver) return "owner"
+  return approvalAmount(po) > policies.managerApprovalLimit ? "owner" : "manager"
 }
 
 export const BLOCK_CODES = ["split_orders", "supplier_cr_expired", "supplier_unverified"] as const
@@ -302,7 +308,7 @@ export function approvalRefusal(po: PurchaseOrder, actor: ProcActor, policies: P
   if (!actor.canApprove) return { code: "no_permission", params: {} }
   if (isSelfApproval(po, actor)) return { code: "own_order", params: {} }
   if (po.basis === "retroactive") return { code: "owner_only_retroactive", params: {} }
-  const value = poValue(po)
+  const value = approvalAmount(po)
   if (value > policies.managerApprovalLimit) return { code: "above_limit", params: { value, limit: policies.managerApprovalLimit } }
   return null
 }
@@ -470,6 +476,8 @@ export interface OfferLike {
   id?: string
   price?: string | number | null
   status?: string | null
+  /** Materials the supplier does not supply: such an offer's total is not comparable with a full one's. */
+  skippedItems?: unknown
 }
 
 const OFFER_REJECTED = "مرفوض"
@@ -484,10 +492,13 @@ export function offerPrice(o: OfferLike): number | null {
 
 const competing = (offers: OfferLike[]) => offers.filter((o) => o.status !== OFFER_REJECTED && offerPrice(o) != null)
 
-/** The lowest priced offer still in the running (the earliest wins a tie). */
+/** The lowest priced offer still in the running (the earliest wins a tie). A partial offer's smaller sum over fewer
+ * materials is no lower price: only when every competing offer is partial do they compete among themselves. */
 export function lowestOffer<T extends OfferLike>(offers: T[]): T | null {
   let best: T | null = null
-  for (const o of competing(offers) as T[]) {
+  const live = competing(offers) as T[]
+  const whole = live.filter((o) => !(Array.isArray(o.skippedItems) && o.skippedItems.length > 0))
+  for (const o of whole.length ? whole : live) {
     if (best == null || (offerPrice(o) as number) < (offerPrice(best) as number)) best = o
   }
   return best

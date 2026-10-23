@@ -94,9 +94,16 @@ describe("an award the supplier may read", () => {
 });
 
 describe("every other status is none of this module's business", () => {
-  it.each(["مرفوض", "مطلوب تخفيض", "قيد المراجعة", "تم التسليم"])("%s passes through", (status) => {
+  it.each(["مطلوب تخفيض", "قيد المراجعة", "تم التسليم"])("%s passes through", (status) => {
     // Even with an undisclosed order hanging off it — only an award is masked.
     expect(supplierOfferStatus({ status, poId: "po1", awaitingOrderApproval: true }, map(order("awaiting_approval")))).toBe(status);
+  });
+});
+
+describe("a buyer's exclusion is not told to the supplier (website Procurement 2.0, G-15 — offer-decisions.ts statusForSupplier)", () => {
+  it("an offer excluded the old way (مرفوض) reads under review until an award or a close ends it", () => {
+    expect(supplierOfferStatus({ status: "مرفوض" }, map())).toBe(UNDER_REVIEW);
+    expect(supplierOfferStatus({ status: "مرفوض", poId: "po1", awaitingOrderApproval: true }, map(order("awaiting_approval")))).toBe(UNDER_REVIEW);
   });
 });
 
@@ -108,7 +115,8 @@ describe("asSupplierSees, which is what the screens actually call", () => {
       { id: "c", status: "مرفوض" },
     ];
     const shown = asSupplierSees(offers, map(order("sent"), order("awaiting_approval", { id: "po2" })));
-    expect(shown.map((o) => o.status)).toEqual([AWARDED, UNDER_REVIEW, "مرفوض"]);
+    // The old exclusion is masked too since Procurement 2.0 (G-15).
+    expect(shown.map((o) => o.status)).toEqual([AWARDED, UNDER_REVIEW, UNDER_REVIEW]);
   });
 
   it("leaves the stored document alone", () => {
@@ -120,7 +128,7 @@ describe("asSupplierSees, which is what the screens actually call", () => {
   });
 
   it("hands back the same object when nothing changed", () => {
-    const offer = { id: "a", status: "مرفوض" };
+    const offer = { id: "a", status: "تم التسليم" };
     expect(asSupplierSees([offer], map())[0]).toBe(offer);
   });
 });

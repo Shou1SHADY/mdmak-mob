@@ -11,8 +11,8 @@ import { headerTopPadding, tabScreenBottomPadding } from "@/lib/layout";
 import { useAuth } from "@/context/AuthContext";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { auth, db } from "@/lib/firebase";
-import { notifyFavoritesOfPublish } from "@/lib/site-api";
-import { buildRfqDoc, createRfqWithNumber } from "@/lib/contracts";
+import { notifyFavoritesOfPublish, publishRfq } from "@/lib/site-api";
+import { buildPublishInput, buildRfqDoc, createRfqWithNumber, publishGap, riyadhDay, type BuildRfqArgs } from "@/lib/contracts";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Input } from "@/components/ui/Input";
 import { DateField } from "@/components/ui/DateField";
@@ -78,32 +78,50 @@ export default function CreateRFQScreen() {
       Alert.alert(t.rfq.missingTitle, t.rfq.missingFields);
       return;
     }
+    const args: BuildRfqArgs = {
+      uid: user.uid,
+      organizationId: user.organizationId,
+      displayName: user.displayName,
+      title: title.trim(),
+      description: description.trim(),
+      category,
+      city,
+      district: district.trim() || null,
+      deadline: deadline || null,
+      items: boqItems,
+      isDraft: draft,
+    };
+    // What the website's publish would refuse, said here with the field to fix.
+    const gap = draft ? null : publishGap(args, riyadhDay());
+    if (gap) {
+      const why = { deadline: t.rfq.publishNeedsDeadline, deadline_past: t.rfq.publishDeadlinePast, items: t.rfq.publishNeedsItems, item_incomplete: t.rfq.publishItemIncomplete }[gap];
+      Alert.alert(t.rfq.missingTitle, why);
+      return;
+    }
     setLoading(true);
     try {
-      // Numbered RFQ-yyyy/NNN in the same transaction, as every RFQ the website creates.
-      const ref = await createRfqWithNumber(
-        db,
-        buildRfqDoc({
-          uid: user.uid,
-          organizationId: user.organizationId,
-          displayName: user.displayName,
-          title: title.trim(),
-          description: description.trim(),
-          category,
-          city,
-          district: district.trim() || null,
-          deadline: deadline || null,
-          items: boqItems,
-          isDraft: draft,
-        })
-      );
-      // Same fan-out the website does on publish: favourited suppliers get a
-      // text about the new RFQ. Fire-and-forget, like the website.
-      if (!draft) {
-        auth.currentUser
-          ?.getIdToken()
-          .then((idToken) => notifyFavoritesOfPublish(idToken, [ref.id]))
-          .catch(() => {});
+      if (draft) {
+        // A draft is the browser's to write, as on the website; numbered RFQ-yyyy/NNN in the same
+        // transaction (the website's publish keeps a number already drawn).
+        await createRfqWithNumber(db, buildRfqDoc(args));
+      } else {
+        // «انشر» is the server's since Procurement 2.0: it checks the rows, the city and the deadline,
+        // draws the number, opens the visitor link and sends the publish event.
+        const idToken = await auth.currentUser?.getIdToken();
+        if (!idToken) throw new Error("no session");
+        const res = await publishRfq(idToken, buildPublishInput(args));
+        if (!res.ok) {
+          const why =
+            res.code === "date_invalid" ? t.rfq.publishDeadlinePast
+            : res.code === "rows_missing" ? t.rfq.publishItemIncomplete
+            : res.code === "no_permission" || res.code === "forbidden" ? t.errors.noPermission
+            : t.rfq.createFailed;
+          Alert.alert(t.common.error, why);
+          return;
+        }
+        // Same fan-out the website does on publish: favourited suppliers get a
+        // text about the new RFQ. Fire-and-forget, like the website.
+        notifyFavoritesOfPublish(idToken, [res.data.id]).catch(() => {});
       }
       Alert.alert(t.common.success, draft ? t.rfq.savedDraft : t.rfq.published, [
         { text: t.common.ok, onPress: () => router.back() },

@@ -45,7 +45,7 @@ interface OfferCardProps {
   onPress?: () => void;
   actions?: React.ReactNode;
   rank?: number;
-  /** Set when the buyer may not see this price (a sealed round, or a role that
+  /** Set when the buyer may not see this price (a role that
    * sees no amounts — lib/offer-sealing.ts): shown in its place, and the rank
    * and any target price go with it. */
   hiddenPriceLabel?: string;

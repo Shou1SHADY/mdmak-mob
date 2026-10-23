@@ -49,7 +49,7 @@ export type AwardReasonCode =
 /** What Procurement decided about a quantity rejected at the gate (§5.2-8). */
 export type RejectDecision = "replace" | "discount" | "reduce"
 
-export type RejectReasonCode = "damaged" | "wrong_item" | "wrong_spec" | "sample" | "expired" | "excess" | "other"
+export type RejectReasonCode = "damaged" | "wrong_item" | "wrong_spec" | "short" | "sample" | "expired" | "excess" | "other"
 export type HoldReasonCode = "certificate" | "test" | "consultant"
 
 /** The non-blocking checklist at the gate (§6.3). */
@@ -81,6 +81,17 @@ export interface PoLine {
   /** Where the line came from. */
   boqItemId?: string | null
   rfqProductIndex?: number | null
+  /** A piece line (PO-06): request units in one piece — 6 for «قطعة 6 م». `quantity` is then the number of pieces. */
+  pk?: number | null
+  /** The quantity the request asked for, in the request unit (175 for «175 م»). */
+  need?: number | null
+  /** The request unit, Arabic («م»); the line's `unit` is the pack's name («قطعة 6 م»). */
+  base?: string | null
+  /** The pack's name in both languages — the English reads «6 m bar». */
+  packName?: { ar: string; en: string } | null
+  /** The material's id and the specification key — the price history is by specification (R-28), never by category. */
+  materialId?: string | null
+  specKey?: string | null
 }
 
 export interface PoLogEntry {
@@ -115,6 +126,7 @@ export interface PoLogEntry {
     | "warranty_registered"
     | "warranty_accepted"
     | "supplier_rated"
+    | "message"
   note?: string | null
   /** Free parameters for the rendered sentence (channel, date, quantity…). */
   params?: Record<string, string | number> | null
@@ -150,6 +162,49 @@ export interface PoDeliveryReport {
   closedBy?: string | null
 }
 
+/** Where an order is delivered — frozen on the order when it is made; the supplier's link reads only this (PO-05, G-05). */
+export interface PoSite {
+  id: string | null
+  name: string
+  city?: string | null
+  district?: string | null
+  address?: string | null
+  mapUrl?: string | null
+  receiver?: { name: string; phone: string | null } | null
+  access?: { unload?: "sup" | "us" | null; slot?: string | null; note?: string | null } | null
+}
+
+/** Every change of an order after it was sent is a new version with an event (PO-15). `sent` is version 1. */
+export type PoVersionKind = "sent" | "cancel" | "date" | "close_short" | "decline"
+
+export interface PoVersion {
+  n: number
+  at: string
+  byId?: string | null
+  byName: string
+  kind: PoVersionKind
+  note?: string | null
+  params?: Record<string, string | number> | null
+  /** The supplier read and accepted this version (`proc:PO:<no>:V<n>:ACC`). */
+  acceptedAt?: string | null
+  acceptedByName?: string | null
+}
+
+/** What the award recorded about the way the order was won (header tags). The reasons are structured, never free text alone. */
+export interface PoTags {
+  notLowest?: { why: string } | null
+  lowComp?: { n: number; why: string } | null
+  directOver?: { why: string } | null
+}
+
+/** An advance to a supplier with no supply record waits for the owner before it is asked for (PO-14). */
+export interface PoAdvanceOwner {
+  required: boolean
+  approvedAt?: string | null
+  approvedById?: string | null
+  approvedByName?: string | null
+}
+
 /** The supplier's decline of an order he had not accepted yet. */
 export interface PoSupplierDecline {
   at: string
@@ -160,6 +215,8 @@ export interface PoSupplierDecline {
 }
 
 export interface PurchaseOrder {
+  /** How the order ends, stamped at approval from the package of that moment (NFR-08): the goods counted, or Finance's payment. */
+  closeOn?: "receipt" | "payment" | null
   id: string
   organizationId: string
   /** `PO-2026/014` — stored Latin, shown `ط.ش-2026/014` in Arabic. */
@@ -197,8 +254,21 @@ export interface PurchaseOrder {
   vatRate: number // 0.15
   paymentTerms?: string | null
   deliveryLocation?: string | null
+  deliveryDistrict?: string | null
   /** What the offer said about lead time, in days, when it said anything. */
   leadTimeDays?: number | null
+  /** One order per supplier × delivery site (G-05): the key that makes the pair, and the site as it was when the order was made. */
+  siteKey?: string | null
+  site?: PoSite | null
+  /** The supplier is not VAT-registered: the order carries no VAT (`vatRate` 0, R-18). */
+  noVat?: boolean
+  /** What the supplier commits to by accepting, `YYYY-MM-DD` — his offer's arrival, else approval + acceptance window + lead time. */
+  dueDate?: string | null
+  /** The version of the order the supplier is looking at; absent on an order made before versions. */
+  ver?: number
+  versions?: PoVersion[] | null
+  tags?: PoTags | null
+  advanceOwner?: PoAdvanceOwner | null
 
   // Award facts — what the Exceptions report reads.
   offersCount: number
@@ -227,8 +297,8 @@ export interface PurchaseOrder {
   requestedDeliveryDate?: string | null
   /** The supplier's committed delivery date, `YYYY-MM-DD`. */
   promisedDate?: string | null
-  /** Who recorded the acceptance: the supplier in the portal, or us for them. */
-  acceptanceRecordedBy?: "supplier" | "buyer" | null
+  /** Who recorded the acceptance: the supplier in the portal or from the order link, or us for them. */
+  acceptanceRecordedBy?: "supplier" | "buyer" | "link" | null
   closedAt?: string | null
   closedShort?: boolean
   closeReason?: string | null
@@ -345,10 +415,6 @@ export interface ProcurementPolicies {
   awardCycleDays: number
   supplierAcceptanceDays: number
   splitWindowDays: number
-  /** Hide offer prices until the RFQ's deadline. ON by default, as the PRD and
-   * the prototype (`POL.seal`): «الأسعار مغلقة حتى الموعد (سياسة قابلة للإيقاف)» —
-   * the owner switches it off in Procurement settings to award as offers arrive. */
-  sealOffersUntilDeadline: boolean
   /** How many days before a delivery a notice still sitting with Procurement
    * becomes somebody's task to forward (§5.2-3b). */
   forwardWindowDays: number
@@ -358,6 +424,20 @@ export interface ProcurementPolicies {
    * "Send". A guest supplier has no portal: his order waits for WhatsApp or
    * e-mail, and whoever may send it is told. ON by default. */
   sendOnApproval: boolean
+  /** The default offers deadline of a new RFQ: today + this many days (PRD §14). */
+  rfqDefaultDays: number
+  /** The supplier's lead time inside «آخر يوم للطلب»: need date − this − the RFQ cycle − the award cycle. */
+  supplyLeadDays: number
+  /** Within this percent of the lowest complete offer still counts as the lowest — no reason needed. */
+  tieBandPct: number
+  /** Days after a delivery notice before an uncounted delivery is escalated (the reminder goes at 2 whatever this is). */
+  escalateAfterDays: number
+  /** An advance to a supplier with no record on the platform needs the owner's approval before it is asked for. */
+  advanceUnknownSupplierOwner: boolean
+  /** Inventory's stock check before buying, then we proceed with the whole quantity. */
+  inventoryReplyDays: number
+  /** The workshop's make-or-buy answer, then the decision returns to Procurement. */
+  workshopReplyDays: number
 }
 
 export const DEFAULT_POLICIES: ProcurementPolicies = {
@@ -368,11 +448,17 @@ export const DEFAULT_POLICIES: ProcurementPolicies = {
   overReceiptTolerancePercent: 5,
   rfqWindowDays: 3,
   awardCycleDays: 2,
-  supplierAcceptanceDays: 2,
+  supplierAcceptanceDays: 1,
   splitWindowDays: 30,
-  sealOffersUntilDeadline: true,
   forwardWindowDays: 1,
   sendOnApproval: true,
+  rfqDefaultDays: 3,
+  supplyLeadDays: 10,
+  tieBandPct: 0.5,
+  escalateAfterDays: 2,
+  advanceUnknownSupplierOwner: true,
+  inventoryReplyDays: 1,
+  workshopReplyDays: 1,
 }
 
 /** What an approval needs to know about the supplier — read from the

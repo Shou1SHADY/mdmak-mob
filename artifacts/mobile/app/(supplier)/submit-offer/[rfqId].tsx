@@ -137,7 +137,17 @@ export default function SubmitOfferScreen() {
       if (!token) throw new Error("no session");
       const sent = await submitSupplierOffer(token, rfqId, offerData as Record<string, unknown>);
       if (!sent.ok) {
-        const why = sent.code === "not_approved" ? t.rfq.notApproved : sent.code === "quota" ? t.rfq.quotaReached : sent.code === "rfq_closed" ? t.rfq.rfqClosed : t.rfq.submitFailed;
+        // The website's refusals (supplier-offer-server.ts — Procurement 2.0 added the deadline, the reach, one live quote
+        // per company and the lead time).
+        const why =
+          sent.code === "not_approved" ? t.rfq.notApproved
+          : sent.code === "quota" ? t.rfq.quotaReached
+          : sent.code === "rfq_closed" ? t.rfq.rfqClosed
+          : sent.code === "deadline" ? t.rfq.offerDeadlinePassed
+          : sent.code === "not_reached" ? t.rfq.offerNotReached
+          : sent.code === "already_quoted" ? t.rfq.offerAlreadyQuoted
+          : sent.code === "duration_invalid" ? t.rfq.offerDurationInvalid
+          : t.rfq.submitFailed;
         Alert.alert(t.common.error, why);
         return;
       }

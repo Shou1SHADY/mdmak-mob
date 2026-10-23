@@ -238,3 +238,37 @@ export async function supplierAct<T = Record<string, unknown>>(
     return { ok: false, code: "NETWORK" };
   }
 }
+
+/** The body of POST /api/procurement/rfq/publish (website rfq-server/publish.ts `publishSchema`). */
+export interface RfqPublishInput {
+  rfqId?: string;
+  title: string;
+  audience: "public" | "private" | "direct";
+  /** `YYYY-MM-DD`, today or later (Riyadh). */
+  deadline: string;
+  pricing: "line" | "total";
+  notes?: string;
+  doc: { products: ReadonlyArray<object> } & Record<string, unknown>;
+}
+
+/** POST /api/procurement/rfq/publish — «انشر» on the server (website Procurement 2.0, WP-S2-07): it checks every row
+ * (a category, a quantity, a unit), the city and the deadline, draws the RFQ-yyyy/NNN number in the same transaction,
+ * opens the visitor link of a public RFQ and sends the publish event. A refusal carries the website's `reason`
+ * (rows_missing · city_missing · date_invalid · no_permission · rfq_not_open …) as `code`. */
+export async function publishRfq(idToken: string, input: RfqPublishInput): Promise<ApiResult<{ id: string; number: string }>> {
+  try {
+    const res = await fetch(`${SITE_URL}/api/procurement/rfq/publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify(input),
+    });
+    const json = await readJson(res);
+    if (!res.ok || !json?.success || !json?.data?.id) {
+      const code = typeof json?.reason === "string" ? json.reason : typeof json?.code === "string" ? json.code.toLowerCase() : "PUBLISH_FAILED";
+      return { ok: false, code, message: json?.message, status: res.status };
+    }
+    return { ok: true, data: { id: String(json.data.id), number: String(json.data.number || "") } };
+  } catch {
+    return { ok: false, code: "NETWORK" };
+  }
+}

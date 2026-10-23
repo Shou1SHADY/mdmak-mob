@@ -79,6 +79,10 @@ const MIRRORS = {
   "lib/procurement/po.ts": "src/lib/procurement/po.ts",
   "lib/procurement/receipts.ts": "src/lib/procurement/receipts.ts",
   "lib/procurement/supplier.ts": "src/lib/procurement/supplier.ts",
+  // Procurement 2.0 (22 Oct 2026): supplier.ts reads the buyer's decisions through offer-decisions.ts, which reads
+  // offer-calc.ts (both pure, import-free of the rest of the website).
+  "lib/procurement/offer-decisions.ts": "src/lib/procurement/offer-decisions.ts",
+  "lib/procurement/offer-calc.ts": "src/lib/procurement/offer-calc.ts",
   "lib/supplier-home.ts": "src/lib/supplier-home.ts",
 };
 
@@ -113,6 +117,10 @@ const UPSTREAM_PINS = {
     "src/components/procurement/rfq-editor/RfqEditor.tsx",
     "src/lib/procurement/rfq-editor.ts",
     "src/components/supplier/SubmitOfferDialog.tsx",
+    // Procurement 2.0: «انشر» is the server's — the phone builds its body (`buildPublishInput`) — and a quote's
+    // refusals come from the offer server.
+    "src/lib/procurement/rfq-server/publish.ts",
+    "src/lib/supplier-offer-server.ts",
   ],
   "lib/crm-writes.ts": [
     "src/lib/crm-writes.ts",
@@ -120,7 +128,12 @@ const UPSTREAM_PINS = {
     "src/components/crm/CrmOpportunityDialog.tsx",
     "src/components/crm/CrmActivityDialog.tsx",
   ],
-  "lib/delivery-writes.ts": ["src/components/contractor/RfqOffersView.tsx"],
+  // Procurement 2.0: no device confirms a delivery; the phone sends the receiver to the website's desk
+  // (RfqOffersView's old confirmation is gone — the receipt is receipt-confirm-server.ts behind the receiver's page).
+  "lib/delivery-writes.ts": [
+    "src/lib/procurement/receipt-confirm-server.ts",
+    "src/app/[locale]/(contractor)/contractor/goods-received/page.tsx",
+  ],
   "lib/connection-writes.ts": ["src/app/[locale]/(supplier)/supplier/connections/page.tsx"],
   "lib/portal-components.ts": ["src/lib/portal-components.ts"],
   "lib/company-modules.ts": ["src/lib/company-modules.ts"],

@@ -3,7 +3,13 @@
 // as they are: which modules each portal may switch, what a module needs (HR goes with Finance or
 // Inventory, Manufacturing with Inventory), and how the stored `companyModules/{orgId}` document
 // is read. Only the last step differs: this app's registry is flat (`items`), so switching a module
-// off removes its tile here instead of rewriting website menu sections.
+// off removes its tile here instead of rewriting website menu sections — and the website's ONE
+// "Finance & Accounting" component (`payments`) is two tiles here, so `payments` off takes the
+// `accounting` tile with it.
+//
+// A contractor has four switches since 18 Oct 2026 (website 3c48284) — Project Management, Finance,
+// HR and Manufacturing; a supplier five. The website's `SHARED_PAGES` (the printable receipt under
+// Finance's address) guards its address-bar redirect, which this app does not have.
 //
 // "Off" is a product switch, not a security boundary: the data rules still go by permission. A
 // company with no switch document has everything on. Pure: no I/O.
@@ -16,7 +22,7 @@ export const OPTIONAL_MODULES = ["project-management", "hr", "manufacturing", "c
 export type OptionalModule = (typeof OPTIONAL_MODULES)[number];
 export type ModulePortal = "contractor" | "supplier";
 
-const CONTRACTOR_SWITCHES: readonly OptionalModule[] = ["project-management", "hr", "manufacturing"];
+const CONTRACTOR_SWITCHES: readonly OptionalModule[] = ["project-management", "payments", "hr", "manufacturing"];
 const SUPPLIER_SWITCHES: readonly OptionalModule[] = ["crm", "warehouses", "payments", "hr", "manufacturing"];
 
 /** The switches a company of this portal has. */
@@ -73,6 +79,8 @@ export function applyModuleSwitches(
   const allowed = optionalFor(portal) as readonly string[];
   const out: PortalComponentDef[] = [];
   for (const c of components) {
+    // The books are part of the website's Finance & Accounting component: off with it.
+    if (c.id === "accounting" && off.has("payments") && allowed.includes("payments")) continue;
     if (!off.has(c.id) || !allowed.includes(c.id)) {
       out.push(c);
     } else if (c.id === "project-management") {

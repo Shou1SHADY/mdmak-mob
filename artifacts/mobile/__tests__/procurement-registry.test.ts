@@ -45,3 +45,22 @@ describe("Procurement's new screens", () => {
     expect(keysFor("offers.view")).not.toContain("goods_received");
   });
 });
+
+describe("Procurement 2.0's requester entry (website REQ-01, `requiredNone`)", () => {
+  it("«طلباتي» is the requester's: shown to a member with no Procurement permission, hidden from every Procurement role", () => {
+    expect(keysFor("projects.view")).toContain("proc_my_requests");
+    for (const p of ["rfq.create", "rfq.manage", "offers.view", "offers.accept", "po.approve", "po.expedite", "suppliers.manage", "deliveries.confirm"] as PermissionId[]) {
+      expect(keysFor(p)).not.toContain("proc_my_requests");
+    }
+    // The owner passes every check, so he never sees it.
+    expect(visibleItems(procurementItems(), () => true).map((i) => i.titleKey)).not.toContain("proc_my_requests");
+  });
+
+  it("opens on the website, as the guide does for any Procurement role", () => {
+    const mine = procurementItems().find((i) => i.titleKey === "proc_my_requests");
+    expect(mine?.built).toBe(false);
+    expect(mine?.href).toBe("/contractor/rfqs/my-requests");
+    expect(keysFor("deliveries.confirm")).toContain("proc_guide");
+    expect(keysFor("projects.view")).not.toContain("proc_guide");
+  });
+});

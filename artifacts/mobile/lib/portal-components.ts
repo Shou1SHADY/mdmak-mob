@@ -30,7 +30,7 @@
 // This is UI gating only. Real enforcement stays in firestore.rules.
 
 import type { Feather } from "@expo/vector-icons";
-import type { PermissionId } from "@/lib/permissions";
+import { PERMISSION_SECTIONS, type PermissionId } from "@/lib/permissions";
 
 export type FeatherIcon = keyof typeof Feather.glyphMap;
 
@@ -60,6 +60,9 @@ export interface NavItem {
   requiredPermission?: PermissionId;
   /** Visible to whoever holds ANY of these — as on the website. */
   requiredAnyPermission?: PermissionId[];
+  /** Visible only to whoever holds NONE of these (the requester's «طلباتي»: a member with no Procurement
+   * permission — website Procurement 2.0, REQ-01). */
+  requiredNone?: PermissionId[];
   /** False until the screen exists in this app. */
   built: boolean;
 }
@@ -87,6 +90,9 @@ export interface PortalComponentDef {
 const PROC_ANY_ROLE: PermissionId[] = ["rfq.create", "rfq.manage", "offers.view", "offers.accept", "po.approve", "po.expedite", "suppliers.manage", "deliveries.confirm"];
 /** The orders list: whoever sees prices, plus the expediter (dates and quantities only). */
 const PROC_ORDER_ROLES: PermissionId[] = ["offers.view", "offers.accept", "po.approve", "po.expedite"];
+/** Every permission of the Procurement section (website tab-gates.ts `PROC_SECTION_PERMISSIONS`). A member who
+ * holds none of them is a requester («طالب مواد»): his one entry is «طلباتي». */
+const PROC_SECTION_PERMISSIONS: PermissionId[] = PERMISSION_SECTIONS.find((s) => s.key === "procurement")?.permissions ?? [];
 
 // Reachable from every module, never permission-gated — everyone in an org can
 // be talked to. Mirrors the website's CONTRACTOR/SUPPLIER_COMMUNICATION_SECTION.
@@ -206,6 +212,10 @@ export const CONTRACTOR_COMPONENTS: PortalComponentDef[] = [
       { titleKey: "goods_received", href: "/(goods)", icon: "package", requiredPermission: "deliveries.confirm", built: true },
       { titleKey: "proc_reports", href: "/contractor/rfqs/reports", icon: "bar-chart", requiredAnyPermission: ["offers.view", "offers.accept"], built: false },
       { titleKey: "proc_settings", href: "/contractor/rfqs/settings", icon: "settings", requiredPermission: "po.approve", built: false },
+      // Procurement 2.0 (website 227e0eb): the requester's one page, and the module's guide. The two entries the
+      // website shows dimmed «قريباً» (the material market, pay-later) are left out until they are released.
+      { titleKey: "proc_my_requests", href: "/contractor/rfqs/my-requests", icon: "clipboard", requiredNone: PROC_SECTION_PERMISSIONS, built: false },
+      { titleKey: "proc_guide", href: "/contractor/rfqs/guide", icon: "book-open", requiredAnyPermission: PROC_ANY_ROLE, built: false },
     ],
   },
   {
@@ -474,6 +484,7 @@ export function communicationForRole(role: string | undefined): NavItem[] {
 export type PermissionCheck = (permission: PermissionId) => boolean;
 
 function itemIsVisible(item: NavItem, can: PermissionCheck): boolean {
+  if (item.requiredNone?.some((p) => can(p))) return false;
   if (item.requiredPermission && !can(item.requiredPermission)) return false;
   if (item.requiredAnyPermission?.length && !item.requiredAnyPermission.some((p) => can(p))) return false;
   return true;

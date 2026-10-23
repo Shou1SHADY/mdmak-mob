@@ -1,47 +1,39 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { View, Text, SectionList, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useT, useLanguage } from "@/context/LanguageContext";
-import { useAuth } from "@/context/AuthContext";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { tabScreenBottomPadding } from "@/lib/layout";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/ui/SkeletonLoader";
-import { Input } from "@/components/ui/Input";
-import { CrmSheet } from "@/components/crm/CrmSheet";
-import { db } from "@/lib/firebase";
 import { useOrgCollection } from "@/hooks/useOrgCollection";
 import * as WebBrowser from "expo-web-browser";
-import { confirmDelivery, RECEIVE_ON_WEB, receivingPath, type DeliveryDoc } from "@/lib/delivery-writes";
+import { receivingPath, type DeliveryDoc } from "@/lib/delivery-writes";
 import { siteUrl } from "@/lib/site-api";
 
 /**
  * Delivery notices awaiting confirmation.
  *
  * The strongest phone case in the app after the request inbox: someone is
- * standing at a gate with a lorry, and confirming there is the point.
+ * standing at a gate with a lorry, and seeing what is due is the point.
  *
- * Confirming runs the mirrored `confirmDelivery`, which also receives the stock
- * into a warehouse and notifies the supplier — the same three steps, in the same
- * order, with the same best-effort semantics as the website.
+ * Receiving is the website's (Procurement 2.0): the receiver counts blind, notes
+ * the rejects and signs on its receiving desk, and one server act then numbers
+ * the receipt, lands the stock, posts the books and tells the supplier. The
+ * phone lists what is waiting and opens that desk on the delivery.
  */
 export default function GoodsReceivedScreen() {
   const colors = useColors();
   const t = useT();
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
   // Deliveries name the contractor's ORG, not their uid.
   const { items: deliveries, isLoading, error: loadError } = useOrgCollection<DeliveryDoc>(
     "deliveries",
     "contractorOrgId"
   );
-
-  const [target, setTarget] = useState<DeliveryDoc | null>(null);
-  const [receiver, setReceiver] = useState("");
-  const [busy, setBusy] = useState(false);
 
   const sections = useMemo(() => {
     const awaiting = deliveries.filter((d) => d.status !== "confirmed");
@@ -52,51 +44,13 @@ export default function GoodsReceivedScreen() {
     ].filter((s) => s.data.length > 0);
   }, [deliveries, t]);
 
-  const openConfirm = (delivery: DeliveryDoc) => {
-    setTarget(delivery);
-    // The person confirming is the obvious default receiver; still editable,
-    // because a storekeeper often confirms on someone else's behalf.
-    setReceiver(user?.displayName || "");
-  };
-
-  const doConfirm = async () => {
-    if (!target || !user) return;
-    if (!receiver.trim()) {
-      Alert.alert(t.common.error, t.goods.receiverRequired);
-      return;
-    }
-    setBusy(true);
-    try {
-      const { stockLanded } = await confirmDelivery({
-        firestore: db,
-        delivery: target,
-        receiverName: receiver,
-        uid: user.uid,
-        userName: user.displayName || user.email || "",
-        centralLabels: {
-          name: t.goods.centralName,
-          location: t.goods.centralLocation,
-          description: t.goods.centralDesc,
-        },
-      });
-      setTarget(null);
-      setReceiver("");
-      Alert.alert(t.common.success, stockLanded ? t.goods.confirmedToast : t.goods.stockNotLanded);
-    } catch (e: any) {
-      if (e?.message === RECEIVE_ON_WEB) {
-        const deliveryId = target.id;
-        setTarget(null);
-        Alert.alert(t.goods.receiveOnWeb, undefined, [
-          { text: t.common.cancel, style: "cancel" },
-          { text: t.goods.openReceiving, onPress: () => void WebBrowser.openBrowserAsync(siteUrl(receivingPath(deliveryId))) },
-        ]);
-        return;
-      }
-      if (__DEV__) console.warn("[GoodsReceived] confirm:", e?.message);
-      Alert.alert(t.common.error, t.goods.failed);
-    } finally {
-      setBusy(false);
-    }
+  // The rules refuse a device confirming a delivery (Procurement 2.0, G-09): the
+  // receiver's count on the website IS the receipt — see lib/delivery-writes.ts.
+  const openReceiving = (delivery: DeliveryDoc) => {
+    Alert.alert(t.goods.receiveOnWeb, undefined, [
+      { text: t.common.cancel, style: "cancel" },
+      { text: t.goods.openReceiving, onPress: () => void WebBrowser.openBrowserAsync(siteUrl(receivingPath(delivery.id))) },
+    ]);
   };
 
   return (
@@ -180,13 +134,13 @@ export default function GoodsReceivedScreen() {
 
                 {!isConfirmed && (
                   <TouchableOpacity
-                    onPress={() => openConfirm(item)}
+                    onPress={() => openReceiving(item)}
                     accessibilityRole="button"
                     style={[styles.action, { backgroundColor: colors.success, flexDirection: isRTL ? "row-reverse" : "row" }]}
                   >
-                    <Feather name="check" size={15} color={colors.successForeground} />
+                    <Feather name="external-link" size={15} color={colors.successForeground} />
                     <Text style={[styles.actionText, { color: colors.successForeground }]}>
-                      {t.goods.confirmReceipt}
+                      {t.goods.openReceiving}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -205,32 +159,6 @@ export default function GoodsReceivedScreen() {
         />
       )}
 
-      <CrmSheet
-        visible={!!target}
-        title={t.goods.confirmTitle}
-        onClose={() => setTarget(null)}
-        onSubmit={doConfirm}
-        submitLabel={t.goods.confirmReceipt}
-        submitting={busy}
-      >
-        <Text
-          style={[styles.sheetLine, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}
-        >
-          {target?.rfqTitle || ""}
-          {target?.supplierName ? ` · ${target.supplierName}` : ""}
-        </Text>
-        <Input
-          label={t.goods.receiverName}
-          value={receiver}
-          onChangeText={setReceiver}
-          required
-          isRTL={isRTL}
-        />
-        <View style={[styles.notice, { backgroundColor: colors.accent + "12", flexDirection: isRTL ? "row-reverse" : "row" }]}>
-          <Feather name="box" size={14} color={colors.accent} />
-          <Text style={[styles.noticeText, { color: colors.accent }]}>{t.goods.intoWarehouse}</Text>
-        </View>
-      </CrmSheet>
     </View>
   );
 }
@@ -261,7 +189,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   actionText: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_600SemiBold" },
-  sheetLine: { fontSize: 14, lineHeight: 24, fontFamily: "Inter_400Regular", marginBottom: 16 },
-  notice: { alignItems: "center", gap: 8, borderRadius: 12, padding: 8, minHeight: 44 },
-  noticeText: { flex: 1, fontSize: 12, lineHeight: 20, fontFamily: "Inter_400Regular" },
 });

@@ -1,8 +1,10 @@
 {
   "lib/contracts.ts": {
-    "src/components/procurement/rfq-editor/RfqEditor.tsx": "be8fe8dc20467d74003f031f4624ae3f14ba8eb1c58c1acbe1ec57b064950cc0",
-    "src/lib/procurement/rfq-editor.ts": "38bc6b9ca595c36255a248b687ededdb5131ad15b45003ce75c0aeaaeb62c234",
-    "src/components/supplier/SubmitOfferDialog.tsx": "af9081d69c7017dab156d31a926af84906a9a9563375349719fd27083bcbd62d"
+    "src/components/procurement/rfq-editor/RfqEditor.tsx": "49fafede46fbe782bef1c6ad8aa7aeed87e1d99b0ecdd968af16b45ea7dd306a",
+    "src/lib/procurement/rfq-editor.ts": "6810a0071e6fb771f85206cc918d1cd77ff6ec2e75b750693c4dd02c43ee668b",
+    "src/components/supplier/SubmitOfferDialog.tsx": "f6f2f10de96da518e9bdc24ef88511a18cfca08d3f58b4de3e0feb3379476dec",
+    "src/lib/procurement/rfq-server/publish.ts": "0a1a451e43a10afa9b56840d41fedb5e4af5073ebd340c27d8f3e8520aaa93b2",
+    "src/lib/supplier-offer-server.ts": "122658019928b556f9efe05ae02fb4f1941a704aef1fbe581524f1b159c2a1f3"
   },
   "lib/crm-writes.ts": {
     "src/lib/crm-writes.ts": "12cddcd93f3ecb85a85bcf637f541c12f409ec103b77d01825c655c571aaf725",
@@ -11,15 +13,16 @@
     "src/components/crm/CrmActivityDialog.tsx": "62b6cb9d7de92db7464f328e93d0c7d6e69db3bffa2778194dbb14fb9116f0ea"
   },
   "lib/delivery-writes.ts": {
-    "src/components/contractor/RfqOffersView.tsx": "7879cac7dc384cf860b6948062d6b9875b8c2a928bfc764679feb8e3f1dc4f21"
+    "src/lib/procurement/receipt-confirm-server.ts": "46dc0f272452cc14b17fb759cbf85cace6e5699a0ad5c55df1455ce0fdb7b3b2",
+    "src/app/[locale]/(contractor)/contractor/goods-received/page.tsx": "26c61304d09b493ec2991e6cbe2b71352fc11e5286b490fa8333353bf490ac73"
   },
   "lib/connection-writes.ts": {
     "src/app/[locale]/(supplier)/supplier/connections/page.tsx": "3a4bd595207ae51521a5d1fb94698237766da4b5885dbcac822051ef4e193819"
   },
   "lib/portal-components.ts": {
-    "src/lib/portal-components.ts": "2b8af1c68d0274329538c3960d54ce75dd98d334570a53ef3c7dd489931acc9b"
+    "src/lib/portal-components.ts": "f6cee989b629ca6077ae9b0de8625da45d38f8a5f0c6196d383bcdab1b4e2544"
   },
   "lib/company-modules.ts": {
-    "src/lib/company-modules.ts": "c380ccd3a6c3b4d9ad335833c8863d97679d92f88ffe253714ac70a6dc79ebe8"
+    "src/lib/company-modules.ts": "af72fc7a874516a357e4aede3c5a405af80863e1492c5dceeed039cc22db5b03"
   }
 }

@@ -27,7 +27,8 @@ import { exportRFQPDF, exportOfferComparisonPDF } from "@/lib/pdf-export";
 import { type, space, radius, MIN_TOUCH } from "@/lib/design";
 import * as WebBrowser from "expo-web-browser";
 import { siteUrl } from "@/lib/site-api";
-import { deadlineLabel, offersPagePath, priceHiddenReason, sealPolicyOf, seesOfferPrices, type SealPolicy } from "@/lib/offer-sealing";
+import { offersPagePath, priceHiddenReason, seesOfferPrices } from "@/lib/offer-sealing";
+import { useAuth } from "@/context/AuthContext";
 
 type SortMode = "price" | "date";
 
@@ -46,6 +47,7 @@ export default function RFQDetailScreen() {
   const t = useT();
   const { isRTL } = useLanguage();
   const { can } = usePermissions();
+  const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [rfq, setRfq] = useState<RFQItem | null>(null);
   const rfqLineItems = useMemo(() => readRfqLineItems(rfq as any), [rfq]);
@@ -56,9 +58,6 @@ export default function RFQDetailScreen() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const [pdfLoading, setPdfLoading] = useState(false);
-  // The company's sealed-round policy; until it is read the round counts as
-  // sealed (the default), so a price never flashes up and disappears.
-  const [sealPolicy, setSealPolicy] = useState<SealPolicy>(() => sealPolicyOf(null));
 
   const rowDirection = isRTL ? "row-reverse" : "row";
   const textAlign = isRTL ? "right" : "left";
@@ -91,20 +90,13 @@ export default function RFQDetailScreen() {
       const rfqDoc = await getDoc(doc(db, "rfqs", id));
       if (rfqDoc.exists()) setRfq({ id: rfqDoc.id, ...rfqDoc.data() } as RFQItem);
 
-      // procurementSettings/{orgId} — absent = the PRD reference (sealed). A
-      // failed read keeps the default too: hiding a price is the safe mistake.
-      const orgId = rfqDoc.exists() ? (rfqDoc.data() as { organizationId?: string }).organizationId : undefined;
-      if (orgId) {
-        try {
-          const settings = await getDoc(doc(db, "procurementSettings", orgId));
-          setSealPolicy(sealPolicyOf(settings.exists() ? settings.data() : null));
-        } catch {
-          setSealPolicy(sealPolicyOf(null));
-        }
-      }
-
-      const offSnap = await getDocs(query(collection(db, "offers"), where("rfqId", "==", id)));
-      const offerItems: OfferItem[] = offSnap.docs.map((d) => ({
+      // The rules read an offer list only when the query names its side (website G-06):
+      // the buying company's, by `contractorOrgId` — an `rfqId` filter alone is refused.
+      const orgId = user?.organizationId;
+      const offSnap = orgId
+        ? await getDocs(query(collection(db, "offers"), where("rfqId", "==", id), where("contractorOrgId", "==", orgId)))
+        : null;
+      const offerItems: OfferItem[] = (offSnap?.docs ?? []).map((d) => ({
         id: d.id, ...d.data(),
       } as OfferItem));
 
@@ -145,17 +137,17 @@ export default function RFQDetailScreen() {
     } finally {
       setLoading(false);
     }
-  }, [id, isRTL]);
+  }, [id, isRTL, user?.organizationId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // Prices may be on screen only as the website allows (lib/offer-sealing.ts):
-  // while sealed — or for a role that sees no amounts — the list shows who
-  // quoted and when, ordered by arrival, with no price, rank or comparison.
-  const hiddenReason = priceHiddenReason(rfq, sealPolicy, new Date(), seesOfferPrices(can));
+  // for a role that sees no amounts the list shows who quoted and when,
+  // ordered by arrival, with no price, rank or comparison.
+  const hiddenReason = priceHiddenReason(seesOfferPrices(can));
   const showPrices = hiddenReason === null;
   const sortMode: SortMode = showPrices ? sortBy : "date";
-  const hiddenPriceLabel = hiddenReason === "sealed" ? t.rfq.priceSealed : hiddenReason === "role" ? t.rfq.pricesHiddenRole : undefined;
+  const hiddenPriceLabel = hiddenReason === "role" ? t.rfq.pricesHiddenRole : undefined;
   const canDecide = can("offers.accept") || can("rfq.manage");
   const openDecideOnWeb = () => {
     if (!rfq) return;
@@ -170,8 +162,8 @@ export default function RFQDetailScreen() {
   // Republishing, rejecting, asking a single supplier for a lower price and
   // awarding are not made here. The website replaced them with acts the phone
   // cannot reproduce faithfully: reopening is only an extension, an exclusion
-  // needs a logged reason, a reduction is one round per RFQ (refused while
-  // sealed), an award prepares a purchase order for Finance — and the rules
+  // needs a logged reason, a better price is asked through the
+  // server's offer decisions, an award prepares a purchase order for Finance — and the rules
   // also check the member's seat on a project's tender. One button hands all
   // of them to the website's offers page.
 
@@ -316,21 +308,12 @@ export default function RFQDetailScreen() {
           )}
         </View>
 
-        {/* Why no price is shown — and, when sealed, when they open. */}
+        {/* Why no price is shown. */}
         {hiddenReason && offers.length > 0 ? (
           <View style={[styles.noteCard, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: rowDirection }]}>
             <Feather name="lock" size={16} color={colors.mutedForeground} />
             <View style={styles.noteBody}>
-              {hiddenReason === "sealed" ? (
-                <>
-                  <Text style={[type.bodyStrong, { color: colors.foreground, textAlign }]}>{t.rfq.pricesSealedTitle}</Text>
-                  <Text style={[type.caption, { color: colors.mutedForeground, textAlign }]}>
-                    {t.rfq.pricesSealedDesc.replace("{date}", deadlineLabel(rfq?.deadline, isRTL))}
-                  </Text>
-                </>
-              ) : (
-                <Text style={[type.caption, { color: colors.mutedForeground, textAlign }]}>{t.rfq.pricesHiddenRole}</Text>
-              )}
+              <Text style={[type.caption, { color: colors.mutedForeground, textAlign }]}>{t.rfq.pricesHiddenRole}</Text>
             </View>
           </View>
         ) : null}

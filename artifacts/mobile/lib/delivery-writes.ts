@@ -1,42 +1,24 @@
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  type Firestore,
-} from "firebase/firestore";
-import { receiveDelivery } from "@/lib/warehouse-transfer";
-import { onGoodsReceived } from "@/lib/accounting/hooks";
-import { markPurchaseArrived } from "@/lib/manufacturing-writes";
-
-// Confirming a delivery, mirroring the website's handleConfirmDelivery in
-// src/components/contractor/RfqOffersView.tsx — which the website REMOVED on 20 Oct 2026
-// (Procurement 1.5, PUR-06: one way to receive — the receiving desk's blind count). Here it
-// still confirms a legacy delivery with NO order; every delivery with one already goes to the
-// website's desk (`RECEIVE_ON_WEB`). Moving the rest there too is the open follow-up.
+// Receiving a delivery — and why the phone no longer writes it.
 //
-// Confirmation is three things, in this order and with these failure semantics:
+// Until Procurement 2.0 this file confirmed a legacy delivery (one with no
+// purchase order) the way the website's RfqOffersView `handleConfirmDelivery`
+// used to: mark the delivery confirmed, land the stock in a warehouse, post the
+// books, tell the supplier. The website removed that path (Procurement 1.5,
+// PUR-06: one way to receive) and, with Procurement 2.0 (G-08, G-09, 22 Oct
+// 2026), firestore.rules refuse every client write that creates or confirms a
+// delivery: «the receiver's confirmation IS the receipt», and ONE server act
+// (src/lib/procurement/receipt-confirm-server.ts `confirmReceipt`) does it all —
+// the blind count, the rejects with their reasons, the GR-yyyy/NNN number, the
+// order's counters, the stock, the books, the workshop's request and the people
+// who must know. It runs behind the receiver's page (a member the delivery was
+// forwarded to, or anyone holding the link and its texted code) —
+// /api/receipt-links/[token]/sign — and a legacy delivery is priced there from
+// its awarded offer (`legacyOfferNet`).
 //
-//   1. Mark the delivery confirmed. This is the write that matters; if it
-//      throws, nothing else runs and the caller reports failure.
-//   2. Receive the stock into a warehouse. Deliberately isolated in its own
-//      try/catch — step 1 has already committed and must NOT be rolled back
-//      because a warehouse write failed. The website makes the same call for
-//      the same reason.
-//   3. Notify the supplier. Best-effort for the same reason.
-//
-// Getting that ordering wrong would either lose a confirmation the contractor
-// already gave, or credit stock for a delivery that was never confirmed.
-//
-// Since PRD 3.0 (22 Sep 2026) the website confirms an itemised delivery with
-// no purchase order through its receipts write, which does all of the above
-// and also issues a GR-yyyy/NNN receipt. That write is not mirrored yet, so a
-// delivery confirmed here lands the same stock and posting without a receipt
-// number. A delivery WITH a purchase order is refused below and sent to the
-// website's receiving desk, where it must be counted.
+// That flow (forward → link → count → code or sign-in → sign) is not ported to
+// the phone yet; every delivery, with an order or without, is received on the
+// website's receiving desk. This file keeps only the shared shape and where to
+// send the user.
 
 export interface DeliveryItem {
   name?: string;
@@ -65,168 +47,8 @@ export interface DeliveryDoc {
   poId?: string | null;
 }
 
-/** Thrown when a delivery belongs to a purchase order and must be counted at
- * receiving on the website instead of confirmed whole here. */
+/** Why a receipt is taken on the website: the rules refuse a device confirming one. */
 export const RECEIVE_ON_WEB = "receive_on_web";
 
-/** The website's goods-received desk, open on this delivery. */
+/** The website's goods-received desk, open on this delivery (forward it, or count it). */
 export const receivingPath = (deliveryId: string) => `/contractor/goods-received?delivery=${deliveryId}`;
-
-/** Names of the central warehouse this app creates when none exists yet. Kept
- * as parameters rather than hardcoded Arabic so the caller passes localized
- * strings, matching the website, which reads them from its message catalog. */
-export interface CentralWarehouseLabels {
-  name: string;
-  location: string;
-  description: string;
-}
-
-export interface ConfirmDeliveryInput {
-  firestore: Firestore;
-  delivery: DeliveryDoc;
-  receiverName: string;
-  uid: string;
-  /** Who confirms — the name on the journal entry and the purchase request. */
-  userName?: string;
-  centralLabels: CentralWarehouseLabels;
-}
-
-/** Mirrors the website's delivery confirmation (RfqOffersView, 19 Sep 2026):
- * the receipt is priced from the awarded offer — quoted EXCLUDING VAT — and
- * posted to the books; stock carries the unit cost when it is exact; an RFQ
- * that answered a Manufacturing purchase request closes it. Returns whether the
- * stock actually landed, so the screen can say so when it did not. */
-export async function confirmDelivery(input: ConfirmDeliveryInput): Promise<{ stockLanded: boolean }> {
-  const { firestore, delivery, receiverName, uid, centralLabels } = input;
-  const userName = input.userName || "";
-  let stockLanded = true;
-
-  // The award's price and, since PRD 3.0, whether it carries a purchase order.
-  // Read before anything is written: an ordered delivery is not ours to confirm.
-  let net = 0;
-  let offerPoId: string | null = null;
-  try {
-    if (delivery.offerId) {
-      const offerSnap = await getDoc(doc(firestore, "offers", delivery.offerId));
-      const o = offerSnap.data() as { price?: string | number; totalBatchesPrice?: number; poId?: string | null } | undefined;
-      net = Math.max(0, Number(o?.totalBatchesPrice ?? o?.price) || 0);
-      offerPoId = o?.poId || null;
-    }
-  } catch {
-    net = 0;
-  }
-
-  // A delivery against a purchase order is counted at the gate — blind count,
-  // coded rejects, the over-receipt limit and a GR number — never confirmed
-  // whole. The website routes it to its receiving desk; confirming it here
-  // would land stock at the notified quantity and skip every one of those.
-  if (delivery.poId || offerPoId) {
-    throw new Error(RECEIVE_ON_WEB);
-  }
-
-  // 1 — the confirmation itself.
-  await updateDoc(doc(firestore, "deliveries", delivery.id), {
-    status: "confirmed",
-    receivedByName: receiverName.trim(),
-    confirmedAt: serverTimestamp(),
-    confirmedByUserId: uid,
-  });
-
-  // 2 — goods receipt. Confirming is the moment stock actually enters a
-  // warehouse: the project's warehouse when the delivery names one project,
-  // otherwise the org's central warehouse, created here with the SAME
-  // deterministic id the website uses (`central_{orgId}`) so both apps land on
-  // one warehouse rather than two.
-  const orgId = delivery.contractorOrgId;
-  try {
-    const rawItems = (delivery.items ?? [])
-      .map((it) => ({
-        name: it.name || "",
-        unit: it.unitOfMeasure || it.unit || "",
-        quantity: Number(it.quantity) || 0,
-      }))
-      .filter((it) => it.name && it.unit && it.quantity > 0);
-    // A unit cost only when it is exact: one line, one price.
-    const items = rawItems.map((it) => ({ ...it, unitCost: rawItems.length === 1 && net > 0 ? Math.round((net / it.quantity) * 100) / 100 : null }));
-
-    if (orgId && items.length > 0) {
-      let targetWarehouseId: string | null = null;
-      if (delivery.projectId) {
-        const projectSnap = await getDoc(doc(firestore, "projects", delivery.projectId));
-        targetWarehouseId =
-          (projectSnap.data() as { warehouseId?: string } | undefined)?.warehouseId || null;
-      }
-      if (!targetWarehouseId) {
-        const centralRef = doc(firestore, "warehouses", `central_${orgId}`);
-        const centralSnap = await getDoc(centralRef);
-        if (!centralSnap.exists()) {
-          await setDoc(centralRef, {
-            name: centralLabels.name,
-            location: centralLabels.location,
-            description: centralLabels.description,
-            organizationId: orgId,
-            isCentral: true,
-            projectId: null,
-            projectName: null,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
-        }
-        targetWarehouseId = `central_${orgId}`;
-      }
-      await receiveDelivery({ firestore, warehouseId: targetWarehouseId, items, organizationId: orgId });
-    }
-  } catch (receiptErr) {
-    stockLanded = false;
-    if (__DEV__) console.error("[confirmDelivery] goods receipt into warehouse failed:", receiptErr);
-  }
-
-  // 2b — the books, and Manufacturing's purchase request, once stock is in.
-  if (orgId && stockLanded) {
-    onGoodsReceived(
-      firestore,
-      { organizationId: orgId, userId: uid, userName },
-      {
-        deliveryId: delivery.id,
-        net,
-        supplierId: delivery.supplierOrgId && delivery.supplierOrgId !== "guest" ? delivery.supplierOrgId : null,
-        supplierName: delivery.supplierName || null,
-        rfqTitle: delivery.rfqTitle || null,
-        projectId: delivery.projectId || null,
-      }
-    );
-    try {
-      if (delivery.rfqId) {
-        const rfqSnap = await getDoc(doc(firestore, "rfqs", delivery.rfqId));
-        const src = (rfqSnap.data() as { purchaseSource?: { kind?: string; workOrderId?: string; purchaseRequestId?: string } } | undefined)?.purchaseSource;
-        if (src?.kind === "mfg_purchase" && src.workOrderId && src.purchaseRequestId) {
-          await markPurchaseArrived(firestore, { orderId: src.workOrderId, purchaseRequestId: src.purchaseRequestId, actor: { id: uid, name: userName } });
-        }
-      }
-    } catch (linkErr) {
-      if (__DEV__) console.warn("[confirmDelivery] purchase request not closed:", linkErr);
-    }
-  }
-
-  // 3 — tell the supplier. A guest supplier has no user doc to write to; they
-  // see the confirmation on their own offer page instead.
-  try {
-    if (delivery.supplierId && !delivery.isGuestDelivery && delivery.supplierId !== "guest") {
-      await addDoc(collection(firestore, "users", delivery.supplierId, "notifications"), {
-        userId: delivery.supplierId,
-        organizationId: delivery.supplierOrgId || delivery.supplierId,
-        type: "delivery_confirmed",
-        i18n: { title: "pn_delivery_confirmed_title", message: "pn_delivery_confirmed", params: { rfq: delivery.rfqTitle || "" } },
-        title: "✅ تم تأكيد الاستلام",
-        message: `أكد المقاول استلام الشحنة لطلب عروض الأسعار: ${delivery.rfqTitle || ""}`,
-        offerId: delivery.offerId ?? null,
-        rfqId: delivery.rfqId ?? null,
-        createdAt: new Date().toISOString(),
-        read: false,
-      });
-    }
-  } catch (notifyErr) {
-    if (__DEV__) console.warn("[confirmDelivery] supplier notification failed:", notifyErr);
-  }
-  return { stockLanded };
-}

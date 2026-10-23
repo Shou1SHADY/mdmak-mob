@@ -112,6 +112,20 @@ describe("company switches on the phone", () => {
     expect([...offSet({ off: ["crm"] }, "contractor")]).toEqual([]);
   });
 
+  it("a contractor can switch Finance off (website 3c48284): HR goes with it, and so do the books", () => {
+    const off = offSet({ off: ["payments"] }, "contractor");
+    expect([...off].sort()).toEqual(["hr", "payments"]);
+    const shown = ids(visibleComponents(applyModuleSwitches(CONTRACTOR_COMPONENTS, off, "contractor"), all));
+    for (const gone of ["payments", "accounting", "hr"]) expect(shown).not.toContain(gone);
+    expect(shown).toContain("procurement");
+  });
+
+  it("the books stay while Finance is on", () => {
+    const shown = ids(visibleComponents(applyModuleSwitches(CONTRACTOR_COMPONENTS, offSet({ off: ["manufacturing"] }, "contractor"), "contractor"), all));
+    expect(shown).toContain("accounting");
+    expect(shown).toContain("payments");
+  });
+
   it("a contractor with Project Management off keeps the dashboard but loses the tile", () => {
     const off = offSet({ off: ["project-management"] }, "contractor");
     const list = applyModuleSwitches(CONTRACTOR_COMPONENTS, off, "contractor");

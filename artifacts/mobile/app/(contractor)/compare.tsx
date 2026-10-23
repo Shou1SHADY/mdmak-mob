@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, StyleSheet, TouchableOpacity,
   Platform, ActivityIndicator, ScrollView, Alert,
 } from "react-native";
-import { collection, query, where, getDocs, orderBy, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -15,7 +15,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { EmptyState } from "@/components/ui/EmptyState";
 import * as WebBrowser from "expo-web-browser";
 import { siteUrl } from "@/lib/site-api";
-import { deadlineLabel, offersPagePath, priceHiddenReason, sealPolicyOf, seesOfferPrices, type SealPolicy } from "@/lib/offer-sealing";
+import { offersPagePath, priceHiddenReason, seesOfferPrices } from "@/lib/offer-sealing";
 
 interface RFQRow {
   id: string;
@@ -61,8 +61,6 @@ export default function CompareScreen() {
   const [offersLoading, setOffersLoading] = useState(false);
   const [offersError, setOffersError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>("price");
-  // The company's sealed-round policy; sealed (the default) until read.
-  const [sealPolicy, setSealPolicy] = useState<SealPolicy>(() => sealPolicyOf(null));
 
   /* ── Load RFQs that have offers ── */
   // `rfqReload` is what Retry bumps: the loader lives in this effect, so
@@ -73,10 +71,6 @@ export default function CompareScreen() {
       const orgId = user?.organizationId;
       if (!orgId) { setRfqLoading(false); return; }
       setRfqError(null);
-      // procurementSettings/{orgId} — absent or unreadable = the default (sealed).
-      getDoc(doc(db, "procurementSettings", orgId))
-        .then((settings) => setSealPolicy(sealPolicyOf(settings.exists() ? settings.data() : null)))
-        .catch(() => setSealPolicy(sealPolicyOf(null)));
       try {
         const snap = await getDocs(query(
           collection(db, "rfqs"),
@@ -85,7 +79,8 @@ export default function CompareScreen() {
         ));
         const results = await Promise.allSettled(
           snap.docs.map((d) =>
-            getDocs(query(collection(db, "offers"), where("rfqId", "==", d.id)))
+            // The rules read an offer list only when the query names its side (website G-06).
+            getDocs(query(collection(db, "offers"), where("rfqId", "==", d.id), where("contractorOrgId", "==", orgId)))
               .then((offSnap) => ({ d, offSnap }))
           )
         );
@@ -113,18 +108,26 @@ export default function CompareScreen() {
     setOffersLoading(true);
     setOffersError(null);
     try {
+      const orgId = user?.organizationId;
+      if (!orgId) { setOffers([]); return; }
+      // Named by the buying side (`contractorOrgId`, website G-06) — the rules refuse an `rfqId`
+      // filter alone. Newest first, sorted here: no composite index for the three-field query.
       const snap = await getDocs(query(
         collection(db, "offers"),
         where("rfqId", "==", rfq.id),
-        orderBy("createdAt", "desc"),
+        where("contractorOrgId", "==", orgId),
       ));
-      setOffers(snap.docs.map(d => ({ id: d.id, ...d.data() } as OfferRow)));
+      setOffers(
+        snap.docs
+          .map(d => ({ id: d.id, ...d.data() } as OfferRow))
+          .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+      );
     } catch (e: any) {
       setOffersError(e?.message || (t.compare.failedToLoadOffers));
     } finally {
       setOffersLoading(false);
     }
-  }, [isRTL]);
+  }, [isRTL, user?.organizationId]);
 
   /* ── Award ── */
   // The phone does not award. Awarding now prepares a purchase order for
@@ -162,9 +165,9 @@ export default function CompareScreen() {
   };
 
   // Prices may be on screen only as the website allows (lib/offer-sealing.ts):
-  // while sealed — or for a role that sees no amounts — the cards show who
-  // quoted and when, with no price, no "best" and no award.
-  const hiddenReason = selectedRfq ? priceHiddenReason(selectedRfq, sealPolicy, new Date(), seesOfferPrices(can)) : null;
+  // for a role that sees no amounts the cards show who quoted and when, with
+  // no price, no "best" and no award.
+  const hiddenReason = selectedRfq ? priceHiddenReason(seesOfferPrices(can)) : null;
   const showPrices = hiddenReason === null;
   const sortKey: SortKey = !showPrices && sortBy === "price" ? "date" : sortBy;
   const sortKeys: SortKey[] = showPrices ? ["price", "duration", "date"] : ["duration", "date"];
@@ -341,25 +344,14 @@ export default function CompareScreen() {
           contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: tabScreenBottomPadding(insets.bottom) }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Why no price is shown — and, when sealed, when they open. */}
+          {/* Why no price is shown. */}
           {hiddenReason ? (
             <View style={[styles.noteCard, { backgroundColor: colors.card, borderColor: colors.border, flexDirection: isRTL ? "row-reverse" : "row" }]}>
               <Feather name="lock" size={16} color={colors.mutedForeground} />
               <View style={{ flex: 1, gap: 4 }}>
-                {hiddenReason === "sealed" ? (
-                  <>
-                    <Text style={[styles.supplierName, { color: colors.foreground, textAlign: isRTL ? "right" : "left" }]}>
-                      {t.rfq.pricesSealedTitle}
-                    </Text>
-                    <Text style={[styles.metricLabel, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
-                      {t.rfq.pricesSealedDesc.replace("{date}", deadlineLabel(selectedRfq.deadline, isRTL))}
-                    </Text>
-                  </>
-                ) : (
-                  <Text style={[styles.metricLabel, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
-                    {t.rfq.pricesHiddenRole}
-                  </Text>
-                )}
+                <Text style={[styles.metricLabel, { color: colors.mutedForeground, textAlign: isRTL ? "right" : "left" }]}>
+                  {t.rfq.pricesHiddenRole}
+                </Text>
               </View>
             </View>
           ) : null}
@@ -411,11 +403,6 @@ export default function CompareScreen() {
                         {price.toLocaleString(isRTL ? "ar-SA" : "en-US")}
                       </Text>
                       <Text style={[styles.metricLabel, { color: colors.outline }]}>{t.compare.currency}</Text>
-                    </View>
-                  ) : hiddenReason === "sealed" ? (
-                    <View style={[styles.metricBlock, { backgroundColor: colors.border + "80" }]}>
-                      <Feather name="lock" size={14} color={colors.mutedForeground} />
-                      <Text style={[styles.metricLabel, { color: colors.outline }]}>{t.rfq.priceSealed}</Text>
                     </View>
                   ) : null}
 

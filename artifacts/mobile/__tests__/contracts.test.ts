@@ -1,6 +1,6 @@
 // The document contracts both apps share — the fields the website queries on.
 
-import { buildOfferDoc, buildRfqDoc, readRfqLineItems, riyadhYear } from "@/lib/contracts";
+import { buildOfferDoc, buildPublishInput, buildRfqDoc, publishGap, readRfqLineItems, riyadhDay, riyadhYear } from "@/lib/contracts";
 import { OFFER_STATUS, RFQ_ACCEPTING_OFFERS } from "@/constants/data";
 
 const rfqArgs = {
@@ -106,5 +106,59 @@ describe("RFQ numbering and terms (website Supplier 1.0)", () => {
 
   it("stores no payment terms when the buyer set none, as the website's untouched form", () => {
     expect(buildRfqDoc(rfqArgs).paymentTermsList).toBeNull();
+  });
+});
+
+// The app has no Node typings; jest runs on Node, so read through `require`.
+declare const require: (m: string) => unknown;
+declare const __dirname: string;
+
+describe("publishing goes through the website (Procurement 2.0, /api/procurement/rfq/publish)", () => {
+  const today = "2026-10-23";
+
+  it("asks for a deadline of today or later, as the server's deadlineProblem", () => {
+    expect(publishGap({ ...rfqArgs, deadline: null }, today)).toBe("deadline");
+    expect(publishGap({ ...rfqArgs, deadline: "2026-10-22" }, today)).toBe("deadline_past");
+    expect(publishGap({ ...rfqArgs, deadline: today }, today)).toBeNull();
+  });
+
+  it("asks for rows with a quantity and a unit, as the server's rowProblems", () => {
+    expect(publishGap({ ...rfqArgs, deadline: today, items: [] }, today)).toBe("items");
+    expect(publishGap({ ...rfqArgs, deadline: today, items: [{ description: "x", unit: "", quantity: 2 }] }, today)).toBe("item_incomplete");
+    expect(publishGap({ ...rfqArgs, deadline: today, items: [{ description: "x", unit: "م", quantity: 0 }] }, today)).toBe("item_incomplete");
+  });
+
+  it("sends only what the server copies: the rows and their place, never a status, an owner or a number", () => {
+    const body = buildPublishInput({ ...rfqArgs, deadline: "2026-10-30" });
+    expect(body).toMatchObject({ title: rfqArgs.title, audience: "public", deadline: "2026-10-30", pricing: "total", notes: rfqArgs.description });
+    expect(body.doc.products).toHaveLength(2);
+    expect(body.doc.products[0]).toMatchObject({ name: "باب HDF بحلق", quantity: 40, unitOfMeasure: "باب", category: rfqArgs.category });
+    expect(body.doc.city).toBe("Riyadh");
+    for (const key of ["status", "organizationId", "contractorId", "rfqNumber", "visibility"]) {
+      expect(body).not.toHaveProperty(key);
+      expect(body.doc).not.toHaveProperty(key);
+    }
+  });
+
+  it("reads Riyadh's day, not the device's", () => {
+    expect(riyadhDay(new Date("2026-10-22T22:30:00.000Z"))).toBe("2026-10-23");
+  });
+
+  it("the create screen publishes through the route and keeps the direct write for drafts only", () => {
+    const fs = require("fs") as { readFileSync: (p: string, enc: string) => string };
+    const s = fs.readFileSync(`${__dirname}/../app/(contractor)/rfqs/create.tsx`, "utf8");
+    expect(s).toMatch(/publishRfq\(/);
+    expect(s).toMatch(/if \(draft\) \{[\s\S]*createRfqWithNumber/);
+  });
+});
+
+describe("no device confirms a delivery (website rules, Procurement 2.0 G-09)", () => {
+  it("neither the goods screen nor delivery-writes writes Firestore", () => {
+    const fs = require("fs") as { readFileSync: (p: string, enc: string) => string };
+    for (const rel of ["app/(goods)/index.tsx", "lib/delivery-writes.ts"]) {
+      const s = fs.readFileSync(`${__dirname}/../${rel}`, "utf8");
+      expect(s).not.toMatch(/\b(updateDoc|setDoc|addDoc|runTransaction|writeBatch)\b/);
+      expect(s).not.toMatch(/firebase\/firestore/);
+    }
   });
 });

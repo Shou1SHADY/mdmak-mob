@@ -7,6 +7,9 @@
 //
 // Website counterparts, for when this needs re-checking:
 //   RFQ   -> src/components/procurement/rfq-editor/RfqEditor.tsx + src/lib/procurement/rfq-editor.ts
+//            (a draft is written by the browser; «انشر» is the server's since Procurement 2.0 —
+//            /api/procurement/rfq/publish, src/lib/procurement/rfq-server/publish.ts — so a phone-published
+//            RFQ goes through `buildPublishInput` and site-api `publishRfq`)
 //            (`rfqLinesDoc`; RfqForm.tsx before 20 Oct 2026). The editor adds the material tree
 //            (`subCategoryIds`, a line's `material`); an RFQ without them — this app's — still reaches
 //            suppliers by its category name, as a legacy RFQ does on the website.
@@ -198,6 +201,54 @@ export function buildOfferDoc(args: BuildOfferArgs): Record<string, unknown> {
     doc.executionDurationUnit = args.executionDurationUnit;
   }
   return doc;
+}
+
+/** Why the phone will not send an RFQ to the website's publish: what the server would refuse anyway. */
+export type PublishGap = "deadline" | "deadline_past" | "items" | "item_incomplete";
+
+/** The checks the website's publish runs (rfq-publish-rules.ts `rowProblems`, `deadlineProblem`), here before the
+ * call so the screen can say which field to fix. `today` is Riyadh's `YYYY-MM-DD`. */
+export function publishGap(args: Pick<BuildRfqArgs, "deadline" | "items">, today: string): PublishGap | null {
+  const deadline = (args.deadline || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return "deadline";
+  if (deadline < today) return "deadline_past";
+  if (args.items.length === 0) return "items";
+  if (args.items.some((i) => !(Number(i.quantity) > 0) || !String(i.unit || "").trim() || !String(i.description || "").trim())) return "item_incomplete";
+  return null;
+}
+
+/** Riyadh's calendar day (UTC+3, no daylight saving), as the website's `riyadhDay`. */
+export const riyadhDay = (now: Date = new Date()): string => new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+/**
+ * The body of the website's «انشر» (POST /api/procurement/rfq/publish, Procurement 2.0) for an RFQ made on the phone.
+ * The server owns the status, the owner, the number, the audience and the visitor link; it copies only the line keys
+ * from `doc` (products, category, subCategory, city, district…). The phone's RFQ is public and priced as one total,
+ * as before (a lump-sum quote is what this app's suppliers send); a single-line RFQ the server prices by line itself.
+ */
+export function buildPublishInput(args: BuildRfqArgs): {
+  title: string;
+  audience: "public";
+  deadline: string;
+  pricing: "total";
+  notes: string;
+  doc: { products: RfqProduct[]; category: string; subCategory: string; city: string; district: string | null };
+} {
+  const built = buildRfqDoc({ ...args, isDraft: false });
+  return {
+    title: args.title.trim(),
+    audience: "public",
+    deadline: (args.deadline || "").slice(0, 10),
+    pricing: "total",
+    notes: args.description.trim(),
+    doc: {
+      products: built.products as RfqProduct[],
+      category: args.category,
+      subCategory: "",
+      city: args.city,
+      district: args.district ?? null,
+    },
+  };
 }
 
 /** The RFQ's document type in the yearly `mfgCounters` sequences (website procurement/numbering.ts). */
