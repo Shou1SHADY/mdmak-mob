@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { collection, doc, getDoc, getDocs, query, where, type Query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { DEFAULT_POLICIES, PROCUREMENT_SETTINGS, PURCHASE_ORDERS, type ProcActor, type ProcurementPolicies, type PurchaseOrder } from "@/lib/procurement/types";
 import { contractorDecisions, contractorTodayCounts, type ContractorDecision, type TodayDelivery, type TodayOffer, type TodayRfq } from "@/lib/contractor-today";
+import { supplierFieldOf } from "@/lib/supplier-reach";
+import { fetchReachingRfqs } from "@/lib/supplier-reach-reads";
 import { supplierDecisions, supplierHomeCounts, type HomeOffer, type HomeRfq, type SupplierDecision } from "@/lib/supplier-home";
 
 export type HomeDecision = ContractorDecision | SupplierDecision;
@@ -36,6 +38,10 @@ export function useTodayHome(): TodayState {
   const [error, setError] = useState(false);
 
   const orgId = user?.organizationId ?? null;
+  // The supplier's field (tree specialties, category names, cities), keyed by value so a re-rendered profile
+  // object does not refetch.
+  const fieldKey = JSON.stringify(supplierFieldOf(organization as Record<string, unknown> | null));
+  const field = useMemo(() => JSON.parse(fieldKey) as ReturnType<typeof supplierFieldOf>, [fieldKey]);
   const role = user?.role;
 
   const load = useCallback(async () => {
@@ -52,15 +58,9 @@ export function useTodayHome(): TodayState {
     try {
       if (role === "Supplier") {
         const seesRfqs = can("offers.view");
-        const specs = (organization?.specializations ?? []).filter((s: unknown): s is string => typeof s === "string").slice(0, 30);
+        // The open RFQs that reach him — his field AND his cities, or invited by name (website ED-21, lib/supplier-reach.ts).
         const [rfqs, offers, orders] = await Promise.all([
-          seesRfqs
-            ? rows<HomeRfq>(
-                specs.length > 0
-                  ? query(collection(db, "rfqs"), where("status", "==", "New"), where("category", "in", specs))
-                  : query(collection(db, "rfqs"), where("status", "==", "New"))
-              )
-            : Promise.resolve([]),
+          seesRfqs ? fetchReachingRfqs<HomeRfq>(db, orgId, field) : Promise.resolve([]),
           seesRfqs ? rows<HomeOffer>(query(collection(db, "offers"), where("organizationId", "==", orgId))) : Promise.resolve([]),
           rows<PurchaseOrder>(query(collection(db, PURCHASE_ORDERS), where("supplierOrgId", "==", orgId))).catch(() => []),
         ]);
@@ -115,7 +115,7 @@ export function useTodayHome(): TodayState {
     } finally {
       setLoading(false);
     }
-  }, [orgId, role, permsLoading, can, isOwner, user, organization?.specializations]);
+  }, [orgId, role, permsLoading, can, isOwner, user, field]);
 
   useEffect(() => {
     void load();

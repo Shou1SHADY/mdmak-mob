@@ -15,6 +15,8 @@ import {
 import { router } from 'expo-router';
 import { auth, db } from '@/lib/firebase';
 import { SITE_URL, supplierAct } from '@/lib/site-api';
+import { supplierFieldOf } from '@/lib/supplier-reach';
+import { fetchReachingRfqs } from '@/lib/supplier-reach-reads';
 import { useAuth, type AppUser, type UserRole } from '@/context/AuthContext';
 import type { Language } from '@/context/LanguageContext';
 
@@ -94,10 +96,11 @@ async function buildContext(
       const rfqSnap = await getDocs(rfqQ);
       ctx.rfqs = rfqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      if (ctx.rfqs.length > 0) {
+      if (ctx.rfqs.length > 0 && orgId) {
         const rfqIds = ctx.rfqs.slice(0, 10).map(r => r.id as string);
+        // Named by the buying side (`contractorOrgId`): the rules refuse an offer list filtered by rfqId alone (website G-06).
         const offersSnap = await getDocs(
-          query(collection(db, 'offers'), where('rfqId', 'in', rfqIds), limit(30))
+          query(collection(db, 'offers'), where('rfqId', 'in', rfqIds), where('contractorOrgId', '==', orgId), limit(30))
         );
         ctx.offers = offersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
       }
@@ -116,12 +119,9 @@ async function buildContext(
       }
 
     } else if (role === 'Supplier') {
-      const specs = (profile.specializations as string[] | undefined) ?? [];
-      const rfqQ = specs.length > 0
-        ? query(collection(db, 'rfqs'), where('status', '==', 'New'), where('category', 'in', specs.slice(0, 10)), limit(25))
-        : query(collection(db, 'rfqs'), where('status', '==', 'New'), limit(20));
-      const rfqSnap = await getDocs(rfqQ);
-      ctx.rfqs = rfqSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // The open RFQs that reach him: his field AND his delivery cities, or invited by name (website ED-21).
+      const orgId = (profile.organizationId as string | undefined) || userId;
+      ctx.rfqs = await fetchReachingRfqs<{ id: string } & Record<string, unknown>>(db, orgId, supplierFieldOf(profile), { max: 25 });
 
       const offersSnap = await getDocs(
         query(collection(db, 'offers'), where('supplierId', '==', userId), limit(25))

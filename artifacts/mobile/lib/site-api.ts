@@ -272,3 +272,18 @@ export async function publishRfq(idToken: string, input: RfqPublishInput): Promi
     return { ok: false, code: "NETWORK" };
   }
 }
+
+/** POST /api/supplier/rfq-view — a registered supplier opened this RFQ (website RFQ-02, «اطّلع عليه»). The server counts
+ * it once per supplier company (`viewsCount` is no field a client may write). A courtesy count: fire-and-forget, a failure
+ * is silent and never blocks the screen — as the website's useCountRfqView. */
+export async function countRfqView(idToken: string, rfqId: string): Promise<void> {
+  try {
+    await fetch(`${SITE_URL}/api/supplier/rfq-view`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ rfqId }),
+    });
+  } catch {
+    /* not counted this time */
+  }
+}

@@ -18,6 +18,7 @@ import { CardSkeleton } from "@/components/ui/SkeletonLoader";
 import { RFQ_ACCEPTING_OFFERS, RFQ_STATUSES, displayCategory, displayCity } from "@/constants/data";
 import { BOQEditor } from "@/components/BOQEditor";
 import { headerTopPadding } from "@/lib/layout";
+import { useCountRfqView } from "@/hooks/useCountRfqView";
 
 export default function SupplierRFQDetailScreen() {
   const colors = useColors();
@@ -25,6 +26,8 @@ export default function SupplierRFQDetailScreen() {
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
+  // The website counts a supplier's visit once per company (RFQ-02).
+  useCountRfqView(id);
   const [rfq, setRfq] = useState<RFQItem | null>(null);
   const rfqLineItems = useMemo(() => readRfqLineItems(rfq as any), [rfq]);
   const [loading, setLoading] = useState(true);

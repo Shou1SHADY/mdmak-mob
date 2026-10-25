@@ -83,6 +83,9 @@ const MIRRORS = {
   // offer-calc.ts (both pure, import-free of the rest of the website).
   "lib/procurement/offer-decisions.ts": "src/lib/procurement/offer-decisions.ts",
   "lib/procurement/offer-calc.ts": "src/lib/procurement/offer-calc.ts",
+  // Who a public RFQ reaches: field AND delivery city (ED-21). Pure; its one import is the material types.
+  "lib/materials/reach.ts": "src/lib/materials/reach.ts",
+  "lib/materials/types.ts": "src/lib/materials/types.ts",
   "lib/supplier-home.ts": "src/lib/supplier-home.ts",
 };
 
@@ -138,6 +141,10 @@ const UPSTREAM_PINS = {
   "lib/portal-components.ts": ["src/lib/portal-components.ts"],
   // Procurement 2.0: the buyer's decisions read as the website's hook reads them (query by organisation + RFQ).
   "lib/offer-buyer-view.ts": ["src/hooks/useOfferDecisions.ts"],
+  // Whether an RFQ reaches a supplier: the website's requestReaches (named, or public in field AND city — ED-21).
+  "lib/supplier-reach.ts": ["src/lib/supplier-free/quote-rules.ts"],
+  // A supplier's RFQ visit is counted by the website (RFQ-02).
+  "hooks/useCountRfqView.ts": ["src/hooks/useCountRfqView.ts", "src/app/api/supplier/rfq-view/route.ts"],
   "lib/company-modules.ts": ["src/lib/company-modules.ts"],
 };
 

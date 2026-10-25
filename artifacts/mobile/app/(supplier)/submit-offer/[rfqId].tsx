@@ -12,6 +12,7 @@ import { tabScreenBottomPadding } from "@/lib/layout";
 import { useT, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { auth, db } from "@/lib/firebase";
+import { useCountRfqView } from "@/hooks/useCountRfqView";
 import { announceNewOffer, submitSupplierOffer } from "@/lib/site-api";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -33,6 +34,8 @@ export default function SubmitOfferScreen() {
   const { isRTL } = useLanguage();
   const insets = useSafeAreaInsets();
   const { rfqId } = useLocalSearchParams<{ rfqId: string }>();
+  // Reached without the RFQ screen (the assistant, a notification): still a visit — the server counts once per company.
+  useCountRfqView(rfqId);
   const { user, organization } = useAuth();
   const { isComplete, missingFields } = useProfileGate("supplier", organization ?? null);
 
