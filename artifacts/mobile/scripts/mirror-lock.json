@@ -14,7 +14,7 @@
   },
   "lib/delivery-writes.ts": {
     "src/lib/procurement/receipt-confirm-server.ts": "46dc0f272452cc14b17fb759cbf85cace6e5699a0ad5c55df1455ce0fdb7b3b2",
-    "src/app/[locale]/(contractor)/contractor/goods-received/page.tsx": "e51f04bdd65fbbed29f8f980b5f16322b4634ae307759709ddaca68763c3d263"
+    "src/app/[locale]/(contractor)/contractor/goods-received/page.tsx": "12757fe7a109a294349b2fd103acd246926eb40f57155399db9f0ac732cae7cc"
   },
   "lib/connection-writes.ts": {
     "src/app/[locale]/(supplier)/supplier/connections/page.tsx": "3a4bd595207ae51521a5d1fb94698237766da4b5885dbcac822051ef4e193819"
