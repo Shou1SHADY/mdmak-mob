@@ -1,9 +1,9 @@
 {
   "lib/contracts.ts": {
-    "src/components/procurement/rfq-editor/RfqEditor.tsx": "1f18be446a7b74182ac8cf4c3e5be7328bd56f30d4ed7e64fed49e227ce785b7",
-    "src/lib/procurement/rfq-editor.ts": "d26488f2402c3841b78c72fc02881825c7f6f98cd5b3eab8b93c919f483e70a1",
+    "src/components/procurement/rfq-editor/RfqEditor.tsx": "8e36503d70ef59573fae4ac6bd6b46216ecd5b7697a04d5ee63bffdc551259ae",
+    "src/lib/procurement/rfq-editor.ts": "9cc5ba539510ac1a1e8918985b5ba53ea1c1727a28179a8776a1ff085c4cb73a",
     "src/components/supplier/SubmitOfferDialog.tsx": "f6f2f10de96da518e9bdc24ef88511a18cfca08d3f58b4de3e0feb3379476dec",
-    "src/lib/procurement/rfq-server/publish.ts": "e7fd06b7b242114ad4658a0f9b9be031e409a679081bc06af4e48525965546b5",
+    "src/lib/procurement/rfq-server/publish.ts": "d0df8b6528850cfdaadcd8ecf45f2a7d9f78d2d7f97db2087b49b0317444321d",
     "src/lib/supplier-offer-server.ts": "122658019928b556f9efe05ae02fb4f1941a704aef1fbe581524f1b159c2a1f3"
   },
   "lib/crm-writes.ts": {
